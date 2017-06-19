@@ -1,0 +1,18 @@
+{
+	"orbitRadius": 100.0,
+	"orbitPeriod": 200.0,
+	"inclineAngle": 0.003,
+	"startTime": -0.7,
+	"endTime": 0.7,
+	"numSteps": 150,
+	"widthPixels": 600,
+	"heightPixels": 600,
+	"noiseFraction": 0.0003,
+	"limbDarkeningParams": [ 0.95, -0.25 ],
+	"transitShape": {
+		"type": "image",
+		"imageFilePath": "../img/opaque-triangle.png",
+		"imageWidth": 1.4,
+		"imageHeight": 0.7
+	}
+}

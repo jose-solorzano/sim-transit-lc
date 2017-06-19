@@ -1,0 +1,18 @@
+{
+	"orbitRadius": 100.0,
+	"orbitPeriod": 200.0,
+	"inclineAngle": 0.003,
+	"startTime": -2.0,
+	"endTime": 2.0,
+	"numSteps": 200,
+	"widthPixels": 400,
+	"heightPixels": 400,
+	"videoDuration": 30,
+	"noiseFraction": 0.0003,
+	"transitShape": {
+		"type": "image",
+		"imageFilePath": "../img/opaque-disc.png",
+		"imageWidth": 6.0,
+		"imageHeight": 0.4
+	}
+}

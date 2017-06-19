@@ -1,0 +1,9 @@
+#!/bin/bash
+
+projectDir=`dirname $0`/../..
+workDir=${projectDir}/work
+mkdir -p ${workDir}
+
+echo "Simulation of opaque triangle in transit."
+
+${projectDir}/bin/lc-sim -o ${workDir}/sim-big-triangle.csv -video ${workDir}/sim-big-triangle.mov ${projectDir}/examples/sim/big-triangle.json

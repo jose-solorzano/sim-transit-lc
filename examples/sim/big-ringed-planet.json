@@ -1,0 +1,16 @@
+{
+	"orbitRadius": 100.0,
+	"orbitPeriod": 200.0,
+	"inclineAngle": 0.003,
+	"startTime": -2.5,
+	"endTime": 2.0,
+	"numSteps": 150,
+	"widthPixels": 500,
+	"heightPixels": 500,
+	"transitShape": {
+		"type": "image",
+		"imageFilePath": "../img/ring-planet-0.1-0.2.png",
+		"imageWidth": 10.0,
+		"imageHeight": 10.0
+	}
+}
