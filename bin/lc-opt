@@ -1,0 +1,8 @@
+#!/bin/bash
+
+toolDir=`dirname $0`
+input="$toolDir/../build/dependencies.txt"
+
+CP=`cat ${input}`
+
+java -Xmx1500m -cp "$CP" jhs.lc.tools.SolveLightCurve "$@"

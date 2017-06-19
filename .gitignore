@@ -1,0 +1,7 @@
+work/
+eclipse-build/
+build/
+.settings/
+.gradle/
+.classpath
+.cvsignore
