@@ -23,8 +23,7 @@ public final class MaxActivationFunction implements ActivationFunction {
 
 	@Override
 	public final double activation(double[] inputs, double[] parameters, int paramIndex) {
-		int maxIndex = MathUtil.maxIndex(inputs);
-		double max = maxIndex == -1 ? Double.NEGATIVE_INFINITY : inputs[maxIndex];
-		return ((max - this.b) / this.c + parameters[paramIndex + maxIndex]) / K;
+		double max = MathUtil.max(inputs);
+		return ((max - this.b) / this.c + parameters[paramIndex]) / K;
 	}
 }

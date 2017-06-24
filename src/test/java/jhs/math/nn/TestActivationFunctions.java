@@ -22,8 +22,8 @@ import jhs.math.nn.aa.SumActivationFunction;
 import jhs.math.util.MathUtil;
 
 public class TestActivationFunctions {
-	private static final int NUM_INPUTS = 100;
-	
+	private static final int NUM_INPUTS = 30;
+
 	@Test
 	public void testResponseDistribution() {
 		this.checkDistribution(new IdentityActivationFunction(NUM_INPUTS));

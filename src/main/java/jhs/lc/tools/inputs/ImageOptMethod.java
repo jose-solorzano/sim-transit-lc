@@ -47,10 +47,13 @@ public class ImageOptMethod extends AbstractOptMethod {
 
 	@Override
 	public ParametricFluxFunctionSource createFluxFunctionSource(File context) throws Exception {
-		File parent = context == null ? new File(".") : (context.isDirectory() ? context : context.getParentFile());
-		File imageFile = new File(parent, this.imageFilePath);
-		if(!imageFile.exists()) {
-			throw new IllegalStateException("Image file not found: " + imageFile);
+		File imageFile;
+		if(new File(this.imageFilePath).exists()) {
+			imageFile = new File(this.imageFilePath);
+		}
+		else {
+			File parent = context == null ? new File(".") : (context.isDirectory() ? context : context.getParentFile());
+			imageFile = new File(parent, this.imageFilePath);
 		}
 		BufferedImage image = ImageIO.read(imageFile);
 		return ImageOpacityFunctionSource.create(image, this.aspectRatioPreserved, this.positionFlexibility, minImageWidth, minImageHeight, maxImageWidth, maxImageHeight);

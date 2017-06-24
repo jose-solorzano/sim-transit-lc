@@ -8,36 +8,41 @@ import jhs.math.nn.NeuralNetwork;
 
 public final class NNFluxOrOpacityFunction implements FluxOrOpacityFunction {
 	private static final long serialVersionUID = 1L;
+	private static final double SF = 3.46;
 	private static final double SQ_MEAN = 1.0;
 	private static final double SQ_SD = Math.sqrt(2.0);
 	
 	private final NeuralNetwork[] neuralNetworks;
 	private final InputType inputDef;
 	private final OutputType outputType;
-	private final double imageWidth, imageHeight;
+	private final double scale;
 	private final Rectangle2D boundingBox;
+	private final double outputBias;
 	
 	public NNFluxOrOpacityFunction(NeuralNetwork[] neuralNetworks, InputType inputDef, OutputType outputType,
-			double imageWidth, double imageHeight, Rectangle2D boundingBox) {
+			double scale, Rectangle2D boundingBox, double outputBias) {
 		this.neuralNetworks = neuralNetworks;
 		this.inputDef = inputDef;
 		this.outputType = outputType;
-		this.imageWidth = imageWidth;
-		this.imageHeight = imageHeight;
 		this.boundingBox = boundingBox;
+		this.scale = scale;
+		this.outputBias = outputBias;
 	}
 	
-	public static NNFluxOrOpacityFunction create(NeuralNetwork[] neuralNetworks, InputType inputDef, OutputType outputType,
+	public static NNFluxOrOpacityFunction create(NeuralNetwork[] neuralNetworks, double outputBias, InputType inputDef, OutputType outputType,
 			double imageWidth, double imageHeight) {
 		Rectangle2D boundingBox = new Rectangle2D.Double(-imageWidth / 2.0, -imageHeight / 2.0, imageWidth, imageHeight);
-		return new NNFluxOrOpacityFunction(neuralNetworks, inputDef, outputType, imageWidth, imageHeight, boundingBox);
+		double dim = Math.sqrt((imageWidth * imageWidth + imageHeight * imageHeight) / 2);
+		double scale = SF / dim;
+		return new NNFluxOrOpacityFunction(neuralNetworks, inputDef, outputType, scale, boundingBox, outputBias);
 	}
 
 	@Override
 	public final double fluxOrOpacity(double x, double y, double z) {
-		double xscale = 3.47 * x / this.imageWidth;
-		double yscale = 3.47 * y / this.imageHeight;
-		double a = this.maxActivation(getInputData(xscale, yscale, this.inputDef));
+		double scale = this.scale;
+		double scaledX = x * scale;
+		double scaledY = y * scale;
+		double a = this.maxActivation(getInputData(scaledX, scaledY, this.inputDef)) + this.outputBias;
 		switch(this.outputType) {
 		case BINARY:
 			return a >= 0 ? 0 : Double.NaN;

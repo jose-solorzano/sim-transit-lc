@@ -168,7 +168,7 @@ public class CSLightCurveFitter {
 		}
 		return weightSum == 0 ? 0 : sum / weightSum;
 	}
-
+	
 	private static class LocalErrorFunction implements MultivariateRealFunction {
 		private final SolutionSampler sampler;
 		private final double[] fluxArray;
@@ -191,10 +191,10 @@ public class CSLightCurveFitter {
 		@Override
 		public final double value(double[] parameters) throws FunctionEvaluationException, IllegalArgumentException {
 			Solution solution = this.sampler.parametersAsSolution(parameters);
-			double mse = meanSquaredError(this.fluxArray, this.weights, solution);
+			double baseError = meanSquaredError(this.fluxArray, this.weights, solution); 
 			double sdParams = MathUtil.standardDev(parameters, 0);
 			double diffWithNormal = sdParams - 1.0;			
-			return mse + (diffWithNormal * diffWithNormal * this.lambda);
+			return baseError + (diffWithNormal * diffWithNormal * this.lambda);
 		}		
 	}
 }

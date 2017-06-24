@@ -14,7 +14,6 @@ import jhs.math.nn.aa.RbfActivationFunction;
 import jhs.math.nn.aa.RbfType;
 import jhs.math.nn.aa.SigmoidActivationFunction;
 import jhs.math.nn.aa.SignActivationFunction;
-import jhs.math.nn.aa.SimpleMinActivationFunction;
 import jhs.math.nn.aa.SumActivationFunction;
 
 public enum ActivationFunctionType {
@@ -25,9 +24,8 @@ public enum ActivationFunctionType {
 	LEAKY_RELU,
 	MIN,
 	MAX,
-	SIMPLE_MIN,
 	ATAN,
-	IDENTITY,
+	LINEAR,
 	GAUSSIAN,
 	RBF_C,
 	RBF_S,
@@ -58,13 +56,11 @@ public enum ActivationFunctionType {
 			return new MinActivationFunction(numInputs);
 		case MAX:
 			return new MaxActivationFunction(numInputs);
-		case SIMPLE_MIN:
-			return new SimpleMinActivationFunction(numInputs);
 		case SUM:
 			return new SumActivationFunction(numInputs);
 		case ATAN:
 			return new AtanActivationFunction(numInputs);
-		case IDENTITY:
+		case LINEAR:
 			return new IdentityActivationFunction(numInputs);
 		case GAUSSIAN:
 			return new GaussianActivationFunction(numInputs);

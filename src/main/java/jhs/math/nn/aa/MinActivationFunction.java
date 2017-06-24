@@ -23,8 +23,7 @@ public final class MinActivationFunction implements ActivationFunction {
 
 	@Override
 	public final double activation(double[] inputs, double[] parameters, int paramIndex) {
-		int minIndex = MathUtil.minIndex(inputs);
-		double min = minIndex == -1 ? Double.POSITIVE_INFINITY : inputs[minIndex];
-		return ((min + this.b) / this.c + parameters[paramIndex + minIndex]) / K;
+		double min = MathUtil.min(inputs);
+		return ((min + this.b) / this.c + parameters[paramIndex]) / K;
 	}
 }

@@ -46,8 +46,14 @@ public class ImageTransitShape extends AbstractTransitShape {
 
 	@Override
 	public RotationAngleSphereFactory createSphereFactory(File context) throws Exception {
-		File parent = context == null ? new File(".") : (context.isDirectory() ? context : context.getParentFile());
-		File imageFile = new File(parent, this.imageFilePath);
+		File imageFile;
+		if(new File(this.imageFilePath).exists()) {
+			imageFile = new File(this.imageFilePath);
+		}
+		else {
+			File parent = context == null ? new File(".") : (context.isDirectory() ? context : context.getParentFile());
+			imageFile = new File(parent, this.imageFilePath);
+		}
 		if(!imageFile.exists()) {
 			throw new IllegalStateException("Image file not found: " + imageFile);
 		}

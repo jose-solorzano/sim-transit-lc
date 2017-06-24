@@ -14,9 +14,10 @@ public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
 	private final OutputType outputType;
 	private final double imageWidth, imageHeight;
 	private final int numNetworks;
+	private final double outputBias;
 
 	public NNFluxFunctionSource(NeuralNetworkStructure structure, InputType inputType, OutputType outputType,
-			double imageWidth, double imageHeight, int numNetworks) {
+			double imageWidth, double imageHeight, int numNetworks, double outputBias) {
 		super();
 		this.structure = structure;
 		this.inputType = inputType;
@@ -24,6 +25,7 @@ public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
 		this.imageWidth = imageWidth;
 		this.imageHeight = imageHeight;
 		this.numNetworks = numNetworks;
+		this.outputBias = outputBias;
 	}
 
 	@Override
@@ -38,7 +40,7 @@ public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
 			double[] nparams = Arrays.copyOfRange(parameters, i * nppn, (i + 1) * nppn);
 			nn[i] = new PlainNeuralNetwork(this.structure, nparams);
 		}
-		return NNFluxOrOpacityFunction.create(nn, inputType, outputType, imageWidth, imageHeight);
+		return NNFluxOrOpacityFunction.create(nn, this.outputBias, inputType, outputType, imageWidth, imageHeight);
 	}
 
 	@Override

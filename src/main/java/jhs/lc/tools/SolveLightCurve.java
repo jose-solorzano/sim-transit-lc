@@ -101,7 +101,7 @@ public class SolveLightCurve extends AbstractTool {
 
 		String resultsFilePath = cmdLine.getOptionValue("or");
 		if(resultsFilePath != null) {
-			this.writeResults(resultsFilePath, sampler, lightCurve, solution, fluxArray, elapsedSeconds);
+			this.writeResults(resultsFilePath, optSpec, sampler, lightCurve, solution, fluxArray, elapsedSeconds);
 		}		
 
 		String transitImageFileName = cmdLine.getOptionValue("oi");
@@ -154,7 +154,7 @@ public class SolveLightCurve extends AbstractTool {
 		};
 		// TODO: configure with options
 		fitter.setCircuitShuffliness(0.5);
-		fitter.setDisplacementFactor(0.02);
+		fitter.setDisplacementFactor(0.04);
 		fitter.setExpansionFactor(3.0);
 		fitter.setMaxCSIterationsWithClustering(numClusteringIterations);
 		fitter.setMaxExtraCSIterations(30);
@@ -164,7 +164,7 @@ public class SolveLightCurve extends AbstractTool {
 		return solution;
 	}
 	
-	private void writeResults(String resultsFilePath, SolutionSampler sampler, LightCurvePoint[] lightCurve, Solution solution, double[] fluxArray, double elapsedSeconds) throws Exception {
+	private void writeResults(String resultsFilePath, OptSpec optSpec, SolutionSampler sampler, LightCurvePoint[] lightCurve, Solution solution, double[] fluxArray, double elapsedSeconds) throws Exception {
 		double[] weights = sampler.createFluxWeights(fluxArray);
 		double mse = CSLightCurveFitter.meanSquaredError(lightCurve, weights, solution);
 		if(logger.isLoggable(Level.INFO)) {
@@ -175,6 +175,7 @@ public class SolveLightCurve extends AbstractTool {
 		spec.setOptElapsedSeconds(elapsedSeconds);
 		spec.setRmse(Math.sqrt(mse));
 		spec.setParameters(solution.getOpacityFunctionParameters());
+		spec.setMethod(optSpec.getMethod());
 		File resultsFile = new File(resultsFilePath);
 		SpecMapper.writeOptResultsSpec(resultsFile, spec);
 		System.out.println("Wrote solution info to " + resultsFile);

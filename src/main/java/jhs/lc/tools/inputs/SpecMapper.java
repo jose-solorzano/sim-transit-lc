@@ -21,6 +21,6 @@ public class SpecMapper {
 	
 	public static void writeOptResultsSpec(File outFile, OptResultsSpec spec) throws JsonMappingException, JsonGenerationException, IOException {
 		ObjectMapper mapper = new ObjectMapper();
-		mapper.writerFor(OptResultsSpec.class).writeValue(outFile, spec);		
+		mapper.writerWithDefaultPrettyPrinter().writeValue(outFile, spec);		
 	}
 }

@@ -26,6 +26,20 @@ public class TestTriangularDistanceEstimator {
 		double d6 = this.distance(random, 0, +tf);
 		assertEquals(0.5, d6, 0.001);
 	}
+	
+	@Test
+	public void testNonNegative() {
+		Random random = new Random(17);
+		TriangularDistanceEstimator est = new TriangularDistanceEstimator();
+		int numVars = 3;
+		int numTests = 500;
+		for(int i = 0; i < numTests; i++) {
+			double[] point1 = MathUtil.sampleGaussian(random, 1.0, numVars);
+			double[] point2 = MathUtil.sampleGaussian(random, 1.0, numVars);
+			double d = est.triangularDistance(point1, point2, 0);
+			assertTrue(d >= 0);
+		}
+	}
 
 	private double distance(Random random, double x, double y) {
 		double[] origin = MathUtil.sampleGaussian(random, 1.0, 2);
