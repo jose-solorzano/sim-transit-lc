@@ -13,8 +13,6 @@ public class CSLightCurveFitter {
 	private final SolutionSampler sampler;
 	private final int populationSize;
 	
-	private double epsilon = 0.01;
-	
 	private int maxCSIterationsWithClustering = 100;
 	private int maxExtraCSIterations = 5;
 	private int maxGradientDescentIterations = 10;
@@ -25,19 +23,22 @@ public class CSLightCurveFitter {
 	private double circuitShuffliness = 0.5;
 	
 	private double lambda = 0.0003;
+	private double epsionFactor = 1.0;
 
 	public CSLightCurveFitter(SolutionSampler sampler, int populationSize) {
 		this.sampler = sampler;
 		this.populationSize = populationSize;
 	}
 
-	public final double getEpsilon() {
-		return epsilon;
+	public final double getEpsionFactor() {
+		return epsionFactor;
 	}
 
-	public final void setEpsilon(double epsilon) {
-		this.epsilon = epsilon;
+
+	public final void setEpsionFactor(double epsionFactor) {
+		this.epsionFactor = epsionFactor;
 	}
+
 
 	public final int getMaxCSIterationsWithClustering() {
 		return maxCSIterationsWithClustering;
@@ -116,7 +117,6 @@ public class CSLightCurveFitter {
 			}			
 		};
 		optimizer.setMaxIterations(maxIterations);
-		optimizer.setEpsilon(this.epsilon);
 		double[] initialPoint = sampler.solutionAsParameters(initialSolution);
 		RealPointValuePair optPoint = optimizer.optimize(errorFunction, initialPoint);
 		return sampler.parametersAsSolution(optPoint.getPointRef());
