@@ -31,4 +31,9 @@ public final class AngularFluxSource implements SimulatedFluxSource {
 		AngularSimulation simulation = new AngularSimulation(inclineAngle, orbitRadius, orbitalPeriod, ldParams, sphereFactory);
 		return simulation.produceModeledFlux(timestamps, peakTimespanFraction, width, height);
 	}
+	
+	@Override
+	public ImageElementInfo createImageElementInfo(FluxOrOpacityFunction brightnessFunction) {
+		return ImageElementInfo.createImageFrameElements(brightnessFunction, this.width, this.height);
+	}	
 }

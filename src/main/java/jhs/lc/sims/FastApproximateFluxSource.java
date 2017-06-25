@@ -54,7 +54,7 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		Sphere star = new SolidSphere(1.0, this.ldParams);
 		double baseFlux = this.estimateBaseFlux(star, boundingBox);
 		
-		ImageElementInfo imageElementInfo = this.createImageFrameElements(brightnessFunction, boundingBox);
+		ImageElementInfo imageElementInfo = ImageElementInfo.createImageFrameElements(brightnessFunction, this.frameWidthPixels, this.frameHeightPixels, boundingBox);
 		
 		double startTimestamp = timestamps[0];
 		double endTimestamp = timestamps[length - 1];
@@ -143,35 +143,7 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 	private boolean starOutsideImageView(double imageX, double imageY, double imageWidth, double imageHeight) {
 		return imageX >= +1.0 || imageX + imageWidth <= -1.0 || imageY >= +1.0 || imageY + imageHeight <= -1.0;
 	}
-	
-	private ImageElementInfo createImageFrameElements(FluxOrOpacityFunction brightnessFunction, Rectangle2D boundingBox) {
-		double imageWidth = boundingBox.getWidth();
-		double imageHeight = boundingBox.getHeight();
-		double fromX = boundingBox.getX();
-		double fromY = boundingBox.getY();
-		int pixelWidth = this.frameWidthPixels;
-		int pixelHeight = this.frameHeightPixels;		
-		double xcw = imageWidth / pixelWidth;
-		double ycw = imageHeight / pixelHeight;
-		List<ImageElement> elementList = new ArrayList<>();
-		double totalPositiveFlux = 0;
-		for(int c = 0; c < pixelWidth; c++) {
-			double x = fromX + c * xcw;
-			for(int r = 0; r < pixelHeight; r++) {
-				double y = fromY + r * ycw;
-				double b = brightnessFunction.fluxOrOpacity(x, y, 1.0);
-				if(b > -1.0) { // also, not NaN
-					elementList.add(new ImageElement(c, r, b));
-					if(b > 0) {
-						totalPositiveFlux += b;
-					}
-				}
-			}
-		}
-		ImageElement[] elements = elementList.toArray(new ImageElement[elementList.size()]);
-		return new ImageElementInfo(totalPositiveFlux, elements);
-	}
-	
+		
 	private double estimateBaseFlux(Sphere star, Rectangle2D imageBounds) {
 		double imageWidth = imageBounds.getWidth();
 		double imageHeight = imageBounds.getHeight();
@@ -196,27 +168,9 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		}
 		return boxFlux * (starPixelWidth * starPixelHeight) / (ceilStarPixelWidth * ceilStarPixelHeight);
 	}
-	
-	private static final class ImageElementInfo {
-		private final double totalPositiveFlux;
-		private final ImageElement[] elements;
-		
-		public ImageElementInfo(double totalPositiveFlux, ImageElement[] elements) {
-			super();
-			this.totalPositiveFlux = totalPositiveFlux;
-			this.elements = elements;
-		}
-	}
-	
-	private static final class ImageElement {
-		private final int colIdx, rowIdx;
-		private final double brightness;
-		
-		public ImageElement(int colIdx, int rowIdx, double brightness) {
-			super();
-			this.colIdx = colIdx;
-			this.rowIdx = rowIdx;
-			this.brightness = brightness;
-		}
+
+	@Override
+	public ImageElementInfo createImageElementInfo(FluxOrOpacityFunction brightnessFunction) {
+		return ImageElementInfo.createImageFrameElements(brightnessFunction, this.frameWidthPixels, this.frameHeightPixels);
 	}	
 }
