@@ -173,7 +173,7 @@ public class SolutionSampler {
 		ImageState baseImageInfo = this.imageState(optimizerParameters);
 		double[] baseVector = new double[optimizerParameters.length];
 		DisplacementInfo[] dinfos = new DisplacementInfo[optimizerParameters.length];
-		//int orci = this.getOrbitRadiusChangeParamIndex();
+		int orci = this.getOrbitRadiusChangeParamIndex();
 		double sumDiscrete = 0;
 		int numDiscrete = 0;
 		for(int i = 0; i < optimizerParameters.length; i++) {
@@ -181,13 +181,13 @@ public class SolutionSampler {
 			dinfo = this.varDisplacementInfo(baseImageInfo, optimizerParameters, i, epsilon);
 			dinfos[i] = dinfo;			
 			baseVector[i] = dinfo.noChangeRange;
-			if(dinfo.apparentVariableType == VariableType.DISCRETE) {
+			if(dinfo.apparentVariableType == VariableType.DISCRETE && i != orci) {
 				numDiscrete++;
 				sumDiscrete += dinfo.noChangeRange;
 			}
 		}
 		if(numDiscrete == 0) {
-			logger.info("minimalChangeThreshold(): No apparent discrete-effect variables.");
+			logger.info("minimalChangeThreshold(): No apparent discrete-effect parameters.");
 		}
 		else {
 			double meanDiscrete = sumDiscrete / numDiscrete;
