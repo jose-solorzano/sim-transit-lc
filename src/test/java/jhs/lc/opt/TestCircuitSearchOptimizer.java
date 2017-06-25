@@ -53,7 +53,7 @@ public class TestCircuitSearchOptimizer {
 		optimizer.setExpansionFactor(2.0);
 		optimizer.setConvergeDistance(0.003);
 		double[] minimum = MathUtil.sampleGaussian(random, 1.0, vectorLength);
-		MultivariateRealFunction errorFunction = new DistanceSqErrorFunction(minimum);
+		CircuitSearchEvaluator errorFunction = new DistanceSqErrorFunction(minimum);
 		RealPointValuePair result = optimizer.optimize(errorFunction, vectorLength);
 		double[] resultPoint = result.getPointRef();
 		int numMatches = 0;
@@ -85,22 +85,28 @@ public class TestCircuitSearchOptimizer {
 		return new RealPointValuePair(bestPoint, minError);
 	}
 	
-	private static class DistanceSqErrorFunction implements MultivariateRealFunction {
+	private static class DistanceSqErrorFunction implements CircuitSearchEvaluator {
 		private final double[] minimum;
 		
 		public DistanceSqErrorFunction(double[] minimum) {
 			super();
 			this.minimum = minimum;
 		}
-
+		
 		@Override
-		public double value(double[] point) throws FunctionEvaluationException, IllegalArgumentException {
-			return MathUtil.euclideanDistanceSquared(point, this.minimum);
+		public CircuitSearchParamEvaluation evaluate(double[] params) {
+			return new CircuitSearchParamEvaluation(
+					MathUtil.euclideanDistanceSquared(params, this.minimum),
+					params);
 		}		
 	}
 	
-	private static class CustomErrorFunction implements MultivariateRealFunction {
+	private static class CustomErrorFunction implements CircuitSearchEvaluator {
 		@Override
+		public CircuitSearchParamEvaluation evaluate(double[] params) throws FunctionEvaluationException, IllegalArgumentException {
+			return new CircuitSearchParamEvaluation(this.value(params), params);
+		}
+		
 		public final double value(double[] point) throws FunctionEvaluationException, IllegalArgumentException {
 			double x = point[0];
 			double y = point[1];

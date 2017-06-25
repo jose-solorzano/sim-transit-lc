@@ -106,11 +106,11 @@ public class CircuitSearchOptimizer {
 	}
 
 	@SuppressWarnings("unchecked")
-	public RealPointValuePair optimize(MultivariateRealFunction errorFunction, int vectorLength) throws MathException {
+	public RealPointValuePair optimize(CircuitSearchEvaluator errorFunction, int vectorLength) throws MathException {
 		int n = this.populationSize;
 		int maxIterations = this.maxTotalIterations;
 		int maxIterationsWithClustering = this.maxIterationsWithClustering;
-		List<Particle> workingSet = this.createInitialWorkingSet(n, vectorLength);
+		List<Particle> workingSet = this.createInitialWorkingSet(n, vectorLength, errorFunction);
 		RealPointValuePair rpvp = null;
 		for(int i = 0; i < maxIterations; i++) {
 			boolean clusteringPhase = i < maxIterationsWithClustering;
@@ -139,7 +139,7 @@ public class CircuitSearchOptimizer {
 		double[] meanPosition = ItemUtil.meanPosition(workingSet);
 		double maxDiffSq = Double.NEGATIVE_INFINITY;
 		for(Particle particle : workingSet) {
-			double pmds = MathUtil.maxSquaredDiff(particle.position, meanPosition);
+			double pmds = MathUtil.maxSquaredDiff(particle.clusteringPosition, meanPosition);
 			if(pmds > maxDiffSq) {
 				maxDiffSq = pmds;
 			}
@@ -149,7 +149,7 @@ public class CircuitSearchOptimizer {
 	
 	private RealPointValuePair getBestPoint(List<Particle> workingSet) {
 		Particle bestParticle = this.getBestParticle(workingSet);
-		return bestParticle == null ? null : new RealPointValuePair(bestParticle.position, bestParticle.evaluation);
+		return bestParticle == null ? null : new RealPointValuePair(bestParticle.parameters, bestParticle.evaluation);
 	}
 		
 	private Particle getBestParticle(List<Particle> workingSet) {	
@@ -199,7 +199,7 @@ public class CircuitSearchOptimizer {
 		return result;
 	}
 	 
-	private List<Particle> circuitSearch(List<Particle> workingSet, MultivariateRealFunction errorFunction, boolean clusteringPhase) throws MathException {
+	private List<Particle> circuitSearch(List<Particle> workingSet, CircuitSearchEvaluator errorFunction, boolean clusteringPhase) throws MathException {
 		List<Particle> circuit = this.produceCircuit(workingSet, clusteringPhase);
 		int size = circuit.size();
 		List<Particle> result = new ArrayList<>();
@@ -213,42 +213,42 @@ public class CircuitSearchOptimizer {
 		return result;
 	}
 
-	private Particle lineSearch(Particle particle1, Particle particle2, MultivariateRealFunction errorFunction) throws MathException {
+	private Particle lineSearch(Particle particle1, Particle particle2, CircuitSearchEvaluator errorFunction) throws MathException {
 		double error1 = particle1.evaluation;
 		double error2 = particle2.evaluation;
-		double[] position1 = particle1.getPosition();
-		double[] position2 = particle2.getPosition();
-		double[] difference = MathUtil.subtract(position2, position1);
+		double[] params1 = particle1.getParameters();
+		double[] params2 = particle2.getParameters();
+		double[] difference = MathUtil.subtract(params2, params1);
 		double diffSd = MathUtil.standardDev(difference, 0);
 		double moveSd = diffSd * this.displacementFactor;
-		position1 = this.movePoint(position1, moveSd);
-		position2 = this.movePoint(position2, moveSd);
-		difference = MathUtil.subtract(position2, position1);
+		params1 = this.movePoint(params1, moveSd);
+		params2 = this.movePoint(params2, moveSd);
+		difference = MathUtil.subtract(params2, params1);
 
-		Particle candidate = this.newParticleFromBaseline(errorFunction, position1, difference, 0, 1.0);
+		Particle candidate = this.newParticleFromBaseline(errorFunction, params1, difference, 0, 1.0);
 		double candidateError = candidate.evaluation;
 		if(candidateError <= error1 && candidateError <= error2) {
 			return candidate;
 		}
 		double ef = this.expansionFactor;
 		if(candidateError <= error1) {
-			Particle secondCandidate = this.newParticleFromBaseline(errorFunction, position1, difference, 1.0, 1.0 + ef);
+			Particle secondCandidate = this.newParticleFromBaseline(errorFunction, params1, difference, 1.0, 1.0 + ef);
 			return secondCandidate.evaluation < candidateError ? secondCandidate : candidate;
 		} else if(candidateError <= error2) {
-			Particle secondCandidate = this.newParticleFromBaseline(errorFunction, position1, difference, -ef, 0);
+			Particle secondCandidate = this.newParticleFromBaseline(errorFunction, params1, difference, -ef, 0);
 			return secondCandidate.evaluation < candidateError ? secondCandidate : candidate;
 		}
 		else {
-			Particle secondCandidate = this.newParticleFromBaseline(errorFunction, position1, difference, -ef, 1.0 + ef);
+			Particle secondCandidate = this.newParticleFromBaseline(errorFunction, params1, difference, -ef, 1.0 + ef);
 			return secondCandidate.evaluation < candidateError ? secondCandidate : candidate;			
 		}
 	}
 
-	private Particle newParticleFromBaseline(MultivariateRealFunction errorFunction, double[] baselinePosition, double[] directionVector, double fromFraction, double toFraction) throws MathException {
+	private Particle newParticleFromBaseline(CircuitSearchEvaluator errorFunction, double[] baselineParams, double[] directionVector, double fromFraction, double toFraction) throws MathException {
 		double p = fromFraction + this.random.nextDouble() * (toFraction - fromFraction);
-		double[] newPosition = MathUtil.add(baselinePosition, MathUtil.multiply(directionVector, p));
-		double newError = errorFunction.value(newPosition);
-		return new Particle(newPosition, newError);
+		double[] newParams = MathUtil.add(baselineParams, MathUtil.multiply(directionVector, p));
+		CircuitSearchParamEvaluation eval = errorFunction.evaluate(newParams);
+		return new Particle(newParams, eval.getClusteringPosition(), eval.getError());
 	}
 	
 	/*
@@ -305,16 +305,16 @@ public class CircuitSearchOptimizer {
 	}
 	
 	private Node insertAtDistanceBasedLocation(Node head, Particle particle) {
-		double[] position = particle.position;
-		double distanceToHead = MathUtil.euclideanDistance(position, head.particle.position);
+		double[] position = particle.clusteringPosition;
+		double distanceToHead = MathUtil.euclideanDistance(position, head.particle.clusteringPosition);
 		double distanceToPrior = distanceToHead;
 		double minDistanceChange = distanceToHead;
 		Node insertAfter = null;
 		Node pointer = head;
 		Node next;
 		while((next = pointer.next) != null) {
-			double distancePointerNext = MathUtil.euclideanDistance(pointer.particle.position, next.particle.position);
-			double distanceParticleNext =  MathUtil.euclideanDistance(position, next.particle.position);
+			double distancePointerNext = MathUtil.euclideanDistance(pointer.particle.clusteringPosition, next.particle.clusteringPosition);
+			double distanceParticleNext =  MathUtil.euclideanDistance(position, next.particle.clusteringPosition);
 			double distanceChange = distanceToPrior + distanceParticleNext - distancePointerNext;
 			if(distanceChange < minDistanceChange) {
 				minDistanceChange = distanceChange;
@@ -366,12 +366,13 @@ public class CircuitSearchOptimizer {
 		}
 	}
 
-	private List<Particle> createInitialWorkingSet(int n, int vectorLength) {
+	private List<Particle> createInitialWorkingSet(int n, int vectorLength, CircuitSearchEvaluator errorFunction) throws MathException {
 		Random r = this.random;
 		List<Particle> result = new ArrayList<>();		
 		for(int i = 0; i < n; i++) {
-			double[] position = MathUtil.sampleGaussian(r, 1.0, vectorLength);
-			result.add(new Particle(position, Double.NEGATIVE_INFINITY));
+			double[] params = MathUtil.sampleGaussian(r, 1.0, vectorLength);
+			CircuitSearchParamEvaluation eval = errorFunction.evaluate(params);
+			result.add(new Particle(params, eval.getClusteringPosition(), eval.getError()));
 		}
 		return result;
 	}
@@ -380,18 +381,24 @@ public class CircuitSearchOptimizer {
 	}
 	
 	private static class Particle extends ComparableValueHolder<Particle> implements VectorialItem {
-		private final double[] position;
+		private final double[] parameters;
+		private final double[] clusteringPosition;
 		private final double evaluation;
 		
-		public Particle(double[] position, double evaluation) {
+		public Particle(double[] parameters, double[] clusteringPosition, double evaluation) {
 			super();
-			this.position = position;
+			this.parameters = parameters;
+			this.clusteringPosition = clusteringPosition;
 			this.evaluation = evaluation;
+		}
+
+		public final double[] getParameters() {
+			return parameters;
 		}
 
 		@Override
 		public final double[] getPosition() {
-			return this.position;
+			return this.clusteringPosition;
 		}
 
 		@Override

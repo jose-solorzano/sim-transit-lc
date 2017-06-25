@@ -7,6 +7,7 @@ import org.apache.commons.math.MathException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealPointValuePair;
 import jhs.lc.data.LightCurvePoint;
+import jhs.lc.sims.TestFastApproximateFluxSource;
 import jhs.math.util.MathUtil;
 
 public class CSLightCurveFitter {	
@@ -125,11 +126,11 @@ public class CSLightCurveFitter {
 	}
 
 	public Solution optimizeStandardErrorCS(double[] fluxArray) throws MathException {
-		MultivariateRealFunction errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, this.lambda);
+		CircuitSearchEvaluator errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, this.lambda);
 		return this.optimizeCircuitSearch(errorFunction);
 	}
 
-	public Solution optimizeCircuitSearch(MultivariateRealFunction errorFunction) throws MathException {
+	public Solution optimizeCircuitSearch(CircuitSearchEvaluator errorFunction) throws MathException {
 		SolutionSampler sampler = this.sampler;
 		Random random = sampler.getRandom();
 		CircuitSearchOptimizer optimizer = new CircuitSearchOptimizer(random, this.populationSize) {
@@ -159,6 +160,10 @@ public class CSLightCurveFitter {
 
 	public static double meanSquaredError(double[] fluxArray, double[] weights, Solution solution) {
 		double[] testFluxArray = solution.produceModeledFlux();
+		return meanSquaredError(fluxArray, weights, testFluxArray);
+	}
+
+	public static double meanSquaredError(double[] fluxArray, double[] weights, double[] testFluxArray) {
 		int length = fluxArray.length;
 		double sum = 0;
 		double weightSum = 0;
@@ -170,8 +175,8 @@ public class CSLightCurveFitter {
 		}
 		return weightSum == 0 ? 0 : sum / weightSum;
 	}
-	
-	private static class LocalErrorFunction implements MultivariateRealFunction {
+
+	private static class LocalErrorFunction implements MultivariateRealFunction, CircuitSearchEvaluator {
 		private final SolutionSampler sampler;
 		private final double[] fluxArray;
 		private final double[] weights;
@@ -190,6 +195,17 @@ public class CSLightCurveFitter {
 			return new LocalErrorFunction(sampler, fluxArray, weights, lambda);
 		}
 		
+		@Override
+		public CircuitSearchParamEvaluation evaluate(double[] params) throws MathException {
+			Solution solution = this.sampler.parametersAsSolution(params);
+			double[] modeledFlux = solution.produceModeledFlux();
+			double baseError = meanSquaredError(this.fluxArray, this.weights, modeledFlux); 
+			double sdParams = MathUtil.standardDev(params, 0);
+			double diffWithNormal = sdParams - 1.0;			
+			double error = baseError + (diffWithNormal * diffWithNormal * this.lambda);
+			return new CircuitSearchParamEvaluation(error, modeledFlux);
+		}
+
 		@Override
 		public final double value(double[] parameters) throws FunctionEvaluationException, IllegalArgumentException {
 			Solution solution = this.sampler.parametersAsSolution(parameters);
