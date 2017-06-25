@@ -159,7 +159,7 @@ public class SolveLightCurve extends AbstractTool {
 		fitter.setDisplacementFactor(0.04);
 		fitter.setExpansionFactor(3.0);
 		fitter.setMaxCSIterationsWithClustering(numClusteringIterations);
-		fitter.setMaxExtraCSIterations(0);
+		fitter.setMaxExtraCSIterations(50);
 		fitter.setMaxGradientDescentIterations(numGradientDescentIterations);
 				
 		Solution solution = fitter.optimize(lightCurve);
