@@ -1,5 +1,7 @@
 package jhs.lc.sims;
 
+import java.awt.geom.Rectangle2D;
+
 import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
 import jhs.lc.geom.FluxOrOpacityFunction;
 import jhs.lc.geom.LimbDarkeningParams;
@@ -35,5 +37,19 @@ public final class AngularFluxSource implements SimulatedFluxSource {
 	@Override
 	public ImageElementInfo createImageElementInfo(FluxOrOpacityFunction brightnessFunction) {
 		return ImageElementInfo.createImageFrameElements(brightnessFunction, this.width, this.height);
+	}	
+	
+	@Override
+	public double numPixelsInTimeSpanArc(FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
+		double[] timestamps = this.timestamps;
+		int length = timestamps.length;
+		Rectangle2D boundingBox = brightnessFunction.getBoundingBox();
+		double startTimestamp = timestamps[0];
+		double endTimestamp = timestamps[length - 1];
+		double timeSpan = endTimestamp - startTimestamp;
+		double cycleFraction = timeSpan / this.orbitalPeriod;				
+		double angularRange = Math.PI * 2 * cycleFraction;
+		double arcDistance = orbitRadius * angularRange;
+		return this.width * arcDistance / boundingBox.getWidth();
 	}	
 }

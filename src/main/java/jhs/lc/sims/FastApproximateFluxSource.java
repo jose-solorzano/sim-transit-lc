@@ -172,5 +172,19 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 	@Override
 	public ImageElementInfo createImageElementInfo(FluxOrOpacityFunction brightnessFunction) {
 		return ImageElementInfo.createImageFrameElements(brightnessFunction, this.frameWidthPixels, this.frameHeightPixels);
+	}
+
+	@Override
+	public double numPixelsInTimeSpanArc(FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
+		double[] timestamps = this.timestamps;
+		int length = timestamps.length;
+		Rectangle2D boundingBox = brightnessFunction.getBoundingBox();
+		double startTimestamp = timestamps[0];
+		double endTimestamp = timestamps[length - 1];
+		double timeSpan = endTimestamp - startTimestamp;
+		double cycleFraction = timeSpan / this.orbitalPeriod;				
+		double angularRange = Math.PI * 2 * cycleFraction;
+		double arcDistance = orbitRadius * angularRange;
+		return this.frameWidthPixels * arcDistance / boundingBox.getWidth();
 	}	
 }

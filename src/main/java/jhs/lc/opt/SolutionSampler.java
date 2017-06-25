@@ -132,9 +132,9 @@ public class SolutionSampler {
 		return this.opacitySource.getNumParameters();		
 	}
 	
-	private double getOrbitRadius(double[] parameters) {
+	private double getOrbitRadius(double[] optimizerParameters) {
 		int orcIndex = this.getOrbitRadiusChangeParamIndex();
-		double changeParam = parameters[orcIndex];
+		double changeParam = optimizerParameters[orcIndex];
 		double logDiff = changeParam * this.logRadiusSD;
 		return this.baseRadius * Math.exp(logDiff);
 	}
@@ -166,20 +166,19 @@ public class SolutionSampler {
 		return parameters;
 	}
 	
-	private double[] minimalChangeThreshold(Random random, double[] optimizerParameters, double epsilon) {
+	public double[] minimalChangeThreshold(double[] optimizerParameters, double epsilon) {
 		if(optimizerParameters.length == 0) {
 			throw new IllegalArgumentException("Zero parameters.");
 		}
-		ImageElementInfo baseImageInfo = this.imageInfo(optimizerParameters);
+		ImageState baseImageInfo = this.imageState(optimizerParameters);
 		double[] baseVector = new double[optimizerParameters.length];
 		DisplacementInfo[] dinfos = new DisplacementInfo[optimizerParameters.length];
-		int orci = this.getOrbitRadiusChangeParamIndex();
+		//int orci = this.getOrbitRadiusChangeParamIndex();
 		double sumDiscrete = 0;
 		int numDiscrete = 0;
 		for(int i = 0; i < optimizerParameters.length; i++) {
 			DisplacementInfo dinfo;
-			dinfo = i == orci ? this.orbitRadiusChangeDisplacementInfo(baseImageInfo, optimizerParameters, i, epsilon) :
-								this.varDisplacementInfo(baseImageInfo, optimizerParameters, i, epsilon);
+			dinfo = this.varDisplacementInfo(baseImageInfo, optimizerParameters, i, epsilon);
 			dinfos[i] = dinfo;			
 			baseVector[i] = dinfo.noChangeRange;
 			if(dinfo.apparentVariableType == VariableType.DISCRETE) {
@@ -204,12 +203,12 @@ public class SolutionSampler {
 		return baseVector;
 	}
 	
-	private DisplacementInfo varDisplacementInfo(ImageElementInfo baseImageInfo, double[] optimizerParameters, int varIndex, double epsilon) {
+	private DisplacementInfo varDisplacementInfo(ImageState baseImageState, double[] optimizerParameters, int varIndex, double epsilon) {
 		double[] vector = ArrayUtil.repeat(0.0, optimizerParameters.length);
 		vector[varIndex] = +1.0;
-		DisplacementInfo posDispInfo = this.vectorDisplacementInfo(baseImageInfo, optimizerParameters, vector, epsilon);
+		DisplacementInfo posDispInfo = this.vectorDisplacementInfo(baseImageState, optimizerParameters, vector, epsilon);
 		vector[varIndex] = -1.0;
-		DisplacementInfo negDispInfo = this.vectorDisplacementInfo(baseImageInfo, optimizerParameters, vector, epsilon);
+		DisplacementInfo negDispInfo = this.vectorDisplacementInfo(baseImageState, optimizerParameters, vector, epsilon);
 		double posRange = posDispInfo.noChangeRange;
 		double negRange = negDispInfo.noChangeRange;
 		
@@ -224,7 +223,7 @@ public class SolutionSampler {
 	private static final double PRECISION = 1E-6;
 	private static final int MAX_DISP_ITERATIONS = 10;
 	
-	private DisplacementInfo vectorDisplacementInfo(ImageElementInfo baseImageInfo, double[] optimizerParameters, double[] vector, double epsilon) {
+	private DisplacementInfo vectorDisplacementInfo(ImageState baseImageState, double[] optimizerParameters, double[] vector, double epsilon) {
 		double lowerBound = 0;
 		double upperBound = Double.POSITIVE_INFINITY;
 		boolean foundUnchanged = false;
@@ -243,7 +242,7 @@ public class SolutionSampler {
 				factor = (lowerBound + upperBound) / 2.0;
 			}
 			double[] newParams = MathUtil.add(optimizerParameters, MathUtil.multiply(vector, factor));
-			if(this.changed(baseImageInfo, newParams)) {
+			if(this.changed(baseImageState, newParams)) {				
 				foundChanged = true;
 				upperBound = factor;
 			}
@@ -261,34 +260,25 @@ public class SolutionSampler {
 		}
 		else {
 			apparentVarType = VariableType.DISCRETE;
-		}
-		double noChangeRange = Double.isInfinite(upperBound) ? 0 : upperBound - lowerBound;
+		}		
+		double noChangeRange = Double.isInfinite(upperBound) ? 0 : (lowerBound + upperBound) / 2.0;
  		return new DisplacementInfo(noChangeRange, apparentVarType);
 	}
 	
-	private boolean changed(ImageElementInfo baseImageInfo, double[] optimizerParameters) {
-		ImageElementInfo newImageInfo = this.imageInfo(optimizerParameters);
-		return !Objects.equals(baseImageInfo, newImageInfo);
+	private boolean changed(ImageState baseImageState, double[] optimizerParameters) {
+		ImageState newImageState = this.imageState(optimizerParameters);
+		return !Objects.equals(baseImageState, newImageState);
 	}
 
-	private ImageElementInfo imageInfo(double[] optimizerParameters) {
+	private ImageState imageState(double[] optimizerParameters) {
 		Solution solution = this.parametersAsSolution(optimizerParameters);
 		FluxOrOpacityFunction bf = solution.getBrightnessFunction();
-		return this.fluxSource.createImageElementInfo(bf);
+		ImageElementInfo imageElementInfo = this.fluxSource.createImageElementInfo(bf);
+		double orbitRadius = this.getOrbitRadius(optimizerParameters);
+		int problemArcPixels = (int) Math.round(this.fluxSource.numPixelsInTimeSpanArc(bf, orbitRadius));
+		return new ImageState(imageElementInfo, problemArcPixels);
 	}
 
-	/*
-	private double meanNoChangeRange(Random random, double[] parameters, double[] directionVector, double baselineFactor, int numTests) {
-		double sum = 0;
-		for(int t = 0; t < numTests; t++) {
-			double[] actualDirVector = ArrayUtil.map(directionVector, x -> x * (random.nextBoolean() ? +1.0 : -1.0));
-			DisplacementInfo dinfo = this.vectorDisplacement(parameters, actualDirVector, baselineFactor);
-			sum += dinfo.noChangeRange;
-		}
-		return sum / numTests;
-	}
-	*/
-		
 	private static class DisplacementInfo {
 		private final double noChangeRange;
 		private final VariableType apparentVariableType;
@@ -297,6 +287,53 @@ public class SolutionSampler {
 			super();
 			this.noChangeRange = noChangeRange;
 			this.apparentVariableType = apparentVariableType;
+		}
+
+		@Override
+		public String toString() {
+			return "DI(" + MathUtil.round(noChangeRange, 7) + "," + apparentVariableType + ")";
+		}
+	}
+	
+	private static class ImageState {
+		private final ImageElementInfo imageElementInfo;
+		private final int problemArcPixels;
+		
+		
+		public ImageState(ImageElementInfo imageElementInfo, int problemArcPixels) {
+			super();
+			this.imageElementInfo = imageElementInfo;
+			this.problemArcPixels = problemArcPixels;
+		}
+
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((imageElementInfo == null) ? 0 : imageElementInfo.hashCode());
+			result = prime * result + problemArcPixels;
+			return result;
+		}
+
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			ImageState other = (ImageState) obj;
+			if (imageElementInfo == null) {
+				if (other.imageElementInfo != null)
+					return false;
+			} else if (!imageElementInfo.equals(other.imageElementInfo))
+				return false;
+			if (problemArcPixels != other.problemArcPixels)
+				return false;
+			return true;
 		}
 	}
 }

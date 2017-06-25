@@ -23,7 +23,7 @@ public class CSLightCurveFitter {
 	private double circuitShuffliness = 0.5;
 	
 	private double lambda = 0.0003;
-	private double epsionFactor = 1.0;
+	private double epsilonFactor = 1.0;
 
 	public CSLightCurveFitter(SolutionSampler sampler, int populationSize) {
 		this.sampler = sampler;
@@ -31,12 +31,12 @@ public class CSLightCurveFitter {
 	}
 
 	public final double getEpsionFactor() {
-		return epsionFactor;
+		return epsilonFactor;
 	}
 
 
 	public final void setEpsionFactor(double epsionFactor) {
-		this.epsionFactor = epsionFactor;
+		this.epsilonFactor = epsionFactor;
 	}
 
 
@@ -118,7 +118,9 @@ public class CSLightCurveFitter {
 		};
 		optimizer.setMaxIterations(maxIterations);
 		double[] initialPoint = sampler.solutionAsParameters(initialSolution);
-		RealPointValuePair optPoint = optimizer.optimize(errorFunction, initialPoint);
+		double[] minChangeShift = sampler.minimalChangeThreshold(initialPoint, 0.003);
+		double[] epsilon = MathUtil.multiply(minChangeShift, this.epsilonFactor);
+		RealPointValuePair optPoint = optimizer.optimize(errorFunction, initialPoint, epsilon);
 		return sampler.parametersAsSolution(optPoint.getPointRef());
 	}
 

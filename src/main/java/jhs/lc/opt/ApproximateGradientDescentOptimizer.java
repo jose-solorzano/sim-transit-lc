@@ -17,7 +17,7 @@ public class ApproximateGradientDescentOptimizer {
 	private final Random random;
 	private int maxIterations = 2000;
 	private int maxSearchIterations = 10;
-	private double initialGradientFactor = 0.15;
+	private double initialGradientFactor = 1.0;
 	private double gfAlpha = 0.2;
 	private double searchFactor = 2.0;
 	
@@ -40,11 +40,6 @@ public class ApproximateGradientDescentOptimizer {
 
 	public void setMaxIterations(int maxIterations) {
 		this.maxIterations = maxIterations;
-	}
-
-	public RealPointValuePair optimize(MultivariateRealFunction errorFunction, double[] initialPoint) throws MathException {
-		double[] epsilon = ArrayUtil.repeat(0.01, initialPoint.length);
-		return this.optimize(errorFunction, initialPoint, epsilon);
 	}
 
 	public RealPointValuePair optimize(MultivariateRealFunction errorFunction, double[] initialPoint, double[] epsilon) throws MathException {
