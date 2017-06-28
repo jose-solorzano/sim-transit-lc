@@ -18,6 +18,8 @@ import jhs.math.nn.aa.RbfActivationFunction;
 import jhs.math.nn.aa.RbfType;
 import jhs.math.nn.aa.SigmoidActivationFunction;
 import jhs.math.nn.aa.SignActivationFunction;
+import jhs.math.nn.aa.SimpleMaxActivationFunction;
+import jhs.math.nn.aa.SimpleMinActivationFunction;
 import jhs.math.nn.aa.SumActivationFunction;
 import jhs.math.util.MathUtil;
 
@@ -34,6 +36,8 @@ public class TestActivationFunctions {
 		this.checkDistribution(new MonodActivationFunction(NUM_INPUTS, 5.4, -3.333));
 		this.checkDistribution(new PiecewiseActivationFunction(NUM_INPUTS, 1.41));
 		this.checkDistribution(new SignActivationFunction(NUM_INPUTS));
+		this.checkDistribution(new SimpleMaxActivationFunction(NUM_INPUTS));
+		this.checkDistribution(new SimpleMinActivationFunction(NUM_INPUTS));
 		this.checkDistribution(new MaxActivationFunction(NUM_INPUTS));
 		this.checkDistribution(new MinActivationFunction(NUM_INPUTS));
 		this.checkDistribution(new RbfActivationFunction(NUM_INPUTS, RbfType.EUCLIDEAN));
