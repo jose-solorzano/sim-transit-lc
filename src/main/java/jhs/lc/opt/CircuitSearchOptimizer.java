@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealConvergenceChecker;
@@ -34,11 +35,14 @@ public class CircuitSearchOptimizer {
 	private int maxTotalIterations = 2000;
 	private int maxIterationsWithClustering = 100;
 	private int maxClusterAlgoSteps = 3;
+	private int maxEliminationIterations = 0;
 	
 	private double expansionFactor = 3.0;
 	private double displacementFactor = 0.03;
 	private double convergeDistance = 0.0001;
 	private double circuitShuffliness = 0.5;
+	
+	private double agdGradientFactor = 0.3;
 	
 	public CircuitSearchOptimizer(Random random, int populationSize) {
 		this.random = random;
@@ -77,6 +81,22 @@ public class CircuitSearchOptimizer {
 		this.maxClusterAlgoSteps = maxClusterAlgoSteps;
 	}
 
+	public int getMaxEliminationIterations() {
+		return maxEliminationIterations;
+	}
+
+	public void setMaxEliminationIterations(int maxEliminationIterations) {
+		this.maxEliminationIterations = maxEliminationIterations;
+	}
+
+	public double getAgdGradientFactor() {
+		return agdGradientFactor;
+	}
+
+	public void setAgdGradientFactor(double agdGradientFactor) {
+		this.agdGradientFactor = agdGradientFactor;
+	}
+
 	public final double getExpansionFactor() {
 		return expansionFactor;
 	}
@@ -111,8 +131,8 @@ public class CircuitSearchOptimizer {
 		int maxIterations = this.maxTotalIterations;
 		int maxIterationsWithClustering = this.maxIterationsWithClustering;
 		List<Particle> workingSet = this.createInitialWorkingSet(n, vectorLength, errorFunction);
-		RealPointValuePair rpvp = null;
-		for(int i = 0; i < maxIterations; i++) {
+		int i;
+		for(i = 0; i < maxIterations; i++) {
 			boolean clusteringPhase = i < maxIterationsWithClustering;
 			List<Particle> newParticles = this.circuitSearch(workingSet, errorFunction, clusteringPhase);
 			if(i == 0) {
@@ -126,13 +146,43 @@ public class CircuitSearchOptimizer {
 			if(workingSet.size() != n) {
 				throw new IllegalStateException();
 			}
-			rpvp = this.getBestPoint(workingSet);
+			RealPointValuePair rpvp = this.getBestPoint(workingSet);
 			this.informProgress(i, rpvp);
 			if(this.converged(workingSet)) {
 				break;
 			}
 		}
-		return rpvp;
+		List<RealPointValuePair> pointValues = ListUtil.map(workingSet, p -> p.getPointValuePair());
+		return this.eliminationViaAGD(pointValues, errorFunction, i);
+	}	
+	
+	private RealPointValuePair eliminationViaAGD(List<RealPointValuePair> pointValues, final CircuitSearchEvaluator errorFunction, int baseIteration) throws MathException {
+		MultivariateRealFunction gdErrorFunction = new MultivariateRealFunction() {			
+			@Override
+			public final double value(double[] params) throws FunctionEvaluationException, IllegalArgumentException {
+				CircuitSearchParamEvaluation pe = errorFunction.evaluate(params);
+				return pe.getError();
+			}
+		};
+		ApproximateGradientDescentOptimizer agdOptimizer = new ApproximateGradientDescentOptimizer(this.random);
+		int maxAgdIterations = this.maxEliminationIterations;
+		List<RealPointValuePair> currentPointValues = pointValues;
+		double agdgf = this.agdGradientFactor;
+		for(int i = 0; i < maxAgdIterations && currentPointValues.size() > 1; i++) {
+			List<RealPointValuePair> newPointValues = new ArrayList<>();
+			for(RealPointValuePair pointValue : currentPointValues) {
+				//TODO: Should be done for every point?
+				double[] epsilon = errorFunction.recommendEpsilon(pointValue.getPointRef());
+				RealPointValuePair newPointValue = agdOptimizer.doOneStep(pointValue, gdErrorFunction, agdgf, epsilon);
+				newPointValues.add(newPointValue);
+			}
+			Collections.sort(newPointValues, (pv1, pv2) -> Double.compare(pv1.getValue(), pv2.getValue()));
+			System.out.println("%%%First value: " + newPointValues.get(0).getValue());
+			System.out.println("%%%Eliminating: " + newPointValues.get(newPointValues.size() - 1).getValue());
+			currentPointValues = newPointValues.subList(0, newPointValues.size() - 1);
+			this.informProgress(baseIteration + i, currentPointValues.get(0));
+		}
+		return ListUtil.min(currentPointValues, RealPointValuePair::getValue);
 	}
 	
 	private boolean converged(List<Particle> workingSet) {
@@ -404,6 +454,10 @@ public class CircuitSearchOptimizer {
 		@Override
 		protected final double getValue() {
 			return this.evaluation;
+		}
+		
+		public RealPointValuePair getPointValuePair() {
+			return new RealPointValuePair(this.parameters, this.evaluation);
 		}
 	}
 	

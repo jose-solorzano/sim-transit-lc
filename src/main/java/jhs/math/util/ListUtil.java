@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ListUtil {
@@ -17,6 +18,32 @@ public class ListUtil {
 		return copy;
 	}
 	
+	public static <T> T max(List<T> list, Function<T,Double> evaluator) {
+		double maxValue = Double.NEGATIVE_INFINITY;
+		T maxItem = null;
+		for(T item : list) {
+			Double value = evaluator.apply(item);
+			if(value != null && value.doubleValue() > maxValue) {
+				maxValue = value.doubleValue();
+				maxItem = item;
+			}
+		}
+		return maxItem;
+	}
+
+	public static <T> T min(List<T> list, Function<T,Double> evaluator) {
+		double minValue = Double.POSITIVE_INFINITY;
+		T minItem = null;
+		for(T item : list) {
+			Double value = evaluator.apply(item);
+			if(value != null && value.doubleValue() < minValue) {
+				minValue = value.doubleValue();
+				minItem = item;
+			}
+		}
+		return minItem;
+	}
+
 	public static <T,U> List<U> map(List<T> list, Function<T,U> mapper) {
 		return list.stream().map(mapper).collect(Collectors.toList());
 	}

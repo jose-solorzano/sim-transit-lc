@@ -10,6 +10,7 @@ import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealPointValuePair;
 import org.junit.Test;
 
+import jhs.math.util.ArrayUtil;
 import jhs.math.util.MathUtil;
 
 public class TestCircuitSearchOptimizer {
@@ -99,6 +100,11 @@ public class TestCircuitSearchOptimizer {
 					MathUtil.euclideanDistanceSquared(params, this.minimum),
 					params);
 		}		
+		
+		@Override
+		public double[] recommendEpsilon(double[] params) {
+			return ArrayUtil.repeat(1.0, params.length);
+		}		
 	}
 	
 	private static class CustomErrorFunction implements CircuitSearchEvaluator {
@@ -118,6 +124,11 @@ public class TestCircuitSearchOptimizer {
 				MathUtil.square(x - 0.7) * 0.1 +
 				MathUtil.square(y + 0.8) * 0.2 +
 				MathUtil.square(z - 0.9) * 0.3;
+		}
+
+		@Override
+		public double[] recommendEpsilon(double[] params) {
+			return ArrayUtil.repeat(1.0, params.length);
 		}		
 	}
 

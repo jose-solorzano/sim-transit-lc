@@ -6,6 +6,7 @@ import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealPointValuePair;
+
 import jhs.lc.data.LightCurvePoint;
 import jhs.lc.sims.TestFastApproximateFluxSource;
 import jhs.math.util.MathUtil;
@@ -16,6 +17,7 @@ public class CSLightCurveFitter {
 	
 	private int maxCSIterationsWithClustering = 100;
 	private int maxExtraCSIterations = 5;
+	private int maxEliminationIterations = 0;
 	private int maxGradientDescentIterations = 10;
 
 	private double expansionFactor = 3.0;
@@ -40,7 +42,6 @@ public class CSLightCurveFitter {
 		this.epsilonFactor = epsionFactor;
 	}
 
-
 	public final int getMaxCSIterationsWithClustering() {
 		return maxCSIterationsWithClustering;
 	}
@@ -63,6 +64,14 @@ public class CSLightCurveFitter {
 
 	public final void setMaxGradientDescentIterations(int maxGradientDescentIterations) {
 		this.maxGradientDescentIterations = maxGradientDescentIterations;
+	}
+
+	public int getMaxEliminationIterations() {
+		return maxEliminationIterations;
+	}
+
+	public void setMaxEliminationIterations(int maxEliminationIterations) {
+		this.maxEliminationIterations = maxEliminationIterations;
 	}
 
 	public final double getExpansionFactor() {
@@ -145,6 +154,7 @@ public class CSLightCurveFitter {
 		optimizer.setExpansionFactor(this.expansionFactor);
 		optimizer.setMaxIterationsWithClustering(this.maxCSIterationsWithClustering);
 		optimizer.setMaxTotalIterations(this.maxCSIterationsWithClustering + this.maxExtraCSIterations);
+		optimizer.setMaxEliminationIterations(this.maxEliminationIterations);
 		int vectorLength = sampler.getNumParameters();
 		RealPointValuePair result = optimizer.optimize(errorFunction, vectorLength);
 		return sampler.parametersAsSolution(result.getPointRef());
@@ -196,7 +206,7 @@ public class CSLightCurveFitter {
 		}
 		
 		@Override
-		public CircuitSearchParamEvaluation evaluate(double[] params) throws MathException {
+		public CircuitSearchParamEvaluation evaluate(double[] params) throws FunctionEvaluationException, IllegalArgumentException {
 			Solution solution = this.sampler.parametersAsSolution(params);
 			double[] modeledFlux = solution.produceModeledFlux();
 			double baseError = meanSquaredError(this.fluxArray, this.weights, modeledFlux); 
@@ -213,6 +223,11 @@ public class CSLightCurveFitter {
 			double sdParams = MathUtil.standardDev(parameters, 0);
 			double diffWithNormal = sdParams - 1.0;			
 			return baseError + (diffWithNormal * diffWithNormal * this.lambda);
+		}
+
+		@Override
+		public final double[] recommendEpsilon(double[] params) {
+			return this.sampler.minimalChangeThreshold(params, 1.0);
 		}		
 	}
 }
