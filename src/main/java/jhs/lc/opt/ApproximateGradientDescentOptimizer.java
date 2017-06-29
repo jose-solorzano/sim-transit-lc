@@ -4,6 +4,7 @@ package jhs.lc.opt;
 import java.util.Arrays;
 import java.util.Random;
 
+import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealConvergenceChecker;
@@ -42,7 +43,7 @@ public class ApproximateGradientDescentOptimizer {
 		this.maxIterations = maxIterations;
 	}
 
-	public RealPointValuePair optimize(MultivariateRealFunction errorFunction, double[] initialPoint, double[] epsilon) throws MathException {
+	public RealPointValuePair optimize(MultivariateRealFunction errorFunction, double[] initialPoint, double[] epsilon) throws FunctionEvaluationException {
 		this.numEvaluations = 1;
 		double error = errorFunction.value(initialPoint);
 		RealPointValuePair current = new RealPointValuePair(initialPoint, error);
@@ -71,12 +72,12 @@ public class ApproximateGradientDescentOptimizer {
 	protected void informProgress(int iteration, RealPointValuePair pointValue) {		
 	}
 	
-	private AdvanceResults advance(MultivariateRealFunction errorFunction, RealPointValuePair pointValue, double gradientFactor, double[] epsilon) throws MathException {
+	private AdvanceResults advance(MultivariateRealFunction errorFunction, RealPointValuePair pointValue, double gradientFactor, double[] epsilon) throws FunctionEvaluationException {
 		double[] gradient = this.gradient(pointValue, errorFunction, epsilon);
 		return this.searchInGradient(errorFunction, pointValue, gradient, gradientFactor);
 	}
 	
-	private AdvanceResults searchInGradient(MultivariateRealFunction errorFunction, RealPointValuePair pointValue, double[] gradient, double gradientFactor) throws MathException {
+	private AdvanceResults searchInGradient(MultivariateRealFunction errorFunction, RealPointValuePair pointValue, double[] gradient, double gradientFactor) throws FunctionEvaluationException {
 		double[] basePoint = changeParameters(pointValue.getPointRef(), gradient, gradientFactor);
 		this.numEvaluations++;
 		double baseError = errorFunction.value(basePoint);
@@ -110,7 +111,7 @@ public class ApproximateGradientDescentOptimizer {
 		return newParameters;
 	}
 
-	public final double[] gradient(RealPointValuePair pointValue, MultivariateRealFunction errorFunction, double[] epsilon) throws MathException {
+	public final double[] gradient(RealPointValuePair pointValue, MultivariateRealFunction errorFunction, double[] epsilon) throws FunctionEvaluationException {
 		int numParams = pointValue.getPointRef().length;
 		int numPoints = (int) Math.ceil((1 + Math.sqrt(1 + 8 * numParams)) / 2); 
 		RealPointValuePair[] pointValues = new RealPointValuePair[numPoints];
@@ -149,7 +150,7 @@ public class ApproximateGradientDescentOptimizer {
 		return diffVector;
 	}
 	
-	private RealPointValuePair smallDisplacement(RealPointValuePair point, MultivariateRealFunction errorFunction, double[] epsilon) throws MathException {
+	private RealPointValuePair smallDisplacement(RealPointValuePair point, MultivariateRealFunction errorFunction, double[] epsilon) throws FunctionEvaluationException {
 		Random r = this.random;
 		double[] vector = point.getPointRef();
 		int length = vector.length;
