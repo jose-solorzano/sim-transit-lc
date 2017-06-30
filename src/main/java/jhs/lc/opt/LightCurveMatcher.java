@@ -3,6 +3,7 @@ package jhs.lc.opt;
 import java.util.Arrays;
 import java.util.Random;
 
+import jhs.lc.data.LightCurve;
 import junit.framework.TestFailure;
 
 import org.apache.commons.math.FunctionEvaluationException;
@@ -25,8 +26,8 @@ public class LightCurveMatcher {
 		this.random = random;
 		this.targetFluxArray = targetFluxArray;
 		this.weights = weights;
-		this.targetCenterOfMass = this.centerOfMass(targetFluxArray);
-		this.targetMassDeviation = this.massDeviation(targetFluxArray, this.targetCenterOfMass);
+		this.targetCenterOfMass = LightCurve.centerOfMass(targetFluxArray);
+		this.targetMassDeviation = LightCurve.massDeviation(targetFluxArray, this.targetCenterOfMass);
 	}
 
 	public final double ordinaryMeanSquaredError(double[] testFluxArray) {
@@ -47,8 +48,8 @@ public class LightCurveMatcher {
 	}
 	
 	public final FlexibleLightCurveMatchingResults flexibleMeanSquaredError(final double[] testFluxArray, final boolean shiftOnly) throws FunctionEvaluationException {
-		double testCenterOfMass = this.centerOfMass(testFluxArray);
-		double testMassDeviation = shiftOnly ? Double.NaN : this.massDeviation(testFluxArray, testCenterOfMass);
+		double testCenterOfMass = LightCurve.centerOfMass(testFluxArray);
+		double testMassDeviation = shiftOnly ? Double.NaN : LightCurve.massDeviation(testFluxArray, testCenterOfMass);
 		double initSkewA = shiftOnly ? 1.0 : testMassDeviation / this.targetMassDeviation;				
 		double initSkewB = testCenterOfMass - this.targetCenterOfMass * initSkewA;
 		ApproximateGradientDescentOptimizer agd = new ApproximateGradientDescentOptimizer(random) {
@@ -98,36 +99,5 @@ public class LightCurveMatcher {
 			}
 		}
 		return this.ordinaryMeanSquaredError(skewedTestFluxArray);
-	}
-	
-	private double centerOfMass(double[] fluxArray) {
-		int length = fluxArray.length;
-		double sumPos = 0;
-		double sumWeight = 0;
-		for(int i = 0; i < length; i++) {
-			double weight = 1.0 - fluxArray[i];
-			if(weight < 0) {
-				weight = 0;
-			}
-			sumWeight += weight;
-			sumPos += i * weight;
-		}
-		return sumWeight == 0 ? 0.5 * fluxArray.length : sumPos / sumWeight;
-	}
-	
-	private double massDeviation(double[] fluxArray, double centerOfMass) {
-		int length = fluxArray.length;
-		double sumDev = 0;
-		double sumWeight = 0;
-		for(int i = 0; i < length; i++) {
-			double weight = 1.0 - fluxArray[i];
-			if(weight < 0) {
-				weight = 0;
-			}
-			sumWeight += weight;
-			double posDiff = i - centerOfMass;
-			sumDev += posDiff * posDiff * weight;
-		}
-		return sumWeight == 0 ? 0 : Math.sqrt(sumDev / sumWeight);
 	}
 }

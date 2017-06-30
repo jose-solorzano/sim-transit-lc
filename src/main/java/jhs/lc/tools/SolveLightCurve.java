@@ -83,7 +83,7 @@ public class SolveLightCurve extends AbstractTool {
 		double peakFraction = (minIndex + 0.5) / fluxArray.length;
 		logger.info("Transit peak estimated to occur at index " + minIndex + " of the flux sequence, whose length is " + fluxArray.length + ".");
 		LimbDarkeningParams ldParams = optSpec.getLimbDarkeningParams() == null ? LimbDarkeningParams.SUN : new LimbDarkeningParams(optSpec.getLimbDarkeningParams());
-		SolutionSampler sampler = this.getSampler(random, timestamps, fluxArray, peakFraction, ldParams, optSpec, cmdLine, specFile);
+		SolutionSampler sampler = this.getSampler(random, timestamps, fluxArray, ldParams, optSpec, cmdLine, specFile);
 		int populationSize = this.getOptionInt(cmdLine, "pop", DEF_POP_SIZE);
 		int numClusteringIterations = this.getOptionInt(cmdLine, "noi", DEF_MAX_ITERATIONS);
 		int numGradientDescentIterations = this.getOptionInt(cmdLine, "nagd", DEF_MAX_AGD_ITERATIONS);
@@ -108,7 +108,7 @@ public class SolveLightCurve extends AbstractTool {
 
 		String transitImageFileName = cmdLine.getOptionValue("oi");
 		if(transitImageFileName != null) {
-			this.writeTransitImageFile(transitImageFileName, timestamps, peakFraction, solution, optSpec.getWidthPixels(), optSpec.getHeightPixels());
+			this.writeTransitImageFile(transitImageFileName, timestamps, solution, optSpec.getWidthPixels(), optSpec.getHeightPixels());
 		}		
 
 		String videoFileName = cmdLine.getOptionValue("video");
@@ -121,11 +121,11 @@ public class SolveLightCurve extends AbstractTool {
 			if(videoDuration <= 0) {
 				throw new IllegalStateException("Invalid video duration: " + videoDuration + ".");
 			}
-			this.writeVideo(videoFileName, timeCaption, videoDuration, timestamps, peakFraction, solution, optSpec, ldParams);
+			this.writeVideo(videoFileName, timeCaption, videoDuration, timestamps, solution, optSpec, ldParams);
 		}
 	}
 	
-	private void writeTransitImageFile(String imageFileName, double[] timestamps, double peakFraction, Solution solution, int transitWidthPixels, int transitHeightPixels) throws IOException {
+	private void writeTransitImageFile(String imageFileName, double[] timestamps, Solution solution, int transitWidthPixels, int transitHeightPixels) throws IOException {
 		int numPixels = DEF_OUT_NUM_PIXELS;
 		BufferedImage image = solution.produceDepiction(numPixels);
 		File outFile = new File(imageFileName);
@@ -133,9 +133,9 @@ public class SolveLightCurve extends AbstractTool {
 		System.out.println("Wrote " + outFile);
 	}	
 	
-	private void writeVideo(String videoFileName, String timeCaption, double videoDuration, double[] timestamps, double peakFraction, Solution solution, OptSpec optSpec, LimbDarkeningParams ldParams) throws Exception {
+	private void writeVideo(String videoFileName, String timeCaption, double videoDuration, double[] timestamps, Solution solution, OptSpec optSpec, LimbDarkeningParams ldParams) throws Exception {
 		int numPixels = DEF_OUT_NUM_PIXELS;
-		Iterator<BufferedImage> iterator = solution.produceModelImages(optSpec.getInclineAngle(), optSpec.getOrbitPeriod(), ldParams, timestamps, peakFraction, timeCaption, numPixels);
+		Iterator<BufferedImage> iterator = solution.produceModelImages(optSpec.getInclineAngle(), optSpec.getOrbitPeriod(), ldParams, timestamps, solution.getPeakFraction(), timeCaption, numPixels);
 		double frameRate = timestamps.length / videoDuration;
 		Dimension dimension = solution.suggestImageDimension(numPixels);
         BufferedImageVideoProducer producer = new BufferedImageVideoProducer(dimension.width, dimension.height, (float) frameRate, FileTypeDescriptor.QUICKTIME);
@@ -212,10 +212,10 @@ public class SolveLightCurve extends AbstractTool {
 		System.out.println("Wrote light curve data to " + file);
 	}
 
-	private SolutionSampler getSampler(Random random, double[] timestamps, double[] fluxArray, double peakFraction, LimbDarkeningParams ldParams, OptSpec optSpec, CommandLine cmdLine, File contextFile) throws Exception {
+	private SolutionSampler getSampler(Random random, double[] timestamps, double[] fluxArray, LimbDarkeningParams ldParams, OptSpec optSpec, CommandLine cmdLine, File contextFile) throws Exception {
 		AbstractOptMethod method = optSpec.getMethod();
 		ParametricFluxFunctionSource ffs = method.createFluxFunctionSource(contextFile);
-		SimulatedFluxSource fluxSource = this.getFluxSource(cmdLine, optSpec, peakFraction, timestamps, ldParams, contextFile);
+		SimulatedFluxSource fluxSource = this.getFluxSource(cmdLine, optSpec, timestamps, ldParams, contextFile);
 		double orf = optSpec.getOrbitRadiusFlexibility();
 		double logRadiusSD = Math.log(1 + orf);
 		SolutionSampler ss = new SolutionSampler(
@@ -228,17 +228,17 @@ public class SolveLightCurve extends AbstractTool {
 		return ss;
 	}
 	
-	private SimulatedFluxSource getFluxSource(CommandLine cmdLine, OptSpec optSpec, double peakFraction, double[] timestamps, LimbDarkeningParams ldParams, File context) {
+	private SimulatedFluxSource getFluxSource(CommandLine cmdLine, OptSpec optSpec, double[] timestamps, LimbDarkeningParams ldParams, File context) {
 		double inclineAngle = optSpec.getInclineAngle();
 		double orbitalPeriod = optSpec.getOrbitPeriod();
 		int widthPixels = optSpec.getWidthPixels();
 		int heightPixels = optSpec.getHeightPixels();
 		if(cmdLine.hasOption("angular")) {
-			return new AngularFluxSource(timestamps, peakFraction, widthPixels, heightPixels, inclineAngle, orbitalPeriod, ldParams);
+			return new AngularFluxSource(timestamps, widthPixels, heightPixels, inclineAngle, orbitalPeriod, ldParams);
 		}
 		else {
 			try {
-				return new FastApproximateFluxSource(timestamps, ldParams, inclineAngle, orbitalPeriod, peakFraction, widthPixels, heightPixels);
+				return new FastApproximateFluxSource(timestamps, ldParams, inclineAngle, orbitalPeriod, widthPixels, heightPixels);
 			} catch(AngleUnsupportedException au) {
 				throw new IllegalStateException("Cannot handle a rotation of " + au.getValue() + " radians with 'fast' optimization. Use -angular option instead.");
 			}

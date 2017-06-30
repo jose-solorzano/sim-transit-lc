@@ -29,13 +29,14 @@ public class SolutionSampler {
 	private static final int WL = 11;
 	
 	private final Random random;
-	private final double baseRadius;
+	private final double baseOrbitRadius;
 	private final double logRadiusSD;
 	private final SimulatedFluxSource fluxSource;
 	private final ParametricFluxFunctionSource opacitySource;
 	
 	private double numMutateParamsFraction = 0.20;
 	private double mutateSD = 0.03;
+	private double peakFraction = 0.5;
 
 	public SolutionSampler(Random random, double baseRadius, double logRadiusSD,
 			SimulatedFluxSource fluxSource, ParametricFluxFunctionSource opacitySource) {
@@ -43,7 +44,7 @@ public class SolutionSampler {
 			throw new IllegalArgumentException("Invalid baseRadius: " + baseRadius);
 		}
 		this.random = random;
-		this.baseRadius = baseRadius;
+		this.baseOrbitRadius = baseRadius;
 		this.logRadiusSD = logRadiusSD;
 		this.fluxSource = fluxSource;
 		this.opacitySource = opacitySource;
@@ -69,6 +70,14 @@ public class SolutionSampler {
 		return random;
 	}
 	
+	public double getPeakFraction() {
+		return peakFraction;
+	}
+
+	public void setPeakFraction(double peakFraction) {
+		this.peakFraction = peakFraction;
+	}
+
 	public double[] createFluxWeights(double[] fluxArray) {
 		if(fluxArray.length < 2) {
 			throw new IllegalArgumentException("Length of flux array must be at least 2.");
@@ -83,8 +92,9 @@ public class SolutionSampler {
 	public final Solution sample() {
 		double[] osParameters = this.sampleOpacityFunctionParameters();
 		FluxOrOpacityFunction of = this.opacitySource.getFluxOrOpacityFunction(osParameters);
-		double radius = this.baseRadius * Math.exp(this.random.nextGaussian() * this.logRadiusSD);
-		return new Solution(this.fluxSource, of, radius, osParameters);
+		double orbitRadius = this.baseOrbitRadius * Math.exp(this.random.nextGaussian() * this.logRadiusSD);
+		double[] modeledFlux = this.fluxSource.produceModeledFlux(this.peakFraction, of, orbitRadius);
+		return new Solution(this.fluxSource, of, orbitRadius, peakFraction, osParameters, modeledFlux);
 	}
 	
 	public final int getNumParameters() {
@@ -114,7 +124,7 @@ public class SolutionSampler {
 		if(orbitRadius == 0) {
 			throw new IllegalStateException("Simulation orbit radius is zero.");
 		}
-		double logDiff = Math.log(orbitRadius / this.baseRadius);
+		double logDiff = Math.log(orbitRadius / this.baseOrbitRadius);
 		return logDiff / this.logRadiusSD;
 	}
 	
@@ -124,8 +134,9 @@ public class SolutionSampler {
 		}
 		double[] osParameters = this.opacitySourceParameters(optimizerParameters);
 		FluxOrOpacityFunction of = this.opacitySource.getFluxOrOpacityFunction(osParameters);
-		double radius = this.getOrbitRadius(optimizerParameters);
-		return new Solution(this.fluxSource, of, radius, osParameters);
+		double orbitRadius = this.getOrbitRadius(optimizerParameters);
+		double[] modeledFlux = this.fluxSource.produceModeledFlux(this.peakFraction, of, orbitRadius);
+		return new Solution(this.fluxSource, of, orbitRadius, peakFraction, osParameters, modeledFlux);
 	}
 	
 	private int getOrbitRadiusChangeParamIndex() {
@@ -136,7 +147,7 @@ public class SolutionSampler {
 		int orcIndex = this.getOrbitRadiusChangeParamIndex();
 		double changeParam = optimizerParameters[orcIndex];
 		double logDiff = changeParam * this.logRadiusSD;
-		return this.baseRadius * Math.exp(logDiff);
+		return this.baseOrbitRadius * Math.exp(logDiff);
 	}
 
 	public final double sampleParameter(int paramIndex) {

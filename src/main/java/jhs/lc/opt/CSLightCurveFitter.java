@@ -6,6 +6,8 @@ import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealPointValuePair;
+
+import jhs.lc.data.LightCurve;
 import jhs.lc.data.LightCurvePoint;
 import jhs.math.util.MathUtil;
 
@@ -102,7 +104,12 @@ public class CSLightCurveFitter {
 	}
 
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
-		boolean flexible = true; //%%% TESTING
+		double targetComf = LightCurve.centerOfMassAsFraction(fluxArray);
+		double testComf = LightCurve.centerOfMassAsFraction(initialSolution.produceModeledFlux());
+		double diff = testComf - targetComf;
+		double newComf = targetComf - diff;
+		this.sampler.setPeakFraction(newComf);
+		boolean flexible = false;
 		MultivariateRealFunction errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, this.lambda, flexible);
 		return this.optimizeAGD(fluxArray, initialSolution, errorFunction, maxIterations);
 	}
@@ -124,6 +131,9 @@ public class CSLightCurveFitter {
 	}
 
 	public Solution optimizeStandardErrorCS(double[] fluxArray) throws MathException {
+		//this.sampler.setPeakFraction(LightCurve.centerOfMassAsFraction(fluxArray));
+		double comf = LightCurve.centerOfMassAsFraction(fluxArray);
+		this.sampler.setPeakFraction(comf);
 		boolean flexible = true;
 		MultivariateRealFunction errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, this.lambda, flexible);
 		return this.optimizeCircuitSearch(errorFunction);
