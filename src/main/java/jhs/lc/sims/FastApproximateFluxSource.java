@@ -47,7 +47,7 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 	}
 
 	@Override
-	public final double[] produceModeledFlux(FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
+	public final SimulatedFlux produceModeledFlux(FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
 		double[] timestamps = this.timestamps;
 		int length = timestamps.length;
 		Rectangle2D boundingBox = brightnessFunction.getBoundingBox();
@@ -80,7 +80,7 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 			}
 			fluxArray[i] = normFlux;
 		}
-		return fluxArray;
+		return new SimulatedFlux(fluxArray, imageElementInfo.clusteringPosition);
 	}
 	
 	private double fluxDifference(Sphere star, ImageElementInfo imageElementInfo, Rectangle2D imageBounds, double xoffset, double yoffset) {

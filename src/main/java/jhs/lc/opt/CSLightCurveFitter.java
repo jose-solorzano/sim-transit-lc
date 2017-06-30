@@ -8,6 +8,7 @@ import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealPointValuePair;
 
 import jhs.lc.data.LightCurvePoint;
+import jhs.lc.sims.SimulatedFlux;
 import jhs.lc.sims.TestFastApproximateFluxSource;
 import jhs.math.util.MathUtil;
 
@@ -168,7 +169,7 @@ public class CSLightCurveFitter {
 	}
 
 	public static double meanSquaredError(double[] fluxArray, double[] weights, Solution solution) {
-		double[] testFluxArray = solution.produceModeledFlux();
+		double[] testFluxArray = solution.produceModeledFlux().getFluxArray();
 		return meanSquaredError(fluxArray, weights, testFluxArray);
 	}
 
@@ -207,12 +208,13 @@ public class CSLightCurveFitter {
 		@Override
 		public CircuitSearchParamEvaluation evaluate(double[] params) throws FunctionEvaluationException, IllegalArgumentException {
 			Solution solution = this.sampler.parametersAsSolution(params);
-			double[] modeledFlux = solution.produceModeledFlux();
+			SimulatedFlux sf = solution.produceModeledFlux();
+			double[] modeledFlux = sf.getFluxArray();
 			double baseError = meanSquaredError(this.fluxArray, this.weights, modeledFlux); 
 			double sdParams = MathUtil.standardDev(params, 0);
 			double diffWithNormal = sdParams - 1.0;			
 			double error = baseError + (diffWithNormal * diffWithNormal * this.lambda);
-			return new CircuitSearchParamEvaluation(error, modeledFlux);
+			return new CircuitSearchParamEvaluation(error, sf.getClusteringPosition());
 		}
 
 		@Override

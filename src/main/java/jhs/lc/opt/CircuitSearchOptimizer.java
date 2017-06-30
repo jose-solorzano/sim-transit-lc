@@ -41,6 +41,7 @@ public class CircuitSearchOptimizer {
 	private double displacementFactor = 0.03;
 	private double convergeDistance = 0.0001;
 	private double circuitShuffliness = 0.5;
+	private double crossoverProbability = 0.95;
 	
 	private double agdGradientFactor = 0.3;
 	
@@ -275,7 +276,9 @@ public class CircuitSearchOptimizer {
 		params2 = this.movePoint(params2, moveSd);
 		difference = MathUtil.subtract(params2, params1);
 
-		Particle candidate = this.newParticleFromBaseline(errorFunction, params1, difference, 0, 1.0);
+		boolean crossover = this.random.nextDouble() < this.crossoverProbability;
+		Particle candidate = crossover ? this.crossover(errorFunction, params1, params2) : this.newParticleFromBaseline(errorFunction, params1, difference, 0, 1.0);
+
 		double candidateError = candidate.evaluation;
 		if(candidateError <= error1 && candidateError <= error2) {
 			return candidate;
@@ -292,6 +295,16 @@ public class CircuitSearchOptimizer {
 			Particle secondCandidate = this.newParticleFromBaseline(errorFunction, params1, difference, -ef, 1.0 + ef);
 			return secondCandidate.evaluation < candidateError ? secondCandidate : candidate;			
 		}
+	}
+	
+	private Particle crossover(CircuitSearchEvaluator errorFunction, double[] params1, double[] params2) throws FunctionEvaluationException {
+		double[] newParams = new double[params1.length];
+		Random r = this.random;
+		for(int i = 0; i < params1.length; i++) {
+			newParams[i] = r.nextBoolean() ? params1[i] : params2[i];
+		}
+		CircuitSearchParamEvaluation evaluation = errorFunction.evaluate(newParams);
+		return new Particle(newParams, evaluation.getClusteringPosition(), evaluation.getError());
 	}
 
 	private Particle newParticleFromBaseline(CircuitSearchEvaluator errorFunction, double[] baselineParams, double[] directionVector, double fromFraction, double toFraction) throws MathException {

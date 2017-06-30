@@ -28,10 +28,12 @@ public final class AngularFluxSource implements SimulatedFluxSource {
 	}
 
 	@Override
-	public final double[] produceModeledFlux(FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
+	public final SimulatedFlux produceModeledFlux(FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
 		RotationAngleSphereFactory sphereFactory = new EvaluatableSurfaceSphereFactory(brightnessFunction);
 		AngularSimulation simulation = new AngularSimulation(inclineAngle, orbitRadius, orbitalPeriod, ldParams, sphereFactory);
-		return simulation.produceModeledFlux(timestamps, peakTimespanFraction, width, height);
+		double[] fluxArray = simulation.produceModeledFlux(timestamps, peakTimespanFraction, width, height);
+		// Note: Doesn't support image-based clustering positions.
+		return new SimulatedFlux(fluxArray, fluxArray);
 	}
 	
 	@Override

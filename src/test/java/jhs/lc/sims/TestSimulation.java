@@ -86,7 +86,7 @@ public class TestSimulation {
 		simulation.setBoxHeight(12.0);
 		double startTimestamp = 0;
 		double endTimestamp = orbitalPeriod;
-		double[] timestamps = simulation.timestamps(startTimestamp, endTimestamp, 201);
+		double[] timestamps = AngularSimulation.timestamps(startTimestamp, endTimestamp, 201);
 		double[] flux = simulation.produceModeledFlux(timestamps, 0.5, 200, 200);		
 		assertEquals(201, flux.length);
 		double[] expectedFlux = new double[flux.length];

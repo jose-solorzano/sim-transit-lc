@@ -58,22 +58,22 @@ public class TestFastApproximateFluxSource {
 		double[] timestamps = AngularSimulation.timestamps(startTimestamp, endTimestamp, 51);
 
 		SimulatedFluxSource angularFluxSource = this.getFluxSource(true, timestamps, orbitalPeriod);
-		double[] flux1 = angularFluxSource.produceModeledFlux(brightnessSource, orbitRadius);
+		double[] flux1 = angularFluxSource.produceModeledFlux(brightnessSource, orbitRadius).getFluxArray();
 		double minFlux1 = MathUtil.min(flux1);
 		System.out.println("MinFlux1: "+ minFlux1);
 		SimulatedFluxSource fastFluxSource = this.getFluxSource(false, timestamps, orbitalPeriod);
 		assertTrue(fastFluxSource instanceof FastApproximateFluxSource);
-		double[] flux2 = fastFluxSource.produceModeledFlux(brightnessSource, orbitRadius);
+		double[] flux2 = fastFluxSource.produceModeledFlux(brightnessSource, orbitRadius).getFluxArray();
 		double minFlux2 = MathUtil.min(flux2);
 		System.out.println("MinFlux2: "+ minFlux2);
-		assertArrayEquals(flux1, flux2, 0.003);
+		assertArrayEquals(flux1, flux2, 0.001);
 	}	
 
 	private SimulatedFluxSource getFluxSource(boolean angular, double[] timestamps, double orbitalPeriod) {
 		LimbDarkeningParams ldParams = new LimbDarkeningParams(0.90, -0.2, 0.1);
 		double inclineAngle = 0.002;
-		int widthPixels = 150;
-		int heightPixels = 150;
+		int widthPixels = 100;
+		int heightPixels = 100;
 		double peakFraction = 0.5;
 		if(angular) {
 			return new AngularFluxSource(timestamps, peakFraction, widthPixels, heightPixels, inclineAngle, orbitalPeriod, ldParams);

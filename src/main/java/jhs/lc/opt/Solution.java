@@ -17,6 +17,7 @@ import jhs.lc.geom.FluxOrOpacityFunction;
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.RotationAngleSphereFactory;
 import jhs.lc.sims.AngularSimulation;
+import jhs.lc.sims.SimulatedFlux;
 import jhs.lc.sims.SimulatedFluxSource;
 import jhs.math.util.ArrayUtil;
 import jhs.math.util.MathUtil;
@@ -58,7 +59,7 @@ public class Solution implements java.io.Serializable {
 		return osParameters;
 	}
 
-	public final double[] produceModeledFlux() {
+	public final SimulatedFlux produceModeledFlux() {
 		return this.fluxSource.produceModeledFlux(brightnessFunction, orbitRadius);
 	}
 

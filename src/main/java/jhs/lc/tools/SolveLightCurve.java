@@ -145,7 +145,6 @@ public class SolveLightCurve extends AbstractTool {
 	}
 		
 	private Solution solve(LightCurvePoint[] lightCurve, SolutionSampler sampler, int populationSize, int numClusteringIterations, int numGradientDescentIterations) throws MathException {
-		//TODO: Get from command line
 		CSLightCurveFitter fitter = new CSLightCurveFitter(sampler, populationSize) {
 			@Override
 			protected void informProgress(String stage, int iteration, double error) {
@@ -160,6 +159,7 @@ public class SolveLightCurve extends AbstractTool {
 		fitter.setExpansionFactor(3.0);
 		fitter.setMaxCSIterationsWithClustering(numClusteringIterations);
 		fitter.setMaxExtraCSIterations(50);
+		fitter.setMaxEliminationIterations(0);
 		fitter.setMaxGradientDescentIterations(numGradientDescentIterations);
 				
 		Solution solution = fitter.optimize(lightCurve);
@@ -197,7 +197,7 @@ public class SolveLightCurve extends AbstractTool {
 
 	private void writeData(LightCurvePoint[] lightCurve, Solution solution, String outFilePath) throws IOException {
 		double[] obsFluxArray = LightCurvePoint.fluxArray(lightCurve);
-		double[] modeledFlux = solution.produceModeledFlux();
+		double[] modeledFlux = solution.produceModeledFlux().getFluxArray();
 		File file = new File(outFilePath);
 		PrintWriter out = new PrintWriter(file);
 		try {
