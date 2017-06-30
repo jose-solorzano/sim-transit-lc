@@ -41,7 +41,7 @@ public class CircuitSearchOptimizer {
 	private double displacementFactor = 0.03;
 	private double convergeDistance = 0.0001;
 	private double circuitShuffliness = 0.5;
-	private double crossoverProbability = 0.95;
+	private double crossoverProbability = 0.5;
 	
 	private double agdGradientFactor = 0.3;
 	

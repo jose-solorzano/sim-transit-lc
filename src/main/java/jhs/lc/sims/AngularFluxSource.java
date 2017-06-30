@@ -9,17 +9,13 @@ import jhs.lc.geom.RotationAngleSphereFactory;
 
 public final class AngularFluxSource implements SimulatedFluxSource {
 	private final double[] timestamps;
-	private final double peakTimespanFraction;
 	private final int width, height;
 	private final double inclineAngle;
 	private final double orbitalPeriod;
 	private final LimbDarkeningParams ldParams;
 	
-	public AngularFluxSource(double[] timestamps, double peakTimespanFraction, int width, int height,
-			double inclineAngle, double orbitalPeriod, LimbDarkeningParams ldParams) {
-		super();
+	public AngularFluxSource(double[] timestamps, int width, int height, double inclineAngle, double orbitalPeriod, LimbDarkeningParams ldParams) {
 		this.timestamps = timestamps;
-		this.peakTimespanFraction = peakTimespanFraction;
 		this.width = width;
 		this.height = height;
 		this.inclineAngle = inclineAngle;
@@ -28,10 +24,10 @@ public final class AngularFluxSource implements SimulatedFluxSource {
 	}
 
 	@Override
-	public final SimulatedFlux produceModeledFlux(FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
+	public final SimulatedFlux produceModeledFlux(double peakFraction, FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
 		RotationAngleSphereFactory sphereFactory = new EvaluatableSurfaceSphereFactory(brightnessFunction);
 		AngularSimulation simulation = new AngularSimulation(inclineAngle, orbitRadius, orbitalPeriod, ldParams, sphereFactory);
-		double[] fluxArray = simulation.produceModeledFlux(timestamps, peakTimespanFraction, width, height);
+		double[] fluxArray = simulation.produceModeledFlux(timestamps, peakFraction, width, height);
 		// Note: Doesn't support image-based clustering positions.
 		return new SimulatedFlux(fluxArray, fluxArray);
 	}

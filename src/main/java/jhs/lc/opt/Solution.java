@@ -28,15 +28,24 @@ public class Solution implements java.io.Serializable {
 	private final SimulatedFluxSource fluxSource;
 	private final FluxOrOpacityFunction brightnessFunction;
 	private final double orbitRadius;
-	private final double[] osParameters;	
+	private final double peakFraction;
+	private final double[] osParameters;
+	private final SimulatedFlux modeledFlux;
 
-	public Solution(SimulatedFluxSource fluxSource, FluxOrOpacityFunction brightnessFunction, double orbitRadius,
-			double[] osParameters) {
+	public Solution(SimulatedFluxSource fluxSource,
+			FluxOrOpacityFunction brightnessFunction, double orbitRadius,
+			double peakFraction, double[] osParameters, SimulatedFlux modeledFlux) {
 		super();
 		this.fluxSource = fluxSource;
 		this.brightnessFunction = brightnessFunction;
 		this.orbitRadius = orbitRadius;
+		this.peakFraction = peakFraction;
 		this.osParameters = osParameters;
+		this.modeledFlux = modeledFlux;
+	}
+
+	public double getPeakFraction() {
+		return peakFraction;
 	}
 
 	public final SimulatedFluxSource getFluxSource() {
@@ -60,7 +69,7 @@ public class Solution implements java.io.Serializable {
 	}
 
 	public final SimulatedFlux produceModeledFlux() {
-		return this.fluxSource.produceModeledFlux(brightnessFunction, orbitRadius);
+		return this.modeledFlux;
 	}
 
 	private double minWidth() {

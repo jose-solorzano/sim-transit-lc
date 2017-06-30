@@ -9,6 +9,8 @@ import org.junit.Test;
 import jhs.lc.geom.FluxOrOpacityFunction;
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.ParametricFluxFunctionSource;
+import jhs.lc.sims.ImageElementInfo;
+import jhs.lc.sims.SimulatedFlux;
 import jhs.lc.sims.SimulatedFluxSource;
 
 public class TestSolutionSampler {
@@ -20,7 +22,25 @@ public class TestSolutionSampler {
 		double baseRadius = 50;
 		double logRadiusSD = 0.01;
 		ParametricFluxFunctionSource opacitySource = this.getOpacitySource();	
-		SimulatedFluxSource fluxSource = null;
+		SimulatedFluxSource fluxSource = new SimulatedFluxSource() {			
+			@Override
+			public SimulatedFlux produceModeledFlux(double peakFraction,
+					FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
+				return null;
+			}
+			
+			@Override
+			public double numPixelsInTimeSpanArc(
+					FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
+				return 0;
+			}
+			
+			@Override
+			public ImageElementInfo createImageElementInfo(
+					FluxOrOpacityFunction brightnessFunction) {
+				return null;
+			}
+		};
 		SolutionSampler sampler = new SolutionSampler(random, baseRadius, logRadiusSD, fluxSource, opacitySource);
 		int np = sampler.getNumParameters();
 		assertEquals(opacitySource.getNumParameters() + 1, np);

@@ -58,12 +58,13 @@ public class TestFastApproximateFluxSource {
 		double[] timestamps = AngularSimulation.timestamps(startTimestamp, endTimestamp, 51);
 
 		SimulatedFluxSource angularFluxSource = this.getFluxSource(true, timestamps, orbitalPeriod);
-		double[] flux1 = angularFluxSource.produceModeledFlux(brightnessSource, orbitRadius).getFluxArray();
+		double peakFraction = 0.5;
+		double[] flux1 = angularFluxSource.produceModeledFlux(peakFraction, brightnessSource, orbitRadius).getFluxArray();
 		double minFlux1 = MathUtil.min(flux1);
 		System.out.println("MinFlux1: "+ minFlux1);
 		SimulatedFluxSource fastFluxSource = this.getFluxSource(false, timestamps, orbitalPeriod);
 		assertTrue(fastFluxSource instanceof FastApproximateFluxSource);
-		double[] flux2 = fastFluxSource.produceModeledFlux(brightnessSource, orbitRadius).getFluxArray();
+		double[] flux2 = fastFluxSource.produceModeledFlux(peakFraction, brightnessSource, orbitRadius).getFluxArray();
 		double minFlux2 = MathUtil.min(flux2);
 		System.out.println("MinFlux2: "+ minFlux2);
 		assertArrayEquals(flux1, flux2, 0.001);
@@ -74,13 +75,12 @@ public class TestFastApproximateFluxSource {
 		double inclineAngle = 0.002;
 		int widthPixels = 100;
 		int heightPixels = 100;
-		double peakFraction = 0.5;
 		if(angular) {
-			return new AngularFluxSource(timestamps, peakFraction, widthPixels, heightPixels, inclineAngle, orbitalPeriod, ldParams);
+			return new AngularFluxSource(timestamps, widthPixels, heightPixels, inclineAngle, orbitalPeriod, ldParams);
 		}
 		else {
 			try {
-				return new FastApproximateFluxSource(timestamps, ldParams, inclineAngle, orbitalPeriod, peakFraction, widthPixels, heightPixels);
+				return new FastApproximateFluxSource(timestamps, ldParams, inclineAngle, orbitalPeriod, widthPixels, heightPixels);
 			} catch(AngleUnsupportedException au) {
 				throw new IllegalStateException("Cannot handle a rotation of " + au.getValue() + " radians with 'fast' optimization. Use -angular option instead.");
 			}

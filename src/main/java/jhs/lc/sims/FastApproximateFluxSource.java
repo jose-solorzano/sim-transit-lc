@@ -15,11 +15,10 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 	private final LimbDarkeningParams ldParams;
 	private final double inclineAngle;
 	private final double orbitalPeriod;
-	private final double peakFraction;
 	private final int frameWidthPixels, frameHeightPixels;
 	
 	public FastApproximateFluxSource(double[] timestamps, LimbDarkeningParams ldParams, double inclineAngle,
-			double orbitalPeriod, double peakFraction, int frameWidthPixels, int frameHeightPixels) throws AngleUnsupportedException {
+			double orbitalPeriod, int frameWidthPixels, int frameHeightPixels) throws AngleUnsupportedException {
 		if(Math.abs(inclineAngle) > MAX_ANGLE_SUPPORTED) {
 			throw new AngleUnsupportedException("inclineAngle", inclineAngle);
 		}
@@ -29,25 +28,19 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		double timeSpan = timestamps[timestamps.length - 1] - timestamps[0];
 		double cycleFraction = timeSpan / orbitalPeriod;				
 		double angularRange = Math.PI * 2 * cycleFraction;
-		double startAngle = -angularRange * peakFraction;
-		double endAngle = angularRange * (1 - peakFraction);
-		if(Math.abs(startAngle) > MAX_ANGLE_SUPPORTED) {
-			throw new AngleUnsupportedException("startAngle", startAngle);
+		if(Math.abs(angularRange) > MAX_ANGLE_SUPPORTED) {
+			throw new AngleUnsupportedException("angularRange", angularRange);
 		}
-		if(Math.abs(endAngle) > MAX_ANGLE_SUPPORTED) {
-			throw new AngleUnsupportedException("endAngle", startAngle);
-		}		
 		this.timestamps = timestamps;
 		this.ldParams = ldParams;
 		this.inclineAngle = inclineAngle;
 		this.orbitalPeriod = orbitalPeriod;
-		this.peakFraction = peakFraction;
 		this.frameWidthPixels = frameWidthPixels;
 		this.frameHeightPixels = frameHeightPixels;
 	}
 
 	@Override
-	public final SimulatedFlux produceModeledFlux(FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
+	public final SimulatedFlux produceModeledFlux(double peakFraction, FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
 		double[] timestamps = this.timestamps;
 		int length = timestamps.length;
 		Rectangle2D boundingBox = brightnessFunction.getBoundingBox();
@@ -62,7 +55,7 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		double cycleFraction = timeSpan / this.orbitalPeriod;
 				
 		double angularRange = Math.PI * 2 * cycleFraction;
-		double startAngle = -angularRange * this.peakFraction;
+		double startAngle = -angularRange * peakFraction;
 		double timeToAngleFactor = angularRange / timeSpan;
 		
 		double yoffset = -orbitRadius * Math.sin(this.inclineAngle);
