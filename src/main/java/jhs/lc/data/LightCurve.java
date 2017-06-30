@@ -33,6 +33,42 @@ public class LightCurve {
 		}
 	}
 	
+	public static double massDeviation(double[] fluxArray, double centerOfMass) {
+		int length = fluxArray.length;
+		double sumDev = 0;
+		double sumWeight = 0;
+		for(int i = 0; i < length; i++) {
+			double weight = 1.0 - fluxArray[i];
+			if(weight < 0) {
+				weight = 0;
+			}
+			sumWeight += weight;
+			double posDiff = i - centerOfMass;
+			sumDev += posDiff * posDiff * weight;
+		}
+		return sumWeight == 0 ? 0 : Math.sqrt(sumDev / sumWeight);
+	}
+
+	public static double centerOfMassAsFraction(double[] fluxArray) {
+		double com = centerOfMass(fluxArray);
+		return com / (fluxArray.length - 1);
+	}
+
+	public static double centerOfMass(double[] fluxArray) {
+		int length = fluxArray.length;
+		double sumPos = 0;
+		double sumWeight = 0;
+		for(int i = 0; i < length; i++) {
+			double weight = 1.0 - fluxArray[i];
+			if(weight < 0) {
+				weight = 0;
+			}
+			sumWeight += weight;
+			sumPos += i * weight;
+		}
+		return sumWeight == 0 ? 0.5 * fluxArray.length : sumPos / sumWeight;
+	}
+
 	public static double[] trendChangeProfile(double[] fluxArray, int windowLength) {
 		int length = fluxArray.length;
 		int hwl = windowLength / 2;

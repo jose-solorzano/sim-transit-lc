@@ -1,6 +1,7 @@
 package jhs.lc.opt.nn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+
 import jhs.math.nn.ActivationFunction;
 import jhs.math.nn.aa.AtanActivationFunction;
 import jhs.math.nn.aa.GaussianActivationFunction;
@@ -14,6 +15,8 @@ import jhs.math.nn.aa.RbfActivationFunction;
 import jhs.math.nn.aa.RbfType;
 import jhs.math.nn.aa.SigmoidActivationFunction;
 import jhs.math.nn.aa.SignActivationFunction;
+import jhs.math.nn.aa.SimpleMaxActivationFunction;
+import jhs.math.nn.aa.SimpleMinActivationFunction;
 import jhs.math.nn.aa.SumActivationFunction;
 
 public enum ActivationFunctionType {
@@ -24,6 +27,8 @@ public enum ActivationFunctionType {
 	LEAKY_RELU,
 	MIN,
 	MAX,
+	SIMPLE_MIN,
+	SIMPLE_MAX,
 	ATAN,
 	LINEAR,
 	GAUSSIAN,
@@ -56,6 +61,10 @@ public enum ActivationFunctionType {
 			return new MinActivationFunction(numInputs);
 		case MAX:
 			return new MaxActivationFunction(numInputs);
+		case SIMPLE_MIN:
+			return new SimpleMinActivationFunction(numInputs);
+		case SIMPLE_MAX:
+			return new SimpleMaxActivationFunction(numInputs);
 		case SUM:
 			return new SumActivationFunction(numInputs);
 		case ATAN:
