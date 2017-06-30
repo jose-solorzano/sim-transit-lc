@@ -26,19 +26,18 @@ public class CSLightCurveFitter {
 	private double circuitShuffliness = 0.5;
 	
 	private double lambda = 0.0003;
-	private double epsilonFactor = 1.0;
+	private double epsilonFactor = 0.1;
 
 	public CSLightCurveFitter(SolutionSampler sampler, int populationSize) {
 		this.sampler = sampler;
 		this.populationSize = populationSize;
 	}
 
-	public final double getEpsionFactor() {
+	public final double getEpsilonFactor() {
 		return epsilonFactor;
 	}
 
-
-	public final void setEpsionFactor(double epsionFactor) {
+	public final void setEpsilonFactor(double epsionFactor) {
 		this.epsilonFactor = epsionFactor;
 	}
 

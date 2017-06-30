@@ -130,6 +130,9 @@ public class NeuralOptMethod extends AbstractOptMethod {
 		if(num <= 0) {
 			throw new IllegalStateException("Invalid number of neural networks: " + num + ".");
 		}
+		if(logger.isLoggable(Level.INFO)) {
+			logger.info("Number of parameters in neural network structure: " + structure.getNumParameters());
+		}
 		double outputBias = this.estimateOutputBias(structure, imageWidth, imageHeight, inputType);
 		return new NNFluxFunctionSource(structure, inputType, outputType, imageWidth, imageHeight, num, outputBias);
 	}
