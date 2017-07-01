@@ -9,6 +9,8 @@ import org.apache.commons.math.optimization.RealPointValuePair;
 
 import jhs.lc.data.LightCurve;
 import jhs.lc.data.LightCurvePoint;
+import jhs.lc.sims.SimulatedFlux;
+import jhs.lc.sims.TestFastApproximateFluxSource;
 import jhs.math.util.MathUtil;
 
 public class CSLightCurveFitter {	
@@ -17,6 +19,7 @@ public class CSLightCurveFitter {
 	
 	private int maxCSIterationsWithClustering = 100;
 	private int maxExtraCSIterations = 5;
+	private int maxEliminationIterations = 0;
 	private int maxGradientDescentIterations = 10;
 
 	private double expansionFactor = 3.0;
@@ -64,6 +67,14 @@ public class CSLightCurveFitter {
 		this.maxGradientDescentIterations = maxGradientDescentIterations;
 	}
 
+	public int getMaxEliminationIterations() {
+		return maxEliminationIterations;
+	}
+
+	public void setMaxEliminationIterations(int maxEliminationIterations) {
+		this.maxEliminationIterations = maxEliminationIterations;
+	}
+
 	public final double getExpansionFactor() {
 		return expansionFactor;
 	}
@@ -105,7 +116,7 @@ public class CSLightCurveFitter {
 
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
 		double targetComf = LightCurve.centerOfMassAsFraction(fluxArray);
-		double testComf = LightCurve.centerOfMassAsFraction(initialSolution.produceModeledFlux());
+		double testComf = LightCurve.centerOfMassAsFraction(initialSolution.produceModeledFlux().getFluxArray());
 		double diff = testComf - targetComf;
 		double newComf = targetComf - diff;
 		this.sampler.setPeakFraction(newComf);
@@ -131,15 +142,14 @@ public class CSLightCurveFitter {
 	}
 
 	public Solution optimizeStandardErrorCS(double[] fluxArray) throws MathException {
-		//this.sampler.setPeakFraction(LightCurve.centerOfMassAsFraction(fluxArray));
+		boolean flexible = true;
 		double comf = LightCurve.centerOfMassAsFraction(fluxArray);
 		this.sampler.setPeakFraction(comf);
-		boolean flexible = true;
-		MultivariateRealFunction errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, this.lambda, flexible);
+		CircuitSearchEvaluator errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, this.lambda, flexible);
 		return this.optimizeCircuitSearch(errorFunction);
 	}
 
-	public Solution optimizeCircuitSearch(MultivariateRealFunction errorFunction) throws MathException {
+	public Solution optimizeCircuitSearch(CircuitSearchEvaluator errorFunction) throws MathException {
 		SolutionSampler sampler = this.sampler;
 		Random random = sampler.getRandom();
 		CircuitSearchOptimizer optimizer = new CircuitSearchOptimizer(random, this.populationSize) {
@@ -154,6 +164,7 @@ public class CSLightCurveFitter {
 		optimizer.setExpansionFactor(this.expansionFactor);
 		optimizer.setMaxIterationsWithClustering(this.maxCSIterationsWithClustering);
 		optimizer.setMaxTotalIterations(this.maxCSIterationsWithClustering + this.maxExtraCSIterations);
+		optimizer.setMaxEliminationIterations(this.maxEliminationIterations);
 		int vectorLength = sampler.getNumParameters();
 		RealPointValuePair result = optimizer.optimize(errorFunction, vectorLength);
 		return sampler.parametersAsSolution(result.getPointRef());
@@ -168,7 +179,11 @@ public class CSLightCurveFitter {
 	}
 
 	public static double meanSquaredError(double[] fluxArray, double[] weights, Solution solution) {
-		double[] testFluxArray = solution.produceModeledFlux();
+		double[] testFluxArray = solution.produceModeledFlux().getFluxArray();
+		return meanSquaredError(fluxArray, weights, testFluxArray);
+	}
+
+	public static double meanSquaredError(double[] fluxArray, double[] weights, double[] testFluxArray) {
 		int length = fluxArray.length;
 		double sum = 0;
 		double weightSum = 0;
@@ -180,8 +195,8 @@ public class CSLightCurveFitter {
 		}
 		return weightSum == 0 ? 0 : sum / weightSum;
 	}
-	
-	private static class LocalErrorFunction implements MultivariateRealFunction {
+
+	private static class LocalErrorFunction implements MultivariateRealFunction, CircuitSearchEvaluator {
 		private final SolutionSampler sampler;
 		private final double lambda;
 		private final LightCurveMatcher matcher;
@@ -200,14 +215,35 @@ public class CSLightCurveFitter {
 		}
 		
 		@Override
+		public CircuitSearchParamEvaluation evaluate(double[] params) throws FunctionEvaluationException, IllegalArgumentException {
+			Solution solution = this.sampler.parametersAsSolution(params);
+			SimulatedFlux sf = solution.produceModeledFlux();
+			double[] modeledFlux = sf.getFluxArray();
+			double baseError;
+			if(this.flexible) {
+				boolean shiftOnly = true;
+				FlexibleLightCurveMatchingResults r = this.matcher.flexibleMeanSquaredError(modeledFlux, shiftOnly);
+				baseError = r.getMinimizedError() + r.getBendMetric() * this.lambda;
+			}
+			else {
+				baseError = this.matcher.ordinaryMeanSquaredError(modeledFlux);
+			}
+			double sdParams = MathUtil.standardDev(params, 0);
+			double diffWithNormal = sdParams - 1.0;			
+			double error = baseError + (diffWithNormal * diffWithNormal * this.lambda);
+			return new CircuitSearchParamEvaluation(error, sf.getClusteringPosition());
+		}
+
+		@Override
 		public final double value(double[] parameters) throws FunctionEvaluationException, IllegalArgumentException {
 			Solution solution = this.sampler.parametersAsSolution(parameters);
-			double[] testFluxArray = solution.produceModeledFlux();
+			SimulatedFlux sf = solution.produceModeledFlux();
+			double[] testFluxArray = sf.getFluxArray();
 			double baseError;
 			if(this.flexible) {
 				boolean shiftOnly = true;
 				FlexibleLightCurveMatchingResults r = this.matcher.flexibleMeanSquaredError(testFluxArray, shiftOnly);
-				baseError = r.getMinimizedError() + r.getBendMetric() * this.lambda;
+				baseError = r.getMinimizedError(); // + r.getBendMetric() * this.lambda;
 			}
 			else {
 				baseError = this.matcher.ordinaryMeanSquaredError(testFluxArray);
@@ -215,6 +251,11 @@ public class CSLightCurveFitter {
 			double sdParams = MathUtil.standardDev(parameters, 0);
 			double diffWithNormal = sdParams - 1.0;			
 			return baseError + (diffWithNormal * diffWithNormal * this.lambda);
+		}
+
+		@Override
+		public final double[] recommendEpsilon(double[] params) {
+			return this.sampler.minimalChangeThreshold(params, 1.0);
 		}		
 	}
 }

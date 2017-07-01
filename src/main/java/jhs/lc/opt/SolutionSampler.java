@@ -18,6 +18,7 @@ import jhs.lc.geom.ParametricFluxFunctionSource;
 import jhs.lc.geom.RotationAngleSphereFactory;
 import jhs.lc.sims.AngularSimulation;
 import jhs.lc.sims.ImageElementInfo;
+import jhs.lc.sims.SimulatedFlux;
 import jhs.lc.sims.SimulatedFluxSource;
 import jhs.math.util.ArrayUtil;
 import jhs.math.util.MathUtil;
@@ -93,7 +94,7 @@ public class SolutionSampler {
 		double[] osParameters = this.sampleOpacityFunctionParameters();
 		FluxOrOpacityFunction of = this.opacitySource.getFluxOrOpacityFunction(osParameters);
 		double orbitRadius = this.baseOrbitRadius * Math.exp(this.random.nextGaussian() * this.logRadiusSD);
-		double[] modeledFlux = this.fluxSource.produceModeledFlux(this.peakFraction, of, orbitRadius);
+		SimulatedFlux modeledFlux = this.fluxSource.produceModeledFlux(this.peakFraction, of, orbitRadius);
 		return new Solution(this.fluxSource, of, orbitRadius, peakFraction, osParameters, modeledFlux);
 	}
 	
@@ -135,7 +136,7 @@ public class SolutionSampler {
 		double[] osParameters = this.opacitySourceParameters(optimizerParameters);
 		FluxOrOpacityFunction of = this.opacitySource.getFluxOrOpacityFunction(osParameters);
 		double orbitRadius = this.getOrbitRadius(optimizerParameters);
-		double[] modeledFlux = this.fluxSource.produceModeledFlux(this.peakFraction, of, orbitRadius);
+		SimulatedFlux modeledFlux = this.fluxSource.produceModeledFlux(this.peakFraction, of, orbitRadius);
 		return new Solution(this.fluxSource, of, orbitRadius, peakFraction, osParameters, modeledFlux);
 	}
 	

@@ -43,6 +43,54 @@ public class ApproximateGradientDescentOptimizer {
 		this.maxIterations = maxIterations;
 	}
 
+	public int getMaxSearchIterations() {
+		return maxSearchIterations;
+	}
+
+	public void setMaxSearchIterations(int maxSearchIterations) {
+		this.maxSearchIterations = maxSearchIterations;
+	}
+
+	public double getInitialGradientFactor() {
+		return initialGradientFactor;
+	}
+
+	public void setInitialGradientFactor(double initialGradientFactor) {
+		this.initialGradientFactor = initialGradientFactor;
+	}
+
+	public double getGfAlpha() {
+		return gfAlpha;
+	}
+
+	public void setGfAlpha(double gfAlpha) {
+		this.gfAlpha = gfAlpha;
+	}
+
+	public double getSearchFactor() {
+		return searchFactor;
+	}
+
+	public void setSearchFactor(double searchFactor) {
+		this.searchFactor = searchFactor;
+	}
+
+	public RealConvergenceChecker getConvergenceChecker() {
+		return convergenceChecker;
+	}
+
+	public void setConvergenceChecker(RealConvergenceChecker convergenceChecker) {
+		this.convergenceChecker = convergenceChecker;
+	}
+
+	public Random getRandom() {
+		return random;
+	}
+
+	public void setNumEvaluations(int numEvaluations) {
+		this.numEvaluations = numEvaluations;
+	}
+
 	public RealPointValuePair optimize(MultivariateRealFunction errorFunction, double[] initialPoint, double[] epsilon) throws FunctionEvaluationException {
 		this.numEvaluations = 1;
 		double error = errorFunction.value(initialPoint);
@@ -70,6 +118,17 @@ public class ApproximateGradientDescentOptimizer {
 	}
 	
 	protected void informProgress(int iteration, RealPointValuePair pointValue) {		
+	}
+
+	public RealPointValuePair doOneStep(RealPointValuePair pointValue, MultivariateRealFunction errorFunction, double gradientFactor, double[] epsilon) throws MathException {
+		AdvanceResults advance = this.advance(errorFunction, pointValue, gradientFactor, epsilon);		
+		if(advance != null) {
+			RealPointValuePair nextPoint = advance.pointValue;
+			if(nextPoint.getValue() <= pointValue.getValue()) {
+				return nextPoint;				
+			}
+		}
+		return pointValue;
 	}
 	
 	private AdvanceResults advance(MultivariateRealFunction errorFunction, RealPointValuePair pointValue, double gradientFactor, double[] epsilon) throws FunctionEvaluationException {

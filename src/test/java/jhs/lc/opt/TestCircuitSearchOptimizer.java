@@ -10,6 +10,7 @@ import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealPointValuePair;
 import org.junit.Test;
 
+import jhs.math.util.ArrayUtil;
 import jhs.math.util.MathUtil;
 
 public class TestCircuitSearchOptimizer {
@@ -53,7 +54,7 @@ public class TestCircuitSearchOptimizer {
 		optimizer.setExpansionFactor(2.0);
 		optimizer.setConvergeDistance(0.003);
 		double[] minimum = MathUtil.sampleGaussian(random, 1.0, vectorLength);
-		MultivariateRealFunction errorFunction = new DistanceSqErrorFunction(minimum);
+		CircuitSearchEvaluator errorFunction = new DistanceSqErrorFunction(minimum);
 		RealPointValuePair result = optimizer.optimize(errorFunction, vectorLength);
 		double[] resultPoint = result.getPointRef();
 		int numMatches = 0;
@@ -85,22 +86,33 @@ public class TestCircuitSearchOptimizer {
 		return new RealPointValuePair(bestPoint, minError);
 	}
 	
-	private static class DistanceSqErrorFunction implements MultivariateRealFunction {
+	private static class DistanceSqErrorFunction implements CircuitSearchEvaluator {
 		private final double[] minimum;
 		
 		public DistanceSqErrorFunction(double[] minimum) {
 			super();
 			this.minimum = minimum;
 		}
-
+		
 		@Override
-		public double value(double[] point) throws FunctionEvaluationException, IllegalArgumentException {
-			return MathUtil.euclideanDistanceSquared(point, this.minimum);
+		public CircuitSearchParamEvaluation evaluate(double[] params) {
+			return new CircuitSearchParamEvaluation(
+					MathUtil.euclideanDistanceSquared(params, this.minimum),
+					params);
+		}		
+		
+		@Override
+		public double[] recommendEpsilon(double[] params) {
+			return ArrayUtil.repeat(1.0, params.length);
 		}		
 	}
 	
-	private static class CustomErrorFunction implements MultivariateRealFunction {
+	private static class CustomErrorFunction implements CircuitSearchEvaluator {
 		@Override
+		public CircuitSearchParamEvaluation evaluate(double[] params) throws FunctionEvaluationException, IllegalArgumentException {
+			return new CircuitSearchParamEvaluation(this.value(params), params);
+		}
+		
 		public final double value(double[] point) throws FunctionEvaluationException, IllegalArgumentException {
 			double x = point[0];
 			double y = point[1];
@@ -112,6 +124,11 @@ public class TestCircuitSearchOptimizer {
 				MathUtil.square(x - 0.7) * 0.1 +
 				MathUtil.square(y + 0.8) * 0.2 +
 				MathUtil.square(z - 0.9) * 0.3;
+		}
+
+		@Override
+		public double[] recommendEpsilon(double[] params) {
+			return ArrayUtil.repeat(1.0, params.length);
 		}		
 	}
 

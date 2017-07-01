@@ -8,13 +8,18 @@ import java.util.List;
 import jhs.lc.geom.FluxOrOpacityFunction;
 
 public final class ImageElementInfo {
+	private static final int CP_BOX_LENGTH = 8;
+	private static final int CP_BOX_NPIXELS = CP_BOX_LENGTH * CP_BOX_LENGTH;
+	
 	final double totalPositiveFlux;
 	final ImageElement[] elements;
+	final double[] clusteringPosition;
 	
-	public ImageElementInfo(double totalPositiveFlux, ImageElement[] elements) {
+	public ImageElementInfo(double totalPositiveFlux, ImageElement[] elements, double[] clusteringPosition) {
 		super();
 		this.totalPositiveFlux = totalPositiveFlux;
 		this.elements = elements;
+		this.clusteringPosition = clusteringPosition;
 	}
 
 	public static ImageElementInfo createImageFrameElements(FluxOrOpacityFunction brightnessFunction, int withInPixels, int heightInPixels) {
@@ -28,14 +33,20 @@ public final class ImageElementInfo {
 		double fromY = boundingBox.getY();
 		double xcw = imageWidth / withInPixels;
 		double ycw = imageHeight / heightInPixels;
+		double xcpf = CP_BOX_LENGTH / imageWidth;
+		double ycpf = CP_BOX_LENGTH / imageHeight;
+		double[] clusteringPosition = new double[CP_BOX_NPIXELS];
 		List<ImageElement> elementList = new ArrayList<>();
 		double totalPositiveFlux = 0;
 		for(int c = 0; c < withInPixels; c++) {
-			double x = fromX + c * xcw;
+			double x = fromX + (c + 0.5) * xcw;
+			int cpc = (int) ((x - fromX) * xcpf);
 			for(int r = 0; r < heightInPixels; r++) {
-				double y = fromY + r * ycw;
+				double y = fromY + (r + 0.5)  * ycw;
+				int cpr = (int) ((y - fromY) * ycpf);
 				double b = brightnessFunction.fluxOrOpacity(x, y, 1.0);
 				if(b > -1.0) { // also, not NaN
+					clusteringPosition[cpr * CP_BOX_LENGTH + cpc] += (b + 1.0);
 					elementList.add(new ImageElement(c, r, b));
 					if(b > 0) {
 						totalPositiveFlux += b;
@@ -44,7 +55,7 @@ public final class ImageElementInfo {
 			}
 		}
 		ImageElement[] elements = elementList.toArray(new ImageElement[elementList.size()]);
-		return new ImageElementInfo(totalPositiveFlux, elements);
+		return new ImageElementInfo(totalPositiveFlux, elements, clusteringPosition);
 	}
 
 	@Override
