@@ -20,7 +20,7 @@ import org.apache.commons.cli.PosixParser;
 
 public class EstimateTransitProperties {
 	private static final Logger logger = Logger.getLogger(EstimateTransitProperties.class.getName());
-	private static final int DEFAULT_WL = 11;
+	private static final int DEFAULT_WL = 7;
 	
 	private void run(CommandLine cmdLine) throws Exception {
 		Level level = Level.WARNING;
@@ -161,7 +161,7 @@ public class EstimateTransitProperties {
 	
 	private static void printHelp(Options options) {
 		HelpFormatter formatter = new HelpFormatter();
-		formatter.printHelp("lc-opt [options] -i <lightcurve>.csv <opt-spec>.json", options);
+		formatter.printHelp("lc-tp [options] -i <lightcurve>.csv", options);
 	}
 	
 	@SuppressWarnings("static-access")

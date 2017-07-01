@@ -169,7 +169,7 @@ public class SolveLightCurve extends AbstractTool {
 	}
 	
 	private void writeResults(String resultsFilePath, OptSpec optSpec, SolutionSampler sampler, LightCurvePoint[] lightCurve, Solution solution, double[] fluxArray, double elapsedSeconds) throws Exception {
-		double[] weights = sampler.createFluxWeights(fluxArray);
+		double[] weights = sampler.createFluxWeights(fluxArray, 0.5);
 		double mse = CSLightCurveFitter.meanSquaredError(lightCurve, weights, solution);
 		if(logger.isLoggable(Level.INFO)) {
 			logger.info("writeResults(): rmse=" + Math.sqrt(mse));

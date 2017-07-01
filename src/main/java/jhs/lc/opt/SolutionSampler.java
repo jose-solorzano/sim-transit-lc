@@ -1,5 +1,6 @@
 package jhs.lc.opt;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -16,8 +17,9 @@ import jhs.math.util.MathUtil;
 public class SolutionSampler {
 	private static final Logger logger = Logger.getLogger(SolutionSampler.class.getName());
 	private static final int NUM_EXTRA_PARAMS = 1;
-	private static final double WF = 3.0;
-	private static final int WL = 11;
+	
+	private static final int WL = 5;
+	private static final double WSD = 0.5;
 	
 	private final Random random;
 	private final double baseOrbitRadius;
@@ -69,14 +71,25 @@ public class SolutionSampler {
 		this.peakFraction = peakFraction;
 	}
 
-	public double[] createFluxWeights(double[] fluxArray) {
+	public double[] createFluxWeights(double[] fluxArray, double shapeBias) {
 		if(fluxArray.length < 2) {
 			throw new IllegalArgumentException("Length of flux array must be at least 2.");
 		}
+		if(shapeBias < 0 || shapeBias > 1) {
+			throw new IllegalArgumentException("shapeBias must be between zero and one, not " + shapeBias + ".");
+		}
 		double[] trendChangeProfile = LightCurve.trendChangeProfile(fluxArray, WL);
-		double[] weights = MathUtil.abs(trendChangeProfile);
-		double mean = MathUtil.mean(weights);
-		MathUtil.addInPlace(weights, mean * WF);
+		double tcsd = MathUtil.standardDev(trendChangeProfile, 0);
+		double[] weights = new double[fluxArray.length];
+		double threshold = -tcsd * WSD;
+		for(int i = 0; i < fluxArray.length; i++) {
+			if(trendChangeProfile[i] <= threshold) {
+				weights[i] = shapeBias;
+			}
+			else {
+				weights[i] = 1 - shapeBias;
+			}
+		}
 		return weights;
 	}
 

@@ -67,30 +67,28 @@ public class LightCurve {
 		return sumWeight == 0 ? 0.5 * fluxArray.length : sumPos / sumWeight;
 	}
 
-	public static double[] trendChangeProfile(double[] fluxArray, int windowLength) {
-		int length = fluxArray.length;
+	public static double[] trendProfile(double[] series, int windowLength) {
+		int length = series.length;
 		int hwl = windowLength / 2;
 		int start = hwl;
 		int end = length - hwl;
 		double[] trends = new double[length];
 		for(int i = start; i < end; i++) {
-			trends[i] = trend(fluxArray, i - hwl, i + hwl);
+			trends[i] = trend(series, i - hwl, i + hwl);
 		}
-		double[] trendChanges = new double[length];
-		for(int i = 1; i < length - 1; i++) {
-			double prev = trends[i - 1];
-			double next = trends[i + 1];
-			trendChanges[i] = next - prev;
-		}
-		return trendChanges;
+		return trends;		
+	}
+
+	public static double[] trendChangeProfile(double[] fluxArray, int windowLength) {
+		double[] trends = trendProfile(fluxArray, windowLength);
+		return trendProfile(trends, windowLength);
 	}
 		
-	private static double trend(double[] array, int firstIndex, int lastIndex) {
+	private static double trend(double[] series, int firstIndex, int lastIndex) {
 		WeightedLinearRegression regression = new WeightedLinearRegression();
 		for(int x = firstIndex; x <= lastIndex; x++) {
-			regression.addData(1.0, x, array[x]);
+			regression.addData(1.0, x, series[x]);
 		}
 		return regression.getSlope();
 	}
-
 }

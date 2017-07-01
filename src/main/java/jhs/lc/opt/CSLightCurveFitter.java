@@ -120,7 +120,8 @@ public class CSLightCurveFitter {
 		double newComf = targetComf - diff;
 		this.sampler.setPeakFraction(newComf);
 		boolean flexible = false;
-		MultivariateRealFunction errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, this.lambda, flexible);
+		double shapeBias = 0.5;
+		MultivariateRealFunction errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, this.lambda, flexible, shapeBias);
 		return this.optimizeAGD(fluxArray, initialSolution, errorFunction, maxIterations);
 	}
 
@@ -144,7 +145,8 @@ public class CSLightCurveFitter {
 		boolean flexible = true;
 		double comf = LightCurve.centerOfMassAsFraction(fluxArray);
 		this.sampler.setPeakFraction(comf);
-		CircuitSearchEvaluator errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, this.lambda, flexible);
+		double shapeBias = 0.60;
+		CircuitSearchEvaluator errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, this.lambda, flexible, shapeBias);
 		return this.optimizeCircuitSearch(errorFunction);
 	}
 
@@ -208,8 +210,8 @@ public class CSLightCurveFitter {
 			this.flexible = flexible;
 		}
 
-		public static LocalErrorFunction create(SolutionSampler sampler, double[] fluxArray, double lambda, boolean flexible) {
-			double[] weights = sampler.createFluxWeights(fluxArray);
+		public static LocalErrorFunction create(SolutionSampler sampler, double[] fluxArray, double lambda, boolean flexible, double shapeBias) {
+			double[] weights = sampler.createFluxWeights(fluxArray, shapeBias);
 			return new LocalErrorFunction(sampler, fluxArray, weights, lambda, flexible);
 		}
 		
