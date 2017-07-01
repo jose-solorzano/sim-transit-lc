@@ -24,6 +24,7 @@ import jhs.math.common.SimpleVectorialItem;
 import jhs.math.common.VectorialItem;
 import jhs.math.optimization.GradientReductionConvergenceChecker;
 import jhs.math.regression.linear.WeightedLinearRegression;
+import jhs.math.util.ArrayUtil;
 import jhs.math.util.ComparableValueHolder;
 import jhs.math.util.ListUtil;
 import jhs.math.util.MathUtil;
@@ -41,7 +42,7 @@ public class CircuitSearchOptimizer {
 	private double displacementFactor = 0.03;
 	private double convergeDistance = 0.0001;
 	private double circuitShuffliness = 0.5;
-	private double crossoverProbability = 0.5;
+	private double crossoverProbability = 0.90;
 	
 	private double agdGradientFactor = 0.3;
 	
@@ -178,8 +179,6 @@ public class CircuitSearchOptimizer {
 				newPointValues.add(newPointValue);
 			}
 			Collections.sort(newPointValues, (pv1, pv2) -> Double.compare(pv1.getValue(), pv2.getValue()));
-			System.out.println("%%%First value: " + newPointValues.get(0).getValue());
-			System.out.println("%%%Eliminating: " + newPointValues.get(newPointValues.size() - 1).getValue());
 			currentPointValues = newPointValues.subList(0, newPointValues.size() - 1);
 			this.informProgress(baseIteration + i, currentPointValues.get(0));
 		}
@@ -298,11 +297,18 @@ public class CircuitSearchOptimizer {
 	}
 	
 	private Particle crossover(CircuitSearchEvaluator errorFunction, double[] params1, double[] params2) throws FunctionEvaluationException {
-		double[] newParams = new double[params1.length];
 		Random r = this.random;
-		for(int i = 0; i < params1.length; i++) {
-			newParams[i] = r.nextBoolean() ? params1[i] : params2[i];
+		if(params1.length <= 1) {
+			throw new IllegalArgumentException("Only " + params1.length + " parameters.");
 		}
+		int pivot1 = Math.abs(r.nextInt() % (params1.length + 1));
+		int pivot2;
+		do {
+			pivot2 = Math.abs(r.nextInt() % (params1.length + 1));
+		} while(pivot2 == pivot1);
+		int pivotMin = Math.min(pivot1, pivot2);
+		int pivotMax = Math.max(pivot1, pivot2);
+		double[] newParams = ArrayUtil.concat(Arrays.copyOfRange(params1, 0, pivotMin), Arrays.copyOfRange(params2, pivotMin, pivotMax), Arrays.copyOfRange(params1, pivotMax, params1.length));
 		CircuitSearchParamEvaluation evaluation = errorFunction.evaluate(newParams);
 		return new Particle(newParams, evaluation.getClusteringPosition(), evaluation.getError());
 	}

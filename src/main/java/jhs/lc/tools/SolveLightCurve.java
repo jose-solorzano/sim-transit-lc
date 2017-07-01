@@ -42,7 +42,8 @@ import jhs.lc.tools.inputs.SpecMapper;
 public class SolveLightCurve extends AbstractTool {
 	private static final Logger logger = Logger.getLogger(SolveLightCurve.class.getName());
 	private static final int DEF_MAX_ITERATIONS = 100;
-	private static final int DEF_MAX_AGD_ITERATIONS = 100;
+	private static final int DEF_MAX_CONS_ITERATIONS = 200;
+	private static final int DEF_MAX_AGD_ITERATIONS = 100;	
 	private static final int DEF_POP_SIZE = 100;
 	private static final double DEF_VIDEO_DURATION = 60;
 	private static final int DEF_OUT_NUM_PIXELS = 100000;
@@ -87,10 +88,11 @@ public class SolveLightCurve extends AbstractTool {
 		int populationSize = this.getOptionInt(cmdLine, "pop", DEF_POP_SIZE);
 		int numClusteringIterations = this.getOptionInt(cmdLine, "noi", DEF_MAX_ITERATIONS);
 		int numGradientDescentIterations = this.getOptionInt(cmdLine, "nagd", DEF_MAX_AGD_ITERATIONS);
+		int numPostClusteringIterations = this.getOptionInt(cmdLine, "npci", DEF_MAX_CONS_ITERATIONS);
 		logger.info("Population size: " + populationSize + ".");
 		logger.info("Max iterations: " + numClusteringIterations + ".");
 		long time1 = System.currentTimeMillis();
-		Solution solution = this.solve(lightCurve, sampler, populationSize, numClusteringIterations, numGradientDescentIterations);		
+		Solution solution = this.solve(lightCurve, sampler, populationSize, numClusteringIterations, numPostClusteringIterations, numGradientDescentIterations);		
 		long time2 = System.currentTimeMillis();
 		double elapsedSeconds = (time2 - time1) / 1000.0;
 		
@@ -144,7 +146,7 @@ public class SolveLightCurve extends AbstractTool {
         System.out.println("Wrote " + outFile);		
 	}
 		
-	private Solution solve(LightCurvePoint[] lightCurve, SolutionSampler sampler, int populationSize, int numClusteringIterations, int numGradientDescentIterations) throws MathException {
+	private Solution solve(LightCurvePoint[] lightCurve, SolutionSampler sampler, int populationSize, int numClusteringIterations, int numPostClusteringIterations, int numGradientDescentIterations) throws MathException {
 		CSLightCurveFitter fitter = new CSLightCurveFitter(sampler, populationSize) {
 			@Override
 			protected void informProgress(String stage, int iteration, double error) {
@@ -158,7 +160,7 @@ public class SolveLightCurve extends AbstractTool {
 		fitter.setDisplacementFactor(0.04);
 		fitter.setExpansionFactor(3.0);
 		fitter.setMaxCSIterationsWithClustering(numClusteringIterations);
-		fitter.setMaxExtraCSIterations(50);
+		fitter.setMaxExtraCSIterations(numPostClusteringIterations);
 		fitter.setMaxEliminationIterations(0);
 		fitter.setMaxGradientDescentIterations(numGradientDescentIterations);
 				
@@ -307,6 +309,10 @@ public class SolveLightCurve extends AbstractTool {
 				.hasArg()
 				.withDescription("Sets the number of main optimizer iterations/steps. Default is " + DEF_MAX_ITERATIONS + ".")
 				.create("noi");
+		Option npcOption = OptionBuilder.withArgName("n")
+				.hasArg()
+				.withDescription("Sets the number of post-clustering (consolidation) iterations/steps. Default is " + DEF_MAX_CONS_ITERATIONS + ".")
+				.create("npci");
 		Option nagdOption = OptionBuilder.withArgName("n")
 				.hasArg()
 				.withDescription("Sets the number of approximate gradient descent (last push) iterations/steps. Default is " + DEF_MAX_AGD_ITERATIONS + ".")
@@ -339,6 +345,7 @@ public class SolveLightCurve extends AbstractTool {
 		options.addOption(timeUnitOption);
 		options.addOption(logOption);
 		options.addOption(nsOption);
+		options.addOption(npcOption);
 		options.addOption(nagdOption);
 		options.addOption(popOption);
 		options.addOption(angOption);		

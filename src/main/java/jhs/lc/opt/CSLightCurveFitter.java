@@ -243,7 +243,7 @@ public class CSLightCurveFitter {
 			if(this.flexible) {
 				boolean shiftOnly = true;
 				FlexibleLightCurveMatchingResults r = this.matcher.flexibleMeanSquaredError(testFluxArray, shiftOnly);
-				baseError = r.getMinimizedError() + r.getBendMetric() * this.lambda;
+				baseError = r.getMinimizedError(); // + r.getBendMetric() * this.lambda;
 			}
 			else {
 				baseError = this.matcher.ordinaryMeanSquaredError(testFluxArray);
