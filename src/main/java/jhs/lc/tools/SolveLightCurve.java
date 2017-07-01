@@ -14,14 +14,6 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.media.protocol.FileTypeDescriptor;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.PosixParser;
-import org.apache.commons.math.MathException;
-
 import jhs.lc.data.DataSet;
 import jhs.lc.data.LightCurvePoint;
 import jhs.lc.geom.LimbDarkeningParams;
@@ -38,6 +30,14 @@ import jhs.lc.tools.inputs.AbstractOptMethod;
 import jhs.lc.tools.inputs.OptResultsSpec;
 import jhs.lc.tools.inputs.OptSpec;
 import jhs.lc.tools.inputs.SpecMapper;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.PosixParser;
+import org.apache.commons.math.MathException;
 
 public class SolveLightCurve extends AbstractTool {
 	private static final Logger logger = Logger.getLogger(SolveLightCurve.class.getName());

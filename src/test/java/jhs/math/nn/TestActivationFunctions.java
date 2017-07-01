@@ -1,10 +1,8 @@
 package jhs.math.nn;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
-
-import org.junit.Test;
 
 import jhs.math.nn.aa.AtanActivationFunction;
 import jhs.math.nn.aa.GaussianActivationFunction;
@@ -22,6 +20,8 @@ import jhs.math.nn.aa.SimpleMaxActivationFunction;
 import jhs.math.nn.aa.SimpleMinActivationFunction;
 import jhs.math.nn.aa.SumActivationFunction;
 import jhs.math.util.MathUtil;
+
+import org.junit.Test;
 
 public class TestActivationFunctions {
 	private static final int NUM_INPUTS = 30;

@@ -2,13 +2,13 @@ package jhs.math.regression.linear;
 
 import java.util.List;
 
+import jhs.math.common.ModelFactory;
+import jhs.math.regression.VectorialRegressionItem;
+
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.LUDecompositionImpl;
 import org.apache.commons.math.linear.MatrixUtils;
 import org.apache.commons.math.linear.RealMatrix;
-
-import jhs.math.common.ModelFactory;
-import jhs.math.regression.VectorialRegressionItem;
 
 public class LinearRegression<T extends VectorialRegressionItem> implements ModelFactory<T> {	
 	private final double lambda;

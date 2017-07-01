@@ -1,8 +1,8 @@
 package jhs.lc.tools.inputs;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jhs.lc.opt.nn.ActivationFunctionType;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class NeuralLayerSpec {
 	private int numUnits;

@@ -1,12 +1,12 @@
 package jhs.math.nn;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
 
-import org.junit.Test;
-
 import jhs.math.util.MathUtil;
+
+import org.junit.Test;
 
 public class TestFullyConnectedNeuralNetworkStructure {
 	@Test

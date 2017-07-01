@@ -2,10 +2,9 @@ package jhs.lc.geom;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import jhs.math.util.MatrixUtil;
 
 import org.junit.Test;
-
-import jhs.math.util.MatrixUtil;
 
 public class TestSphereViewport {
 	@Test

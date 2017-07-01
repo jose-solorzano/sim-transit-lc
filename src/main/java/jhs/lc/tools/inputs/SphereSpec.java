@@ -1,11 +1,11 @@
 package jhs.lc.tools.inputs;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.Point3D;
 import jhs.lc.geom.SolidSphere;
 import jhs.lc.geom.Sphere;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SphereSpec {
 	private static final double DEFAULT_MAX_BRIGHTNESS = 1.0;

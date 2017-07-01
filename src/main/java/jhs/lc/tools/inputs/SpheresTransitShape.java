@@ -4,13 +4,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jhs.lc.geom.Point3D;
 import jhs.lc.geom.RotationAngleSphereFactory;
 import jhs.lc.geom.Sphere;
 import jhs.lc.geom.SphereCollectionSphereFactory;
 import jhs.math.util.ListUtil;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SpheresTransitShape extends AbstractTransitShape {
 	private List<SphereSpec> spheres = new ArrayList<>();

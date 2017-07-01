@@ -1,13 +1,10 @@
 package jhs.lc.opt;
 
-import java.util.Arrays;
 import java.util.Random;
 
 import jhs.lc.data.LightCurve;
-import junit.framework.TestFailure;
 
 import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.MathException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealPointValuePair;
 

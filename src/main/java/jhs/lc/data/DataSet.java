@@ -9,11 +9,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import jhs.math.util.ArrayUtil;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-
-import jhs.math.util.ArrayUtil;
 
 public class DataSet {
 	public static LightCurvePoint[] load(File csvFile) throws IOException {

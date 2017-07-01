@@ -2,16 +2,15 @@ package jhs.lc.opt;
 
 import java.util.Random;
 
+import jhs.lc.data.LightCurve;
+import jhs.lc.data.LightCurvePoint;
+import jhs.lc.sims.SimulatedFlux;
+import jhs.math.util.MathUtil;
+
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealPointValuePair;
-
-import jhs.lc.data.LightCurve;
-import jhs.lc.data.LightCurvePoint;
-import jhs.lc.sims.SimulatedFlux;
-import jhs.lc.sims.TestFastApproximateFluxSource;
-import jhs.math.util.MathUtil;
 
 public class CSLightCurveFitter {	
 	private final SolutionSampler sampler;

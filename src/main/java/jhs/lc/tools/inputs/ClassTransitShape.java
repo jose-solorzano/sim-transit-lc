@@ -2,11 +2,11 @@ package jhs.lc.tools.inputs;
 
 import java.io.File;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
 import jhs.lc.geom.FluxOrOpacityFunction;
 import jhs.lc.geom.RotationAngleSphereFactory;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ClassTransitShape extends AbstractTransitShape {
 	private String className;

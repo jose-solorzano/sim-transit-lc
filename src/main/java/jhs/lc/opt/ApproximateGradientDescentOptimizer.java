@@ -4,15 +4,15 @@ package jhs.lc.opt;
 import java.util.Arrays;
 import java.util.Random;
 
+import jhs.math.optimization.GradientReductionConvergenceChecker;
+import jhs.math.util.ArrayUtil;
+import jhs.math.util.MathUtil;
+
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealConvergenceChecker;
 import org.apache.commons.math.optimization.RealPointValuePair;
-
-import jhs.math.optimization.GradientReductionConvergenceChecker;
-import jhs.math.util.ArrayUtil;
-import jhs.math.util.MathUtil;
 
 public class ApproximateGradientDescentOptimizer {
 	private final Random random;

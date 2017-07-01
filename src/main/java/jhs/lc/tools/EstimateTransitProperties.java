@@ -6,17 +6,17 @@ import java.io.PrintWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import jhs.lc.data.DataSet;
+import jhs.lc.data.LightCurve;
+import jhs.lc.data.LightCurvePoint;
+import jhs.math.util.MathUtil;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
-
-import jhs.lc.data.DataSet;
-import jhs.lc.data.LightCurve;
-import jhs.lc.data.LightCurvePoint;
-import jhs.math.util.MathUtil;
 
 public class EstimateTransitProperties {
 	private static final Logger logger = Logger.getLogger(EstimateTransitProperties.class.getName());

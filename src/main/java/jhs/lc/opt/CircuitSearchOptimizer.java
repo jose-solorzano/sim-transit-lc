@@ -7,27 +7,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.TreeSet;
-
-import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.analysis.MultivariateRealFunction;
-import org.apache.commons.math.optimization.RealConvergenceChecker;
-import org.apache.commons.math.optimization.RealPointValuePair;
-import org.apache.commons.math.stat.clustering.Cluster;
 
 import jhs.math.clustering.KMeansClusteringProducer;
 import jhs.math.clustering.VectorialCluster;
 import jhs.math.clustering.VectorialClusteringResults;
 import jhs.math.common.ItemUtil;
-import jhs.math.common.SimpleVectorialItem;
 import jhs.math.common.VectorialItem;
-import jhs.math.optimization.GradientReductionConvergenceChecker;
-import jhs.math.regression.linear.WeightedLinearRegression;
 import jhs.math.util.ArrayUtil;
 import jhs.math.util.ComparableValueHolder;
 import jhs.math.util.ListUtil;
 import jhs.math.util.MathUtil;
+
+import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.analysis.MultivariateRealFunction;
+import org.apache.commons.math.optimization.RealPointValuePair;
 
 public class CircuitSearchOptimizer {
 	private final Random random;

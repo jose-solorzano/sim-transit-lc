@@ -5,10 +5,10 @@ import java.io.File;
 
 import javax.imageio.ImageIO;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jhs.lc.geom.ParametricFluxFunctionSource;
 import jhs.lc.opt.ImageOpacityFunctionSource;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ImageOptMethod extends AbstractOptMethod {
 	private String imageFilePath;

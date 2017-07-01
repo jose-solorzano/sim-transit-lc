@@ -12,8 +12,6 @@ import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 
-import org.junit.Test;
-
 import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
 import jhs.lc.geom.FluxOrOpacityFunction;
 import jhs.lc.geom.ImageOpacityFunction;
@@ -24,6 +22,8 @@ import jhs.lc.geom.SolidSphere;
 import jhs.lc.geom.Sphere;
 import jhs.lc.geom.SphereCollectionSphereFactory;
 import jhs.math.util.MathUtil;
+
+import org.junit.Test;
 
 public class TestSimulation {
 	@Test

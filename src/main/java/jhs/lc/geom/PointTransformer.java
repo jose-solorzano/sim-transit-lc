@@ -2,11 +2,11 @@ package jhs.lc.geom;
 
 import java.util.Random;
 
+import jhs.math.util.MathUtil;
+
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.LUDecompositionImpl;
 import org.apache.commons.math.linear.RealMatrix;
-
-import jhs.math.util.MathUtil;
 
 public class PointTransformer {
 	private final double[][] transformMatrix;

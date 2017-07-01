@@ -1,22 +1,12 @@
 package jhs.lc.opt;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.sound.sampled.Port.Info;
-
-import org.apache.commons.math.MathException;
-
 import jhs.lc.data.LightCurve;
-import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
 import jhs.lc.geom.FluxOrOpacityFunction;
-import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.ParametricFluxFunctionSource;
-import jhs.lc.geom.RotationAngleSphereFactory;
-import jhs.lc.sims.AngularSimulation;
 import jhs.lc.sims.ImageElementInfo;
 import jhs.lc.sims.SimulatedFlux;
 import jhs.lc.sims.SimulatedFluxSource;

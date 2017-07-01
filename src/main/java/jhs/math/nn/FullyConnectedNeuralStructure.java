@@ -2,6 +2,7 @@ package jhs.math.nn;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import jhs.math.util.ArrayUtil;
 
 public class FullyConnectedNeuralStructure implements NeuralNetworkStructure, java.io.Serializable {

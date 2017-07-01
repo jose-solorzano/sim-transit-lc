@@ -1,7 +1,5 @@
 package jhs.lc.opt.nn;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-
 import jhs.math.nn.ActivationFunction;
 import jhs.math.nn.aa.AtanActivationFunction;
 import jhs.math.nn.aa.GaussianActivationFunction;
@@ -18,6 +16,8 @@ import jhs.math.nn.aa.SignActivationFunction;
 import jhs.math.nn.aa.SimpleMaxActivationFunction;
 import jhs.math.nn.aa.SimpleMinActivationFunction;
 import jhs.math.nn.aa.SumActivationFunction;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 public enum ActivationFunctionType {
 	SIGMOID, 

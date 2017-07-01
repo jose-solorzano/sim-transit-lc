@@ -7,9 +7,9 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jhs.lc.geom.ParametricFluxFunctionSource;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ClassOptMethod extends AbstractOptMethod {
 	private static final Logger logger = Logger.getLogger(ClassOptMethod.class.getName());

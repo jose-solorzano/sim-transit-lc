@@ -5,12 +5,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-
-import org.apache.commons.math.MathException;
 
 import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
 import jhs.lc.geom.FluxOrOpacityFunction;
@@ -19,7 +14,6 @@ import jhs.lc.geom.RotationAngleSphereFactory;
 import jhs.lc.sims.AngularSimulation;
 import jhs.lc.sims.SimulatedFlux;
 import jhs.lc.sims.SimulatedFluxSource;
-import jhs.math.util.ArrayUtil;
 import jhs.math.util.MathUtil;
 
 public class Solution implements java.io.Serializable {

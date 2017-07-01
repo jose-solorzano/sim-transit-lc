@@ -1,8 +1,7 @@
 package jhs.lc.sims;
 
 import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
-import java.util.List;
+
 import jhs.lc.geom.FluxOrOpacityFunction;
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.SolidSphere;

@@ -1,17 +1,17 @@
 package jhs.lc.opt;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
 
-import org.junit.Test;
-
 import jhs.lc.geom.FluxOrOpacityFunction;
-import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.ParametricFluxFunctionSource;
 import jhs.lc.sims.ImageElementInfo;
 import jhs.lc.sims.SimulatedFlux;
 import jhs.lc.sims.SimulatedFluxSource;
+
+import org.junit.Test;
 
 public class TestSolutionSampler {
 	private static final int NP1 = 7;

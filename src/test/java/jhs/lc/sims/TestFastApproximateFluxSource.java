@@ -1,20 +1,15 @@
 package jhs.lc.sims;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.geom.Rectangle2D;
-import java.io.File;
-import java.util.Arrays;
 
-import org.apache.commons.cli.CommandLine;
-import org.junit.Test;
-
-import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
 import jhs.lc.geom.FluxOrOpacityFunction;
 import jhs.lc.geom.LimbDarkeningParams;
-import jhs.lc.geom.RotationAngleSphereFactory;
-import jhs.lc.tools.inputs.OptSpec;
 import jhs.math.util.MathUtil;
+
+import org.junit.Test;
 
 public class TestFastApproximateFluxSource {
 	@Test

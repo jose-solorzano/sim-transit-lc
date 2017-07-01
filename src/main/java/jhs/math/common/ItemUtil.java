@@ -5,13 +5,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Random;
 
 import jhs.math.regression.linear.WeightedLinearRegression;
-import jhs.math.util.ListUtil;
 import jhs.math.util.MathUtil;
-
-import org.apache.commons.math.MathException;
 
 public class ItemUtil {
 	public static double[] subspacePosition(double[] position, int[] subspace) {

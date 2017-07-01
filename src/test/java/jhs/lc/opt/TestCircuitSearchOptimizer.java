@@ -1,17 +1,17 @@
 package jhs.lc.opt;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Random;
 
-import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.analysis.MultivariateRealFunction;
-import org.apache.commons.math.optimization.RealPointValuePair;
-import org.junit.Test;
-
 import jhs.math.util.ArrayUtil;
 import jhs.math.util.MathUtil;
+
+import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.optimization.RealPointValuePair;
+import org.junit.Test;
 
 public class TestCircuitSearchOptimizer {
 	@Test

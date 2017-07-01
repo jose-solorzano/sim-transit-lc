@@ -1,9 +1,9 @@
 package jhs.math.optimization;
 
+import jhs.math.util.MathUtil;
+
 import org.apache.commons.math.optimization.RealConvergenceChecker;
 import org.apache.commons.math.optimization.RealPointValuePair;
-
-import jhs.math.util.MathUtil;
 
 public class GradientReductionConvergenceChecker implements RealConvergenceChecker {
 	private final double alpha;

@@ -3,10 +3,8 @@ package jhs.lc.data;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.List;
 
 import jhs.math.regression.linear.WeightedLinearRegression;
-import jhs.math.util.ArrayUtil;
 
 
 public class LightCurve {

@@ -1,7 +1,6 @@
 package jhs.math.nn.aa;
 
 import jhs.math.nn.ActivationFunction;
-import jhs.math.util.MathUtil;
 
 public final class MinActivationFunction implements ActivationFunction {
 	private static final long serialVersionUID = 1L;

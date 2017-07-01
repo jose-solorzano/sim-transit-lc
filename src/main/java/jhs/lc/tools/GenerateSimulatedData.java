@@ -10,13 +10,6 @@ import java.util.logging.Logger;
 
 import javax.media.protocol.FileTypeDescriptor;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.PosixParser;
-
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.RotationAngleSphereFactory;
 import jhs.lc.jmf.BufferedImageVideoProducer;
@@ -24,6 +17,13 @@ import jhs.lc.sims.AngularSimulation;
 import jhs.lc.tools.inputs.AbstractTransitShape;
 import jhs.lc.tools.inputs.SimSpec;
 import jhs.lc.tools.inputs.SpecMapper;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.PosixParser;
 
 public class GenerateSimulatedData extends AbstractTool {
 	private static final Logger logger = Logger.getLogger(GenerateSimulatedData.class.getName());

@@ -6,7 +6,6 @@ import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jhs.lc.geom.ParametricFluxFunctionSource;
 import jhs.lc.opt.nn.ActivationFunctionType;
 import jhs.lc.opt.nn.InputType;
@@ -22,6 +21,8 @@ import jhs.math.nn.PlainNeuralNetwork;
 import jhs.math.nn.aa.SigmoidActivationFunction;
 import jhs.math.nn.aa.SignActivationFunction;
 import jhs.math.util.MathUtil;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class NeuralOptMethod extends AbstractOptMethod {
 	private static final Logger logger = Logger.getLogger(NeuralOptMethod.class.getName());
