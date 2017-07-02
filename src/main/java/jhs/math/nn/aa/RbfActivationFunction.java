@@ -33,17 +33,17 @@ public class RbfActivationFunction implements ActivationFunction {
 	}
 
 	@Override
-	public final double activation(double[] inputs, double[] parameters, int paramIndex) {
+	public final double activation(double[] inputs, int inputIndex, int numInputs, double[] parameters, int paramIndex) {
 		double distance;
 		switch(this.rbfType) {
 		case EUCLIDEAN:
-			distance = Math.sqrt(MathUtil.euclideanDistanceSquared(inputs, parameters, paramIndex)) - this.k1;
+			distance = Math.sqrt(MathUtil.euclideanDistanceSquared(inputs, inputIndex, numInputs, parameters, paramIndex)) - this.k1;
 			break;
 		case MANHATTAN:
-			distance = MathUtil.manhattanDistance(inputs, parameters, paramIndex) / this.k2 - this.k3;
+			distance = MathUtil.manhattanDistance(inputs, inputIndex, numInputs, parameters, paramIndex) / this.k2 - this.k3;
 			break;
 		case TRIANGULAR:
-			distance = this.tde.triangularDistance(inputs, parameters, paramIndex) / this.k4 - this.k5;
+			distance = this.tde.triangularDistance(inputs, inputIndex, numInputs, parameters, paramIndex) / this.k4 - this.k5;
 			break;
 		default:
 			throw new IllegalStateException(this.rbfType.name());

@@ -13,7 +13,7 @@ public abstract class AbstractSimpleActivationFunction implements ActivationFunc
 		this.biasFactor = paramFactor;
 	}
 	
-	protected abstract double activation(int numInputs, double dotProduct, double[] parameters, int extraParamIndex);
+	protected abstract double activation(double dotProduct, double[] parameters, int extraParamIndex);
 	protected abstract int getNumExtraParams(int numInputs);
 	
 	@Override
@@ -22,12 +22,11 @@ public abstract class AbstractSimpleActivationFunction implements ActivationFunc
 	}
 
 	@Override
-	public final double activation(double[] inputs, double[] parameters, int paramIndex) {
-		int len = inputs.length;
+	public final double activation(double[] inputs, int inputIndex, int numInputs, double[] parameters, int paramIndex) {
 		double sum = 0;
-		for(int i = 0; i < len; i++) {
-			sum += inputs[i] * parameters[i + paramIndex];
+		for(int i = 0; i < numInputs; i++) {
+			sum += inputs[i + inputIndex] * parameters[i + paramIndex];
 		}
-		return this.activation(len, sum * this.sumFactor + parameters[len + paramIndex] * this.biasFactor, parameters, paramIndex + len + 1);
+		return this.activation(sum * this.sumFactor + parameters[paramIndex + numInputs] * this.biasFactor, parameters, paramIndex + numInputs + 1);
 	}
 }

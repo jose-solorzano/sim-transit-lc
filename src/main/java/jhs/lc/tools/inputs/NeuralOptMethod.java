@@ -14,7 +14,7 @@ import jhs.lc.opt.nn.NNFluxOrOpacityFunction;
 import jhs.lc.opt.nn.OutputType;
 import jhs.math.nn.ActivationFunction;
 import jhs.math.nn.ActivationFunctionFactory;
-import jhs.math.nn.FullyConnectedNeuralStructure;
+import jhs.math.nn.DefaultNeuralStructure;
 import jhs.math.nn.NeuralNetwork;
 import jhs.math.nn.NeuralNetworkStructure;
 import jhs.math.nn.PlainNeuralNetwork;
@@ -126,7 +126,7 @@ public class NeuralOptMethod extends AbstractOptMethod {
 			}
 			hiddenLayerCounts[i] = numUnits;
 		}		
-		NeuralNetworkStructure structure = FullyConnectedNeuralStructure.create(hiddenLayerCounts, numOutputs, numVars, afFactory);
+		NeuralNetworkStructure structure = DefaultNeuralStructure.create(hiddenLayerCounts, numOutputs, numVars, afFactory);
 		int num = this.numNetworks;
 		if(num <= 0) {
 			throw new IllegalStateException("Invalid number of neural networks: " + num + ".");

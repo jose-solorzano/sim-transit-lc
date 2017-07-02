@@ -21,16 +21,16 @@ public final class MinActivationFunction implements ActivationFunction {
 	}
 
 	@Override
-	public final double activation(double[] inputs, double[] parameters, int paramIndex) {
+	public double activation(double[] inputs, int inputIndex, int numInputs,
+			double[] parameters, int paramIndex) {
 		double min;
-		int n = inputs.length;
-		if(n == 0) {
+		if(numInputs == 0) {
 			min = 0;
 		}
 		else {
 			min = Double.POSITIVE_INFINITY;
-			for(int i = 0; i < n; i++) {
-				double v = inputs[i] + parameters[paramIndex + i];
+			for(int i = 0; i < numInputs; i++) {
+				double v = inputs[inputIndex + i] + parameters[paramIndex + i];
 				if(v < min) {
 					min = v;
 				}

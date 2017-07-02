@@ -3,7 +3,7 @@ package jhs.lc.opt.nn;
 import jhs.math.nn.ActivationFunction;
 import jhs.math.nn.aa.AtanActivationFunction;
 import jhs.math.nn.aa.GaussianActivationFunction;
-import jhs.math.nn.aa.IdentityActivationFunction;
+import jhs.math.nn.aa.LinearActivationFunction;
 import jhs.math.nn.aa.LeakyReluActivationFunction;
 import jhs.math.nn.aa.MaxActivationFunction;
 import jhs.math.nn.aa.MinActivationFunction;
@@ -70,7 +70,7 @@ public enum ActivationFunctionType {
 		case ATAN:
 			return new AtanActivationFunction(numInputs);
 		case LINEAR:
-			return new IdentityActivationFunction(numInputs);
+			return new LinearActivationFunction(numInputs);
 		case GAUSSIAN:
 			return new GaussianActivationFunction(numInputs);
 		case RBF_C:

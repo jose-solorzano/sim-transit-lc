@@ -19,7 +19,7 @@ public final class AtanActivationFunction extends AbstractSimpleActivationFuncti
 	}
 
 	@Override
-	protected final double activation(int numInputs, double dotProduct, double[] parameters, int extraParamIndex) {
+	protected final double activation(double dotProduct, double[] parameters, int extraParamIndex) {
 		double a = this.a;
 		return StrictMath.atan(dotProduct) * a;
  	}
