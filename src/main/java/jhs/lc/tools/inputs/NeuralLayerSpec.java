@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class NeuralLayerSpec {
 	private int numUnits;
+	private int maxInputsPerUnit = Integer.MAX_VALUE;
 	private ActivationFunctionType[] activationFunctions;
 
 	@JsonProperty(required = true)
@@ -15,6 +16,14 @@ public class NeuralLayerSpec {
 
 	public final void setNumUnits(int numUnits) {
 		this.numUnits = numUnits;
+	}
+
+	public int getMaxInputsPerUnit() {
+		return maxInputsPerUnit;
+	}
+
+	public void setMaxInputsPerUnit(int maxInputsPerUnit) {
+		this.maxInputsPerUnit = maxInputsPerUnit;
 	}
 
 	public final ActivationFunctionType[] getActivationFunctions() {

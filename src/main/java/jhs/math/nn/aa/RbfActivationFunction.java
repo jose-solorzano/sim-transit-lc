@@ -13,6 +13,8 @@ public class RbfActivationFunction implements ActivationFunction {
 	private final double k3;
 	private final double k4;
 	private final double k5;
+	private final double k6;
+	private final double k7;
 
 	public RbfActivationFunction(int numInputs, RbfType rbfType) {
 		if(numInputs <= 0) {
@@ -25,6 +27,8 @@ public class RbfActivationFunction implements ActivationFunction {
 		this.k3 = Math.sqrt(numInputs * 1.81);
 		this.k4 = Math.sqrt(numInputs / 1.81);
 		this.k5 = 1.4 + 0.14 * Math.sqrt(Math.log(numInputs));
+		this.k6 = 4.3 / (5.0 + Math.sqrt(Math.log(numInputs)));
+		this.k7 = 1.294 + 2.15 * Math.sqrt(Math.log(numInputs));
 	}
 
 	@Override
@@ -41,6 +45,9 @@ public class RbfActivationFunction implements ActivationFunction {
 			break;
 		case MANHATTAN:
 			distance = MathUtil.manhattanDistance(inputs, inputIndex, numInputs, parameters, paramIndex) / this.k2 - this.k3;
+			break;
+		case SQUARE:
+			distance = MathUtil.squareDistance(inputs, inputIndex, numInputs, parameters, paramIndex) / this.k6 - this.k7;
 			break;
 		case TRIANGULAR:
 			distance = this.tde.triangularDistance(inputs, inputIndex, numInputs, parameters, paramIndex) / this.k4 - this.k5;

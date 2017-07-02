@@ -76,7 +76,7 @@ public enum ActivationFunctionType {
 		case RBF_C:
 			return new RbfActivationFunction(numInputs, RbfType.EUCLIDEAN);
 		case RBF_S:
-			return new RbfActivationFunction(numInputs, RbfType.MANHATTAN);
+			return new RbfActivationFunction(numInputs, RbfType.SQUARE);
 		case RBF_T:
 			return new RbfActivationFunction(numInputs, RbfType.TRIANGULAR);
 		default:

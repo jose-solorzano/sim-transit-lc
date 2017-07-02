@@ -44,6 +44,7 @@ public class TestActivationFunctions {
 		this.checkDistribution(new RbfActivationFunction(NUM_INPUTS, RbfType.EUCLIDEAN));
 		this.checkDistribution(new RbfActivationFunction(NUM_INPUTS, RbfType.MANHATTAN));
 		this.checkDistribution(new RbfActivationFunction(NUM_INPUTS, RbfType.TRIANGULAR));
+		this.checkDistribution(new RbfActivationFunction(NUM_INPUTS, RbfType.SQUARE));		
 		this.checkDistribution(new SumActivationFunction(NUM_INPUTS));
 	}
 	
@@ -64,6 +65,7 @@ public class TestActivationFunctions {
 		this.checkBoundaries(new RbfActivationFunction(NUM_INPUTS, RbfType.EUCLIDEAN));
 		this.checkBoundaries(new RbfActivationFunction(NUM_INPUTS, RbfType.MANHATTAN));
 		this.checkBoundaries(new RbfActivationFunction(NUM_INPUTS, RbfType.TRIANGULAR));
+		this.checkBoundaries(new RbfActivationFunction(NUM_INPUTS, RbfType.SQUARE));
 		this.checkBoundaries(new SumActivationFunction(NUM_INPUTS));
 	}
 	

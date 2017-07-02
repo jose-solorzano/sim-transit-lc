@@ -591,6 +591,19 @@ public class MathUtil {
 		return sumAbsDiff;		
 	}
 
+	public static final double squareDistance(double[] point1Container, int point1Index, int length, double[] point2Container, int point2Index) {
+		double max = Double.NEGATIVE_INFINITY;
+		for(int i = 0; i < length; i++) {
+			double value1 = point1Container[i + point1Index];
+			double value2 = point2Container[i + point2Index];
+			double diff = Math.abs(value1 - value2);
+			if(diff > max) {
+				max = diff;
+			}
+		}
+		return max;		
+	}
+
 	public static double[] round(double[] numbers, int decimals) {
 		double factor = Math.pow(10, decimals);
 		int length = numbers.length;

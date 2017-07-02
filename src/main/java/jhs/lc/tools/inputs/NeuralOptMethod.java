@@ -119,14 +119,21 @@ public class NeuralOptMethod extends AbstractOptMethod {
 			throw new IllegalStateException("No hidden layer specifications.");
 		}
 		int[] hiddenLayerCounts = new int[layerSpecs.length];
+		int[] maxInputsPerUnitCounts = new int[layerSpecs.length];
 		for(int i = 0; i < layerSpecs.length; i++) {
-			int numUnits = layerSpecs[i].getNumUnits();
+			NeuralLayerSpec layerSpec = layerSpecs[i];
+			int numUnits = layerSpec.getNumUnits();
 			if(numUnits <= 0) {
 				throw new IllegalStateException("Layer " + i + " has " + numUnits + " units.");
 			}
+			int maxInputsPerUnit = layerSpec.getMaxInputsPerUnit();
+			if(maxInputsPerUnit <= 0) {
+				throw new IllegalStateException("Layer " + i + " has " + maxInputsPerUnit + " max inputs per unit.");				
+			}
+			maxInputsPerUnitCounts[i] = maxInputsPerUnit;
 			hiddenLayerCounts[i] = numUnits;
 		}		
-		NeuralNetworkStructure structure = DefaultNeuralStructure.create(hiddenLayerCounts, numOutputs, numVars, afFactory);
+		NeuralNetworkStructure structure = DefaultNeuralStructure.create(hiddenLayerCounts, numOutputs, numVars, afFactory, maxInputsPerUnitCounts);
 		int num = this.numNetworks;
 		if(num <= 0) {
 			throw new IllegalStateException("Invalid number of neural networks: " + num + ".");
