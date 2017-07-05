@@ -8,7 +8,7 @@ import java.util.List;
 import jhs.lc.geom.FluxOrOpacityFunction;
 
 public final class ImageElementInfo {
-	private static final int CP_BOX_LENGTH = 8;
+	private static final int CP_BOX_LENGTH = 12;
 	private static final int CP_BOX_NPIXELS = CP_BOX_LENGTH * CP_BOX_LENGTH;
 	
 	final double totalPositiveFlux;
