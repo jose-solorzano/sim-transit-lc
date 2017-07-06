@@ -22,8 +22,9 @@ public final class SimpleMinActivationFunction implements ActivationFunction {
 	}
 
 	@Override
-	public final double activation(double[] inputs, double[] parameters, int paramIndex) {
-		double min = MathUtil.min(inputs);
+	public double activation(double[] inputs, int inputIndex, int numInputs,
+			double[] parameters, int paramIndex) {
+		double min = MathUtil.min(inputs, inputIndex, numInputs);
 		return ((min + this.b) / this.c + parameters[paramIndex]) / K;
 	}
 }

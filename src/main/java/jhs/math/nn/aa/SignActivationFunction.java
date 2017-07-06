@@ -8,7 +8,7 @@ public class SignActivationFunction extends AbstractSimpleActivationFunction {
 	}
 
 	@Override
-	protected final double activation(int numInputs, double dotProduct, double[] parameters, int extraParamIndex) {
+	protected final double activation(double dotProduct, double[] parameters, int extraParamIndex) {
 		return dotProduct >= 0 ? +1.0 : -1.0;
 	}
 
@@ -16,5 +16,4 @@ public class SignActivationFunction extends AbstractSimpleActivationFunction {
 	protected final int getNumExtraParams(int numInputs) {
 		return 0;
 	}
-
 }

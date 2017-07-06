@@ -23,8 +23,7 @@ public class TestLightCurveMatcher {
 		double baseSd = 40.0;
 		double baseSeparation = 50;
 		double[] targetFluxArray = this.gaussianFluxArray(random, 0.4, length, baseSd, baseSeparation);
-		double[] weights = ArrayUtil.repeat(1.0, length);
-		LightCurveMatcher matcher = new LightCurveMatcher(random, targetFluxArray, weights);
+		LightCurveMatcher matcher = new LightCurveMatcher(targetFluxArray, shiftOnly ? 0.5 : 0.0);
 				
 		for(int t = 0; t < 30; t++) {
 			double sd = shiftOnly ? baseSd : random.nextDouble() * 20.0 + 25.0;
@@ -32,7 +31,7 @@ public class TestLightCurveMatcher {
 			double[] compressed1 = this.gaussianFluxArray(random, 0.4, length, sd, separation);
 			FlexibleLightCurveMatchingResults results1 = matcher.flexibleMeanSquaredError(compressed1, shiftOnly);
 			assertEquals(sd / baseSd, results1.getA(), 0.08);
-			assertEquals(0, results1.getMinimizedError(), 0.0007);
+			assertEquals(0, results1.getMinimizedError(), 0.002);
 			assertTrue(results1.getBendMetric() < 0.3);
 		}
 		double[] compressed2 = this.gaussianFluxArray(random, 0.1, length, 40, 10);

@@ -19,7 +19,7 @@ public final class SigmoidActivationFunction extends AbstractSimpleActivationFun
 	}
 
 	@Override
-	protected final double activation(int numInputs, double dotProduct, double[] parameters, int extraParamIndex) {
+	protected final double activation(double dotProduct, double[] parameters, int extraParamIndex) {
 		double a = this.a;
 		return -a + 2 * a / (1.0 + StrictMath.exp(-dotProduct));
 	}

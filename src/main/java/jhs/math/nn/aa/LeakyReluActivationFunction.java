@@ -16,7 +16,7 @@ public class LeakyReluActivationFunction extends AbstractSimpleActivationFunctio
 	}
 
 	@Override
-	protected final double activation(int numInputs, double dotProduct, double[] parameters, int extraParamIndex) {
+	protected final double activation(double dotProduct, double[] parameters, int extraParamIndex) {
 		return (dotProduct >= 0 ? dotProduct : dotProduct * parameters[extraParamIndex]) * this.a + this.b;
 	}
 

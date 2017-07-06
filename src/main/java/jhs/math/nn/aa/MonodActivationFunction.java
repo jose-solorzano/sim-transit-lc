@@ -21,7 +21,7 @@ public final class MonodActivationFunction extends AbstractSimpleActivationFunct
 	}
 
 	@Override
-	protected final double activation(int numInputs, double dotProduct, double[] parameters, int extraParamIndex) {
+	protected final double activation(double dotProduct, double[] parameters, int extraParamIndex) {
 		double p = 1.0 / (1.0 + StrictMath.abs(dotProduct));
 		return p * this.a + this.b;
 	}

@@ -21,16 +21,16 @@ public final class MaxActivationFunction implements ActivationFunction {
 	}
 
 	@Override
-	public final double activation(double[] inputs, double[] parameters, int paramIndex) {
+	public double activation(double[] inputs, int inputIndex, int numInputs,
+			double[] parameters, int paramIndex) {
 		double max;
-		int n = inputs.length;
-		if(n == 0) {
+		if(numInputs == 0) {
 			max = 0;
 		}
 		else {
 			max = Double.NEGATIVE_INFINITY;
-			for(int i = 0; i < n; i++) {
-				double v = inputs[i] + parameters[paramIndex + i];
+			for(int i = 0; i < numInputs; i++) {
+				double v = inputs[inputIndex + i] + parameters[paramIndex + i];
 				if(v > max) {
 					max = v;
 				}
