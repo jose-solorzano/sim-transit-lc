@@ -9,48 +9,54 @@ import jhs.math.nn.NeuralNetworkStructure;
 import jhs.math.nn.PlainNeuralNetwork;
 
 public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
-	private final NeuralNetworkStructure structure;
-	private final InputType inputType;
-	private final OutputType outputType;
+	private final NeuralNetworkStructure[] structures;
+	private final InputFilterFactory inputFilterType;
+	private final OutputType[] outputTypes;
+	private final double[] outputBiases;
 	private final double imageWidth, imageHeight;
-	private final int numNetworks;
-	private final double outputBias;
-
-	public NNFluxFunctionSource(NeuralNetworkStructure structure, InputType inputType, OutputType outputType,
-			double imageWidth, double imageHeight, int numNetworks, double outputBias) {
+	
+	public NNFluxFunctionSource(NeuralNetworkStructure[] structures, InputFilterFactory inputFilterType,
+			OutputType[] outputTypes, double[] outputBiases, double imageWidth, double imageHeight) {
 		super();
-		this.structure = structure;
-		this.inputType = inputType;
-		this.outputType = outputType;
+		this.structures = structures;
+		this.inputFilterType = inputFilterType;
+		this.outputTypes = outputTypes;
+		this.outputBiases = outputBiases;
 		this.imageWidth = imageWidth;
 		this.imageHeight = imageHeight;
-		this.numNetworks = numNetworks;
-		this.outputBias = outputBias;
 	}
 
 	@Override
 	public final FluxOrOpacityFunction getFluxOrOpacityFunction(double[] parameters) {
-		int n = this.numNetworks;
-		int nppn = this.structure.getNumParameters();
-		if(parameters.length != nppn * n) {
-			throw new IllegalArgumentException("Incorrect number of parameters: " + parameters.length + ". Expecting multiple of " + nppn + ".");
+		NeuralNetworkStructure[] structures = this.structures;
+		final NeuralNetwork nn[] = new NeuralNetwork[structures.length];
+		int numInputFilterParams = this.inputFilterType.getNumParameters();
+		double[] inputFilterParams = Arrays.copyOf(parameters, numInputFilterParams);
+		InputFilter inputFilter = this.inputFilterType.createInputFilter(inputFilterParams);
+		int paramIndex = numInputFilterParams;
+		for(int i = 0; i < structures.length; i++) {
+			NeuralNetworkStructure nns = structures[i];
+			int toParamIndex = paramIndex + nns.getNumParameters();
+			double[] nparams = Arrays.copyOfRange(parameters, paramIndex, toParamIndex);
+			nn[i] = new PlainNeuralNetwork(nns, nparams);
+			paramIndex = toParamIndex;
 		}
-		final NeuralNetwork nn[] = new NeuralNetwork[n];
-		for(int i = 0; i < n; i++) {
-			double[] nparams = Arrays.copyOfRange(parameters, i * nppn, (i + 1) * nppn);
-			nn[i] = new PlainNeuralNetwork(this.structure, nparams);
-		}
-		return NNFluxOrOpacityFunction.create(nn, this.outputBias, inputType, outputType, imageWidth, imageHeight);
+		return NNFluxOrOpacityFunction.create(nn, inputFilter, outputTypes, outputBiases, imageWidth, imageHeight);
 	}
 
 	@Override
 	public final int getNumParameters() {
-		return this.structure.getNumParameters() * this.numNetworks;
+		int total = this.inputFilterType.getNumParameters();
+		NeuralNetworkStructure[] structures = this.structures;
+		for(int i = 0; i < structures.length; i++) {
+			total += structures[i].getNumParameters();
+		}
+		return total;
 	}
 
 	@Override
 	public final double getParameterScale(int paramIndex) {
-		// NN takes care of scaling.
+		// NN activation functions take care of scaling.
 		return 1.0;
 	}	
 }
