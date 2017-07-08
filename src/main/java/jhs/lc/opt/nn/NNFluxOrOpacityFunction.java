@@ -8,30 +8,27 @@ public final class NNFluxOrOpacityFunction implements FluxOrOpacityFunction {
 	private static final long serialVersionUID = 1L;
 	private static final double SF = 3.46;
 	
+	private final NeuralNetworkMetaInfo[] neuralNetworkSpecs;
 	private final NeuralNetwork[] neuralNetworks;
-	private final OutputType[] outputTypes;
-	private final double[] outputBiases;
 	private final InputFilter inputFilter;
 	private final double scale;
 	private final Rectangle2D boundingBox;
 	
-	public NNFluxOrOpacityFunction(NeuralNetwork[] neuralNetworks, OutputType[] outputTypes, double[] outputBiases,
+	public NNFluxOrOpacityFunction(NeuralNetworkMetaInfo[] neuralNetworkSpecs, NeuralNetwork[] neuralNetworks,
 			InputFilter inputFilter, double scale, Rectangle2D boundingBox) {
 		super();
+		this.neuralNetworkSpecs = neuralNetworkSpecs;
 		this.neuralNetworks = neuralNetworks;
-		this.outputTypes = outputTypes;
-		this.outputBiases = outputBiases;
 		this.inputFilter = inputFilter;
 		this.scale = scale;
 		this.boundingBox = boundingBox;
 	}
 
-	public static NNFluxOrOpacityFunction create(NeuralNetwork[] neuralNetworks, InputFilter inputFilter, OutputType[] outputTypes, double[] outputBiases,
-			double imageWidth, double imageHeight) {
+	public static NNFluxOrOpacityFunction create(NeuralNetworkMetaInfo[] neuralNetworkSpecs, NeuralNetwork[] neuralNetworks, InputFilter inputFilter, double imageWidth, double imageHeight) {
 		Rectangle2D boundingBox = new Rectangle2D.Double(-imageWidth / 2.0, -imageHeight / 2.0, imageWidth, imageHeight);
 		double dim = Math.sqrt((imageWidth * imageWidth + imageHeight * imageHeight) / 2);
 		double scale = SF / dim;
-		return new NNFluxOrOpacityFunction(neuralNetworks, outputTypes, outputBiases, inputFilter, scale, boundingBox);
+		return new NNFluxOrOpacityFunction(neuralNetworkSpecs, neuralNetworks, inputFilter, scale, boundingBox);
 	}
 
 	@Override
@@ -43,21 +40,21 @@ public final class NNFluxOrOpacityFunction implements FluxOrOpacityFunction {
 	}
 	
 	private final double combinedOpacity(double[] inputData) {
-		NeuralNetwork[] neuralNetworks = this.neuralNetworks;
-		OutputType[] outputTypes = this.outputTypes;
-		double[] outputBiases = this.outputBiases;		
 		double combinedValue = -1;
-		for(int i = 0; i < neuralNetworks.length; i++) {
-			NeuralNetwork nn = neuralNetworks[i];
+		NeuralNetwork[] nns = this.neuralNetworks;
+		NeuralNetworkMetaInfo[] nnmis = this.neuralNetworkSpecs;
+		for(int i = 0; i < nns.length; i++) {
+			NeuralNetwork nn = nns[i];
+			NeuralNetworkMetaInfo nnmi = nnmis[i];
 			double[] aa = nn.activations(inputData);
-			double a = aa[0] + outputBiases[i];
+			double a = aa[0] + nnmi.getOutputBias();
 			double b;
-			switch(outputTypes[i]) {
+			switch(nnmi.getOutputType()) {
 			case BINARY:
 				b = a >= 0 ? 0 : -1.0;
 				break;
 			case OPACITY:
-				b = (a - 1) / 2;
+				b = -0.5 + a / 2.0;
 				if(b < -1) {
 					b = -1;
 				}
@@ -66,7 +63,7 @@ public final class NNFluxOrOpacityFunction implements FluxOrOpacityFunction {
 				}
 				break;
 			default:
-				throw new IllegalStateException(outputTypes[i].name());
+				throw new IllegalStateException(nnmi.getOutputType().name());
 			}
 			if(b >= 0) {
 				combinedValue = b;

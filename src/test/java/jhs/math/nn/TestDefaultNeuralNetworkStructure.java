@@ -4,11 +4,12 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
 
+import jhs.math.nn.DefaultNeuralStructure.FCNeuron;
 import jhs.math.util.MathUtil;
 
 import org.junit.Test;
 
-public class TestFullyConnectedNeuralNetworkStructure {
+public class TestDefaultNeuralNetworkStructure {
 	@Test
 	public void testParamCharacteristics() {
 		int[] hiddenLayers = new int[] { 2 };
@@ -25,7 +26,7 @@ public class TestFullyConnectedNeuralNetworkStructure {
 				return new LocalActivationFunction(1 + layerIndex + unitIndex);
 			}
 		};
-		FullyConnectedNeuralStructure structure = FullyConnectedNeuralStructure.create(hiddenLayers, numOutputs, numVars, afFactory);
+		DefaultNeuralStructure structure = DefaultNeuralStructure.create(hiddenLayers, numOutputs, numVars, afFactory);
 		int np = structure.getNumParameters();
 		assertEquals(5 + 6 + 6 + 6 + 6, np);
 		assertEquals(3, structure.getNumOutputs());
@@ -59,6 +60,40 @@ public class TestFullyConnectedNeuralNetworkStructure {
 			assertEquals(expectedMax, MathUtil.max(activations), 0.0001);
 		}
 	}
+	
+	@Test
+	public void testPartiallyConnectedStructure() {
+		ActivationFunctionFactory afFactory = new ActivationFunctionFactory() {			
+			@Override
+			public ActivationFunction createOutputActivationFunction(int numInputs) {
+				return new LocalActivationFunction(0);
+			}
+			
+			@Override
+			public ActivationFunction createActivationFunction(int numInputs, int layerIndex, int unitIndex) {
+				return new LocalActivationFunction(0);
+			}
+		};
+		int[] hiddenLayers = new int[] { 2, 2 };
+		int numVars = 4;
+		int numOutputs = 3;
+		int[] maxInputsPerUnit = new int[] { 2, 1 };
+		DefaultNeuralStructure structure = DefaultNeuralStructure.create(hiddenLayers, numOutputs, numVars, afFactory, maxInputsPerUnit);
+		assertEquals(2 * 2 + 2 * 1 + 3 * 2, structure.getNumParameters());
+		int expectedParamIndex = 0;
+		for(int layer = 0; layer < hiddenLayers.length; layer++) {
+			int numUnits = hiddenLayers[layer];
+			int expectedInputIndex = 0;
+			for(int u = 0; u < numUnits; u++) {
+				FCNeuron neuron = structure.getNeuron(layer, u);
+				assertEquals(maxInputsPerUnit[layer], neuron.numInputs);
+				assertEquals("Error in layer " + layer + " unit " + u, expectedInputIndex, neuron.fisrtInputIndex);
+				assertEquals(expectedParamIndex, neuron.firstParamIndex);
+				expectedInputIndex += neuron.numInputs;
+				expectedParamIndex += neuron.activationFunction.getNumParameters(neuron.numInputs);
+			}
+		}
+	}
 
 	private static class LocalActivationFunction implements ActivationFunction {
 		private static final long serialVersionUID = 1L;
@@ -75,9 +110,10 @@ public class TestFullyConnectedNeuralNetworkStructure {
 		}
 
 		@Override
-		public double activation(double[] inputs, double[] parameters, int paramIndex) {
+		public double activation(double[] inputs, int inputIndex,
+				int numInputs, double[] parameters, int paramIndex) {
 			int len = inputs.length;
-			return Math.max(MathUtil.max(inputs), MathUtil.max(parameters, paramIndex, len + this.numExtraParams));
+			return Math.max(MathUtil.max(inputs, inputIndex, numInputs), MathUtil.max(parameters, paramIndex, len + this.numExtraParams));
 		}		
 	}
 	

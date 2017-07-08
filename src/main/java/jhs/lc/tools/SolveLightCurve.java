@@ -15,6 +15,7 @@ import javax.imageio.ImageIO;
 import javax.media.protocol.FileTypeDescriptor;
 
 import jhs.lc.data.DataSet;
+import jhs.lc.data.LightCurve;
 import jhs.lc.data.LightCurvePoint;
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.ParametricFluxFunctionSource;
@@ -41,12 +42,16 @@ import org.apache.commons.math.MathException;
 
 public class SolveLightCurve extends AbstractTool {
 	private static final Logger logger = Logger.getLogger(SolveLightCurve.class.getName());
+	
 	private static final int DEF_MAX_ITERATIONS = 100;
 	private static final int DEF_MAX_CONS_ITERATIONS = 200;
 	private static final int DEF_MAX_AGD_ITERATIONS = 100;	
 	private static final int DEF_POP_SIZE = 100;
-	private static final double DEF_VIDEO_DURATION = 60;
 	private static final int DEF_OUT_NUM_PIXELS = 100000;
+	private static final int TCP_WL = 7;
+	
+	private static final double DEF_VIDEO_DURATION = 60;
+	private static final double DEF_TREND_CHANGE_WEIGHT = 0.1;
 
 	private void run(CommandLine cmdLine) throws Exception {
 		String[] args = cmdLine.getArgs();
@@ -80,9 +85,9 @@ public class SolveLightCurve extends AbstractTool {
 		long seed = seedText == null ? 1 : Long.parseLong(seedText);
 		Random random = new Random(seed * 7 - 11);
 		
-		double minIndex = LimbDarkeningParams.minIndex(fluxArray);
-		double peakFraction = (minIndex + 0.5) / fluxArray.length;
-		logger.info("Transit peak estimated to occur at index " + minIndex + " of the flux sequence, whose length is " + fluxArray.length + ".");
+		//double minIndex = LimbDarkeningParams.minIndex(fluxArray);
+		//double peakFraction = (minIndex + 0.5) / fluxArray.length;
+		//logger.info("Transit peak estimated to occur at index " + minIndex + " of the flux sequence, whose length is " + fluxArray.length + ".");
 		LimbDarkeningParams ldParams = optSpec.getLimbDarkeningParams() == null ? LimbDarkeningParams.SUN : new LimbDarkeningParams(optSpec.getLimbDarkeningParams());
 		SolutionSampler sampler = this.getSampler(random, timestamps, fluxArray, ldParams, optSpec, cmdLine, specFile);
 		int populationSize = this.getOptionInt(cmdLine, "pop", DEF_POP_SIZE);
@@ -156,6 +161,8 @@ public class SolveLightCurve extends AbstractTool {
 			}
 		};
 		// TODO: configure with options
+		fitter.setInitialPoolSize(populationSize * 5);
+		fitter.setTrendChangeWeight(DEF_TREND_CHANGE_WEIGHT);
 		fitter.setCircuitShuffliness(0.5);
 		fitter.setDisplacementFactor(0.04);
 		fitter.setExpansionFactor(3.0);
@@ -200,13 +207,15 @@ public class SolveLightCurve extends AbstractTool {
 	private void writeData(LightCurvePoint[] lightCurve, Solution solution, String outFilePath) throws IOException {
 		double[] obsFluxArray = LightCurvePoint.fluxArray(lightCurve);
 		double[] modeledFlux = solution.produceModeledFlux().getFluxArray();
+		double[] obsTrendChangeProfile = LightCurve.trendChangeProfile(obsFluxArray, TCP_WL);
+		double[] modeledTrendChangeProfile = LightCurve.trendChangeProfile(modeledFlux, TCP_WL);
 		File file = new File(outFilePath);
 		PrintWriter out = new PrintWriter(file);
 		try {
-			out.println("Timestamp,Flux,ModeledFlux");
+			out.println("Timestamp,Flux,ModeledFlux,TCPFlux,TCPModeledFlux");
 			for(int i = 0; i < lightCurve.length; i++) {
 				LightCurvePoint p = lightCurve[i];
-				out.println(p.getTimestamp() + "," + obsFluxArray[i] + "," + modeledFlux[i]);
+				out.println(p.getTimestamp() + "," + obsFluxArray[i] + "," + modeledFlux[i] + "," + obsTrendChangeProfile[i] + "," + modeledTrendChangeProfile[i]);
 			}
 		} finally {
 			out.close();

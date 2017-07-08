@@ -37,7 +37,7 @@ public class TestTriangularDistanceEstimator {
 		for(int i = 0; i < numTests; i++) {
 			double[] point1 = MathUtil.sampleGaussian(random, 1.0, numVars);
 			double[] point2 = MathUtil.sampleGaussian(random, 1.0, numVars);
-			double d = est.triangularDistance(point1, point2, 0);
+			double d = est.triangularDistance(point1, 0, point1.length, point2, 0);
 			assertTrue(d >= 0);
 		}
 	}
@@ -45,7 +45,7 @@ public class TestTriangularDistanceEstimator {
 	private double distance(Random random, double x, double y) {
 		double[] origin = MathUtil.sampleGaussian(random, 1.0, 2);
 		double[] point = MathUtil.add(origin, new double[] { x, y });
-		return new TriangularDistanceEstimator().triangularDistance(point, origin, 0);
+		return new TriangularDistanceEstimator().triangularDistance(point, 0, point.length, origin, 0);
 	}
 	
 }

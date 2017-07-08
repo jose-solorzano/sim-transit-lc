@@ -1,5 +1,6 @@
 package jhs.lc.tools.inputs;
 
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.Random;
@@ -12,10 +13,10 @@ import jhs.lc.opt.nn.InputFilterFactory;
 import jhs.lc.opt.nn.InputFilterType;
 import jhs.lc.opt.nn.NNFluxFunctionSource;
 import jhs.lc.opt.nn.NNFluxOrOpacityFunction;
+import jhs.lc.opt.nn.NeuralNetworkMetaInfo;
 import jhs.lc.opt.nn.OutputType;
 import jhs.math.nn.ActivationFunction;
 import jhs.math.nn.ActivationFunctionFactory;
-import jhs.math.nn.FullyConnectedNeuralStructure;
 import jhs.math.nn.NeuralNetwork;
 import jhs.math.nn.NeuralNetworkStructure;
 import jhs.math.nn.PlainNeuralNetwork;
@@ -26,14 +27,10 @@ import jhs.math.util.MathUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class NeuralOptMethod extends AbstractOptMethod {
-	private static final Logger logger = Logger.getLogger(NeuralOptMethod.class.getName());
-	private static final int NUM_TESTS = 999;
-	
 	private double imageWidth;
 	private double imageHeight;
 
-	private InputFilterType inputFilter = InputFilterType.PLAIN;
-	
+	private InputFilterType inputFilter = InputFilterType.PLAIN;	
 	private NeuralNetworkSpec[] networks;
 
 	@JsonProperty(required = true)
@@ -74,20 +71,21 @@ public class NeuralOptMethod extends AbstractOptMethod {
 
 	@Override
 	public ParametricFluxFunctionSource createFluxFunctionSource(File context) throws Exception {
-		int numOutputs = 1;
 		InputFilterType inputType = this.inputFilter;
 		InputFilterFactory inputFilterFactory = inputType.getFactory();
-		NeuralNetworkStructure structure = FullyConnectedNeuralStructure.create(hiddenLayerCounts, numOutputs, numVars, afFactory);
-		int num = this.numNetworks;
-		if(num <= 0) {
-			throw new IllegalStateException("Invalid number of neural networks: " + num + ".");
-		}
-		if(logger.isLoggable(Level.INFO)) {
-			logger.info("Number of parameters in neural network structure: " + structure.getNumParameters());
-		}
-		double outputBias = this.estimateOutputBias(structure, imageWidth, imageHeight, inputType);
-		return new NNFluxFunctionSource(structures, inputType, outputTypes, outputBiases, imageWidth, imageHeight);
+		NeuralNetworkMetaInfo[] metaInfos = this.createMetaInfos(context, inputFilterFactory);
+		return new NNFluxFunctionSource(metaInfos, inputFilterFactory, imageWidth, imageHeight);
 	}
 	
-	
+	private NeuralNetworkMetaInfo[] createMetaInfos(File context, InputFilterFactory inputFilterFactory) throws Exception {
+		NeuralNetworkSpec[] nnSpecs = this.networks;
+		if(nnSpecs == null || nnSpecs.length == 0) {
+			throw new IllegalStateException("At least one neural network must be specified using the 'networks' property.");
+		}
+		NeuralNetworkMetaInfo[] nnmis = new NeuralNetworkMetaInfo[nnSpecs.length];
+		for(int i = 0; i < nnSpecs.length; i++) {
+			nnmis[i] = nnSpecs[i].createNeuralMetaInfo(context, inputFilterFactory, this.imageWidth, this.imageHeight);
+		}
+		return nnmis;
+	}
 }

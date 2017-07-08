@@ -16,6 +16,16 @@ public class SphereSpec {
 	private boolean limbDarkeningEnabled;
 	private double[] limbDarkeningParams;
 
+	private String comment;
+	
+	public final String getComment() {
+		return comment;
+	}
+
+	public final void setComment(String comment) {
+		this.comment = comment;
+	}
+
 	public final double getRelX() {
 		return relX;
 	}

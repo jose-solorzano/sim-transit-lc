@@ -13,6 +13,16 @@ public class OptSpec {
 	
 	private AbstractOptMethod method;
 	
+	private String comment;
+	
+	public final String getComment() {
+		return comment;
+	}
+
+	public final void setComment(String comment) {
+		this.comment = comment;
+	}
+
 	@JsonProperty(required = true)
 	public final int getWidthPixels() {
 		return widthPixels;

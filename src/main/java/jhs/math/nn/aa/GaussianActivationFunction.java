@@ -21,7 +21,7 @@ public final class GaussianActivationFunction extends AbstractSimpleActivationFu
 	}
 
 	@Override
-	protected final double activation(int numInputs, double dotProduct, double[] parameters, int extraParamIndex) {
+	protected final double activation(double dotProduct, double[] parameters, int extraParamIndex) {
 		double p = Math.exp(-(dotProduct * dotProduct));
 		return p * this.a + this.b;
 	}

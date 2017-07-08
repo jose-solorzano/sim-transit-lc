@@ -21,8 +21,8 @@ public final class SumActivationFunction implements ActivationFunction {
 	}
 
 	@Override
-	public final double activation(double[] inputs, double[] parameters, int paramIndex) {
-		double sum = MathUtil.sum(inputs);
+	public final double activation(double[] inputs, int inputIndex, int numInputs, double[] parameters, int paramIndex) {
+		double sum = MathUtil.sum(inputs, inputIndex, numInputs);
 		return (sum / this.b + parameters[paramIndex]) / K;
 	}
 }

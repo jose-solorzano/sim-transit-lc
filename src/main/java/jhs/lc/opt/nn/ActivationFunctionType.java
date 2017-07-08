@@ -3,13 +3,18 @@ package jhs.lc.opt.nn;
 import jhs.math.nn.ActivationFunction;
 import jhs.math.nn.aa.AtanActivationFunction;
 import jhs.math.nn.aa.GaussianActivationFunction;
-import jhs.math.nn.aa.IdentityActivationFunction;
+import jhs.math.nn.aa.LinearActivationFunction;
+import jhs.math.nn.aa.LinearNoBiasActivationFunction;
 import jhs.math.nn.aa.LeakyReluActivationFunction;
 import jhs.math.nn.aa.MaxActivationFunction;
 import jhs.math.nn.aa.MinActivationFunction;
 import jhs.math.nn.aa.MonodActivationFunction;
 import jhs.math.nn.aa.PiecewiseActivationFunction;
+import jhs.math.nn.aa.PulseActivationFunction;
 import jhs.math.nn.aa.RbfActivationFunction;
+import jhs.math.nn.aa.RbfLogActivationFunction;
+import jhs.math.nn.aa.RbfOriginActivationFunction;
+import jhs.math.nn.aa.RbfOriginLogActivationFunction;
 import jhs.math.nn.aa.RbfType;
 import jhs.math.nn.aa.SigmoidActivationFunction;
 import jhs.math.nn.aa.SignActivationFunction;
@@ -31,11 +36,16 @@ public enum ActivationFunctionType {
 	SIMPLE_MAX,
 	ATAN,
 	LINEAR,
+	LINEAR_NO_BIAS,
 	GAUSSIAN,
 	RBF_C,
 	RBF_S,
 	RBF_T,
-	SUM;
+	RBF0_C,
+	RBF0_S,
+	RBF0_T,
+	SUM, 
+	PULSE;
 	
 	private ActivationFunctionType() {
 	}
@@ -70,15 +80,25 @@ public enum ActivationFunctionType {
 		case ATAN:
 			return new AtanActivationFunction(numInputs);
 		case LINEAR:
-			return new IdentityActivationFunction(numInputs);
+			return new LinearActivationFunction(numInputs);
+		case LINEAR_NO_BIAS:
+			return new LinearNoBiasActivationFunction(numInputs);
+		case PULSE:
+			return new PulseActivationFunction(numInputs);
 		case GAUSSIAN:
 			return new GaussianActivationFunction(numInputs);
 		case RBF_C:
-			return new RbfActivationFunction(numInputs, RbfType.EUCLIDEAN);
+			return new RbfLogActivationFunction(numInputs, RbfType.EUCLIDEAN);
 		case RBF_S:
-			return new RbfActivationFunction(numInputs, RbfType.MANHATTAN);
+			return new RbfLogActivationFunction(numInputs, RbfType.SQUARE);
 		case RBF_T:
-			return new RbfActivationFunction(numInputs, RbfType.TRIANGULAR);
+			return new RbfLogActivationFunction(numInputs, RbfType.TRIANGULAR);
+		case RBF0_C:
+			return new RbfOriginLogActivationFunction(numInputs, RbfType.EUCLIDEAN);
+		case RBF0_S:
+			return new RbfOriginLogActivationFunction(numInputs, RbfType.SQUARE);
+		case RBF0_T:
+			return new RbfOriginLogActivationFunction(numInputs, RbfType.TRIANGULAR);
 		default:
 			throw new IllegalStateException("No AF for " + this + ".");
 		}

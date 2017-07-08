@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import jhs.math.clustering.KMeansClusteringProducer;
 import jhs.math.clustering.VectorialCluster;
@@ -24,8 +26,11 @@ import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealPointValuePair;
 
 public class CircuitSearchOptimizer {
-	private final Random random;
+	private static final Logger logger = Logger.getLogger(CircuitSearchOptimizer.class.getName());
+	private final Random random;	
 	private final int populationSize;
+	
+	private int initialPoolSize = 1000;
 	
 	private int maxTotalIterations = 2000;
 	private int maxIterationsWithClustering = 100;
@@ -36,7 +41,7 @@ public class CircuitSearchOptimizer {
 	private double displacementFactor = 0.03;
 	private double convergeDistance = 0.0001;
 	private double circuitShuffliness = 0.5;
-	private double crossoverProbability = 0.90;
+	private double crossoverProbability = 0.75;
 	
 	private double agdGradientFactor = 0.3;
 	
@@ -119,6 +124,14 @@ public class CircuitSearchOptimizer {
 
 	public final int getPopulationSize() {
 		return populationSize;
+	}
+
+	public final int getInitialPoolSize() {
+		return initialPoolSize;
+	}
+
+	public final void setInitialPoolSize(int initialPoolSize) {
+		this.initialPoolSize = initialPoolSize;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -431,13 +444,20 @@ public class CircuitSearchOptimizer {
 
 	private List<Particle> createInitialWorkingSet(int n, int vectorLength, CircuitSearchEvaluator errorFunction) throws MathException {
 		Random r = this.random;
-		List<Particle> result = new ArrayList<>();		
-		for(int i = 0; i < n; i++) {
+		int poolSize = this.initialPoolSize;
+		if(poolSize < n) {
+			poolSize = n;
+		}
+		if(logger.isLoggable(Level.INFO)) {
+			logger.info("Creating initial pool of " + poolSize + " particles.");
+		}
+		List<Particle> pool = new ArrayList<>();		
+		for(int i = 0; i < poolSize; i++) {
 			double[] params = MathUtil.sampleGaussian(r, 1.0, vectorLength);
 			CircuitSearchParamEvaluation eval = errorFunction.evaluate(params);
-			result.add(new Particle(params, eval.getClusteringPosition(), eval.getError()));
+			pool.add(new Particle(params, eval.getClusteringPosition(), eval.getError()));
 		}
-		return result;
+		return this.extractBestWithClustering(n, pool);
 	}
 	
 	protected void informProgress(int iteration, RealPointValuePair pointValue) {		

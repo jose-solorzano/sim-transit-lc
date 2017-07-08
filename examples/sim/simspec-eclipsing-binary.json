@@ -9,7 +9,6 @@
 	"viewportHeight": 6.0,
 	"widthPixels": 800,
 	"heightPixels": 400,
-	"videoDuration": 60,
 	"transitShape": {
 		"type": "spheres",
 		"spheres": [

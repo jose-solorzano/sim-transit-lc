@@ -541,10 +541,13 @@ public class MathUtil {
 	}
 
 	public static final double euclideanDistanceSquared(double[] point1, double[] point2Container, int point2Index) {
-		int length = point1.length;
+		return euclideanDistanceSquared(point1, 0, point1.length, point2Container, point2Index);
+	}
+
+	public static final double euclideanDistanceSquared(double[] point1Container, int point1Index, int length, double[] point2Container, int point2Index) {
 		double sumDiff2 = 0;
 		for(int i = 0; i < length; i++) {
-			double value1 = point1[i];
+			double value1 = point1Container[i + point1Index];
 			double value2 = point2Container[i + point2Index];
 			double diff = value1 - value2;
 			sumDiff2 += (diff * diff);
@@ -577,16 +580,28 @@ public class MathUtil {
 		return sumDiff2;
 	}
 	
-	public static final double manhattanDistance(double[] point1, double[] point2Container, int point2Index) {
-		int length = point1.length;
+	public static final double manhattanDistance(double[] point1Container, int point1Index, int length, double[] point2Container, int point2Index) {
 		double sumAbsDiff = 0;
 		for(int i = 0; i < length; i++) {
-			double value1 = point1[i];
+			double value1 = point1Container[i + point1Index];
 			double value2 = point2Container[i + point2Index];
 			double diff = value1 - value2;
 			sumAbsDiff += Math.abs(diff);
 		}
 		return sumAbsDiff;		
+	}
+
+	public static final double squareDistance(double[] point1Container, int point1Index, int length, double[] point2Container, int point2Index) {
+		double max = Double.NEGATIVE_INFINITY;
+		for(int i = 0; i < length; i++) {
+			double value1 = point1Container[i + point1Index];
+			double value2 = point2Container[i + point2Index];
+			double diff = Math.abs(value1 - value2);
+			if(diff > max) {
+				max = diff;
+			}
+		}
+		return max;		
 	}
 
 	public static double[] round(double[] numbers, int decimals) {

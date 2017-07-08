@@ -10,6 +10,11 @@ public final class PlainInputFilterFactory implements InputFilterFactory {
 	}
 
 	@Override
+	public final int getNumTransformedInputs() {
+		return 2;
+	}
+
+	@Override
 	public final InputFilter createInputFilter(double[] parameters) {
 		return new InputFilter() {			
 			@Override

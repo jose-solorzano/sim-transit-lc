@@ -13,6 +13,11 @@ public final class QuadraticXyInputFilterFactory implements InputFilterFactory {
 	}
 
 	@Override
+	public final int getNumTransformedInputs() {
+		return 5;
+	}
+
+	@Override
 	public final InputFilter createInputFilter(double[] parameters) {
 		return new InputFilter() {			
 			@Override

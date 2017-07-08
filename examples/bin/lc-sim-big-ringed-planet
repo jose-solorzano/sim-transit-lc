@@ -6,4 +6,4 @@ mkdir -p ${workDir}
 
 echo "Simulation of big ringed planet transit."
 
-${projectDir}/bin/lc-sim -o ${workDir}/sim-big-ringed-planet.csv -video ${workDir}/sim-big-ringed-planet.mov ${projectDir}/examples/sim/big-ringed-planet.json
+${projectDir}/bin/lc-sim -o ${workDir}/sim-big-ringed-planet.csv -video ${workDir}/sim-big-ringed-planet.mov ${projectDir}/examples/sim/simspec-big-ringed-planet.json

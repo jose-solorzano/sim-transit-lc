@@ -8,13 +8,16 @@ import java.util.logging.Logger;
 
 import jhs.lc.geom.ParametricFluxFunctionSource;
 import jhs.lc.opt.nn.ActivationFunctionType;
+import jhs.lc.opt.nn.InputFilter;
+import jhs.lc.opt.nn.InputFilterFactory;
 import jhs.lc.opt.nn.InputFilterType;
 import jhs.lc.opt.nn.NNFluxFunctionSource;
 import jhs.lc.opt.nn.NNFluxOrOpacityFunction;
+import jhs.lc.opt.nn.NeuralNetworkMetaInfo;
 import jhs.lc.opt.nn.OutputType;
 import jhs.math.nn.ActivationFunction;
 import jhs.math.nn.ActivationFunctionFactory;
-import jhs.math.nn.FullyConnectedNeuralStructure;
+import jhs.math.nn.DefaultNeuralStructure;
 import jhs.math.nn.NeuralNetwork;
 import jhs.math.nn.NeuralNetworkStructure;
 import jhs.math.nn.PlainNeuralNetwork;
@@ -24,7 +27,7 @@ import jhs.math.util.MathUtil;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class NeuralNetworkSpec extends AbstractOptMethod {
+public class NeuralNetworkSpec {
 	private static final Logger logger = Logger.getLogger(NeuralNetworkSpec.class.getName());
 	private static final int NUM_TESTS = 999;
 	
@@ -33,6 +36,16 @@ public class NeuralNetworkSpec extends AbstractOptMethod {
 	private ActivationFunctionType outputActivationFunction;
 
 	private double imageOpacityExpectation = 0.05;
+	
+	private String comment;
+	
+	public final String getComment() {
+		return comment;
+	}
+
+	public final void setComment(String comment) {
+		this.comment = comment;
+	}
 
 	public final double getImageOpacityExpectation() {
 		return imageOpacityExpectation;
@@ -68,34 +81,35 @@ public class NeuralNetworkSpec extends AbstractOptMethod {
 		this.hiddenLayers = hiddenLayers;
 	}
 
-	@Override
-	public ParametricFluxFunctionSource createFluxFunctionSource(File context) throws Exception {
+	public NeuralNetworkMetaInfo createNeuralMetaInfo(File context, InputFilterFactory inputFilterFactory, double imageWidth, double imageHeight) throws Exception {
 		int numOutputs = 1;
-		InputFilterType inputType = this.inputType;
-		int numVars = NNFluxOrOpacityFunction.getNumInputs(inputType);
+		int numVars = inputFilterFactory.getNumTransformedInputs();
 		ActivationFunctionFactory afFactory = this.getActivationFunctionFactory();
 		NeuralLayerSpec[] layerSpecs = this.hiddenLayers;
 		if(layerSpecs == null) {
 			throw new IllegalStateException("No hidden layer specifications.");
 		}
 		int[] hiddenLayerCounts = new int[layerSpecs.length];
+		int[] maxInputsPerUnitCounts = new int[layerSpecs.length];
 		for(int i = 0; i < layerSpecs.length; i++) {
-			int numUnits = layerSpecs[i].getNumUnits();
+			NeuralLayerSpec layerSpec = layerSpecs[i];
+			int numUnits = layerSpec.getNumUnits();
 			if(numUnits <= 0) {
 				throw new IllegalStateException("Layer " + i + " has " + numUnits + " units.");
 			}
+			int maxInputsPerUnit = layerSpec.getMaxInputsPerUnit();
+			if(maxInputsPerUnit <= 0) {
+				throw new IllegalStateException("Layer " + i + " has " + maxInputsPerUnit + " max inputs per unit.");				
+			}
+			maxInputsPerUnitCounts[i] = maxInputsPerUnit;
 			hiddenLayerCounts[i] = numUnits;
 		}		
-		NeuralNetworkStructure structure = FullyConnectedNeuralStructure.create(hiddenLayerCounts, numOutputs, numVars, afFactory);
-		int num = this.numNetworks;
-		if(num <= 0) {
-			throw new IllegalStateException("Invalid number of neural networks: " + num + ".");
-		}
+		NeuralNetworkStructure structure = DefaultNeuralStructure.create(hiddenLayerCounts, numOutputs, numVars, afFactory, maxInputsPerUnitCounts);		
 		if(logger.isLoggable(Level.INFO)) {
 			logger.info("Number of parameters in neural network structure: " + structure.getNumParameters());
 		}
-		double outputBias = this.estimateOutputBias(structure, imageWidth, imageHeight, inputType);
-		return new NNFluxFunctionSource(structure, inputType, outputType, imageWidth, imageHeight, num, outputBias);
+		double outputBias = this.estimateOutputBias(structure, imageWidth, imageHeight, inputFilterFactory);
+		return new NeuralNetworkMetaInfo(structure, outputType, outputBias);
 	}
 	
 	private ActivationFunctionFactory getActivationFunctionFactory() {
@@ -105,7 +119,7 @@ public class NeuralNetworkSpec extends AbstractOptMethod {
 		}
 		ActivationFunctionType oafType = this.outputActivationFunction;
 		if(oafType == null) {
-			oafType = ActivationFunctionType.MIN;
+			oafType = ActivationFunctionType.SIMPLE_MAX;
 		}
 		final ActivationFunctionType oafTypeFinal = oafType;
 		return new ActivationFunctionFactory() {			
@@ -127,20 +141,23 @@ public class NeuralNetworkSpec extends AbstractOptMethod {
 		};
 	}
 	
-	private double estimateOutputBias(NeuralNetworkStructure structure, double imageWidth, double imageHeight, InputFilterType inputType) {
+	private double estimateOutputBias(NeuralNetworkStructure structure, double imageWidth, double imageHeight, InputFilterFactory inputFilterFactory) {
 		double ioe = this.imageOpacityExpectation;
 		if(ioe < 0 || ioe > 1.0 || Double.isNaN(ioe)) {
 			throw new IllegalStateException("Image opacity expectation: " + ioe);
 		}
 		Random random = new Random(1759); 
+		int numInputFilterParams = inputFilterFactory.getNumParameters();
 		int numParams = structure.getNumParameters();
 		double[] results = new double[NUM_TESTS];
 		for(int i = 0; i < NUM_TESTS; i++) {
+			double[] ifParams = MathUtil.sampleGaussian(random, 1.0, numInputFilterParams);
+			InputFilter inputFilter = inputFilterFactory.createInputFilter(ifParams);
 			double[] randomParams = MathUtil.sampleGaussian(random, 1.0, numParams);
 			NeuralNetwork nn = new PlainNeuralNetwork(structure, randomParams);
 			double x = -imageWidth / 2 + random.nextDouble() * imageWidth;
 			double y = -imageHeight / 2 + random.nextDouble() * imageHeight;
-			double[] inputData = NNFluxOrOpacityFunction.getInputData(x, y, inputType);
+			double[] inputData = inputFilter.getInput(x, y);
 			double[] activations = nn.activations(inputData);
 			if(activations.length != 1) {
 				throw new IllegalStateException("Expecting one output.");

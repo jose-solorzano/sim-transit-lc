@@ -2,7 +2,7 @@ package jhs.lc.opt.nn;
 
 import jhs.math.nn.NeuralNetworkStructure;
 
-public class NeuralNetworkMetaInfo {
+public final class NeuralNetworkMetaInfo {
 	private final NeuralNetworkStructure structure;
 	private final OutputType outputType;
 	private final double outputBias;
