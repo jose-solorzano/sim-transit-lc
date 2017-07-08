@@ -30,6 +30,18 @@ public abstract class AbstractTool {
 		}
 	}
 	
+	protected Double getOptionDouble(CommandLine cmdLine, String option, Double defaultValue) {
+		String textValue = cmdLine.getOptionValue(option);
+		if(textValue == null) {
+			return defaultValue;
+		}
+		try {
+			return Double.parseDouble(textValue);
+		} catch(NumberFormatException nfe) {
+			throw new IllegalStateException("Option " + option + " requires an numeric value.");
+		}
+	}
+	
 	protected void configureLoggingLevel(CommandLine cmdLine) {
 		Level level = Level.WARNING;
 		try {

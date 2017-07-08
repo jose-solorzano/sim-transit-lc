@@ -18,7 +18,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
 
-public class EstimateTransitProperties {
+public class EstimateTransitProperties extends AbstractTool {
 	private static final Logger logger = Logger.getLogger(EstimateTransitProperties.class.getName());
 	private static final int DEFAULT_WL = 7;
 	
@@ -89,31 +89,6 @@ public class EstimateTransitProperties {
 			index += increment;
 		}
 	}
-	
-	private int getOptionInt(CommandLine cmdLine, String option, int defaultValue) {
-		String textValue = cmdLine.getOptionValue(option);
-		if(textValue == null) {
-			return defaultValue;
-		}
-		try {
-			return Integer.parseInt(textValue);
-		} catch(NumberFormatException nfe) {
-			throw new IllegalStateException("Option " + option + " requires an integer value.");
-		}
-	}
-
-	private Double getOptionDouble(CommandLine cmdLine, String option, Double defaultValue) {
-		String textValue = cmdLine.getOptionValue(option);
-		if(textValue == null) {
-			return defaultValue;
-		}
-		try {
-			return Double.parseDouble(textValue);
-		} catch(NumberFormatException nfe) {
-			throw new IllegalStateException("Option " + option + " requires an numeric value.");
-		}
-	}
-
 	
 	private void writeData(LightCurvePoint[] lightCurve, double[] trendChangeProfile, String outFilePath) throws IOException {
 		double[] timestamps = LightCurvePoint.timestamps(lightCurve);
