@@ -7,29 +7,37 @@ import java.util.Random;
 import jhs.math.nn.aa.AtanActivationFunction;
 import jhs.math.nn.aa.GaussianActivationFunction;
 import jhs.math.nn.aa.LinearActivationFunction;
+import jhs.math.nn.aa.LinearNoBiasActivationFunction;
 import jhs.math.nn.aa.LeakyReluActivationFunction;
 import jhs.math.nn.aa.MaxActivationFunction;
 import jhs.math.nn.aa.MinActivationFunction;
 import jhs.math.nn.aa.MonodActivationFunction;
 import jhs.math.nn.aa.PiecewiseActivationFunction;
-import jhs.math.nn.aa.RbfActivationFunction;
+import jhs.math.nn.aa.PulseActivationFunction;
+import jhs.math.nn.aa.RbfLogActivationFunction;
+import jhs.math.nn.aa.RbfOriginLogActivationFunction;
 import jhs.math.nn.aa.RbfType;
 import jhs.math.nn.aa.SigmoidActivationFunction;
 import jhs.math.nn.aa.SignActivationFunction;
 import jhs.math.nn.aa.SimpleMaxActivationFunction;
 import jhs.math.nn.aa.SimpleMinActivationFunction;
 import jhs.math.nn.aa.SumActivationFunction;
-import jhs.math.util.ArrayUtil;
 import jhs.math.util.MathUtil;
 
 import org.junit.Test;
 
 public class TestActivationFunctions {
-	private static final int NUM_INPUTS = 30;
+	private static final int NUM_INPUTS = 2;
 
 	@Test
+	public void placeholder() {
+	}
+	
+	@Test
 	public void testResponseDistribution() {
+		this.checkDistribution(new PulseActivationFunction(NUM_INPUTS));
 		this.checkDistribution(new LinearActivationFunction(NUM_INPUTS));
+		this.checkDistribution(new LinearNoBiasActivationFunction(NUM_INPUTS));		
 		this.checkDistribution(new SigmoidActivationFunction(NUM_INPUTS));
 		this.checkDistribution(new LeakyReluActivationFunction(NUM_INPUTS));
 		this.checkDistribution(new GaussianActivationFunction(NUM_INPUTS));
@@ -41,16 +49,22 @@ public class TestActivationFunctions {
 		this.checkDistribution(new SimpleMinActivationFunction(NUM_INPUTS));
 		this.checkDistribution(new MaxActivationFunction(NUM_INPUTS));
 		this.checkDistribution(new MinActivationFunction(NUM_INPUTS));
-		this.checkDistribution(new RbfActivationFunction(NUM_INPUTS, RbfType.EUCLIDEAN));
-		this.checkDistribution(new RbfActivationFunction(NUM_INPUTS, RbfType.MANHATTAN));
-		this.checkDistribution(new RbfActivationFunction(NUM_INPUTS, RbfType.TRIANGULAR));
-		this.checkDistribution(new RbfActivationFunction(NUM_INPUTS, RbfType.SQUARE));		
+		this.checkDistribution(new RbfLogActivationFunction(NUM_INPUTS, RbfType.EUCLIDEAN));
+		this.checkDistribution(new RbfLogActivationFunction(NUM_INPUTS, RbfType.MANHATTAN));
+		this.checkDistribution(new RbfLogActivationFunction(NUM_INPUTS, RbfType.TRIANGULAR));
+		this.checkDistribution(new RbfLogActivationFunction(NUM_INPUTS, RbfType.SQUARE));		
+		this.checkDistribution(new RbfOriginLogActivationFunction(NUM_INPUTS, RbfType.EUCLIDEAN));
+		this.checkDistribution(new RbfOriginLogActivationFunction(NUM_INPUTS, RbfType.MANHATTAN));
+		this.checkDistribution(new RbfOriginLogActivationFunction(NUM_INPUTS, RbfType.TRIANGULAR));
+		this.checkDistribution(new RbfOriginLogActivationFunction(NUM_INPUTS, RbfType.SQUARE));		
 		this.checkDistribution(new SumActivationFunction(NUM_INPUTS));
 	}
 	
 	@Test
 	public void testInputParamBoundaries() {
+		this.checkBoundaries(new PulseActivationFunction(NUM_INPUTS));
 		this.checkBoundaries(new LinearActivationFunction(NUM_INPUTS));
+		this.checkBoundaries(new LinearNoBiasActivationFunction(NUM_INPUTS));		
 		this.checkBoundaries(new SigmoidActivationFunction(NUM_INPUTS));
 		this.checkBoundaries(new LeakyReluActivationFunction(NUM_INPUTS));
 		this.checkBoundaries(new GaussianActivationFunction(NUM_INPUTS));
@@ -62,10 +76,14 @@ public class TestActivationFunctions {
 		this.checkBoundaries(new SimpleMinActivationFunction(NUM_INPUTS));
 		this.checkBoundaries(new MaxActivationFunction(NUM_INPUTS));
 		this.checkBoundaries(new MinActivationFunction(NUM_INPUTS));
-		this.checkBoundaries(new RbfActivationFunction(NUM_INPUTS, RbfType.EUCLIDEAN));
-		this.checkBoundaries(new RbfActivationFunction(NUM_INPUTS, RbfType.MANHATTAN));
-		this.checkBoundaries(new RbfActivationFunction(NUM_INPUTS, RbfType.TRIANGULAR));
-		this.checkBoundaries(new RbfActivationFunction(NUM_INPUTS, RbfType.SQUARE));
+		this.checkBoundaries(new RbfLogActivationFunction(NUM_INPUTS, RbfType.EUCLIDEAN));
+		this.checkBoundaries(new RbfLogActivationFunction(NUM_INPUTS, RbfType.MANHATTAN));
+		this.checkBoundaries(new RbfLogActivationFunction(NUM_INPUTS, RbfType.TRIANGULAR));
+		this.checkBoundaries(new RbfLogActivationFunction(NUM_INPUTS, RbfType.SQUARE));
+		this.checkBoundaries(new RbfOriginLogActivationFunction(NUM_INPUTS, RbfType.EUCLIDEAN));
+		this.checkBoundaries(new RbfOriginLogActivationFunction(NUM_INPUTS, RbfType.MANHATTAN));
+		this.checkBoundaries(new RbfOriginLogActivationFunction(NUM_INPUTS, RbfType.TRIANGULAR));
+		this.checkBoundaries(new RbfOriginLogActivationFunction(NUM_INPUTS, RbfType.SQUARE));
 		this.checkBoundaries(new SumActivationFunction(NUM_INPUTS));
 	}
 	
@@ -95,7 +113,7 @@ public class TestActivationFunctions {
 	
 	private void checkDistribution(ActivationFunction af) {
 		int numParams = af.getNumParameters(NUM_INPUTS);
-		int n = 1000;
+		int n = 5000;
 		Random random = new Random(17);
 		double[] a = new double[n];
 		for(int i = 0; i < n; i++) {
@@ -107,7 +125,7 @@ public class TestActivationFunctions {
 		double sd = MathUtil.standardDev(a, mean);
 		System.out.println("Mean: " + mean);
 		System.out.println("SD: " + sd);
-		assertEquals(0, mean, 0.3);
+		assertEquals(0, mean, 0.5);
 		assertEquals(1.0, sd, 0.1);
 	}
 }

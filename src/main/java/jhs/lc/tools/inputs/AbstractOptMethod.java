@@ -20,4 +20,14 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 })
 public abstract class AbstractOptMethod {
 	public abstract ParametricFluxFunctionSource createFluxFunctionSource(File context) throws Exception;	
+	
+	private String comment;
+	
+	public final String getComment() {
+		return comment;
+	}
+
+	public final void setComment(String comment) {
+		this.comment = comment;
+	}
 }

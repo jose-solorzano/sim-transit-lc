@@ -262,7 +262,9 @@ public class CSLightCurveFitter {
 			double sdParams = MathUtil.standardDev(params, 0);
 			double diffWithNormal = sdParams - 1.0;			
 			double error = baseError + (diffWithNormal * diffWithNormal * this.lambda);
-			double[] clusteringPosition = this.getClusteringPosition(modeledFlux);
+			//TODO Improve clustering position
+			//double[] clusteringPosition = this.getClusteringPosition(modeledFlux);
+			double[] clusteringPosition = sf.getClusteringPosition();
 			return new CircuitSearchParamEvaluation(error, clusteringPosition);
 		}
 
@@ -271,10 +273,12 @@ public class CSLightCurveFitter {
 			return this.evaluate(parameters).getError();
 		}
 		
+		/*
 		private double[] getClusteringPosition(double[] modeledFlux) {
 			double[] trendChangeArray = LightCurveMatcher.trendChangeProfile(modeledFlux);
 			return SeriesUtil.skewSeries(trendChangeArray, 0, this.tcCosd, this.tcWidth);
 		}
+		*/
 
 		@Override
 		public final double[] recommendEpsilon(double[] params) {

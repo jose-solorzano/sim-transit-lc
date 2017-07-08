@@ -17,7 +17,17 @@ public class SimSpec {
 	private int numSteps;
 	
 	private AbstractTransitShape transitShape;
+
+	private String comment;
 	
+	public final String getComment() {
+		return comment;
+	}
+
+	public final void setComment(String comment) {
+		this.comment = comment;
+	}
+
 	public final Double getViewportWidth() {
 		return viewportWidth;
 	}

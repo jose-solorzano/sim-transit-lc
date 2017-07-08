@@ -1,0 +1,23 @@
+{
+	"widthPixels": 64,
+	"heightPixels": 64,
+	"orbitPeriod": 150,
+	"orbitRadius": 250,
+	"orbitRadiusFlexibility": 0.1,
+	"method": {
+		"type": "neural",
+		"imageWidth": 2.0,
+		"imageHeight": 2.0,
+		"inputFilter": "plain",
+		"networks": {
+			"outputType": "binary",
+			"outputActivationFunction": "simple_max",
+			"hiddenLayers": [
+				{ "numUnits": 2, "activationFunctions": [ "linear" ],
+					"comment": "Linear transformation of X, Y." },
+				{ "numUnits": 1, "activationFunctions": [ "rbf_t" ],
+					"comment": "Equilateral triangle in bent space." }
+			]
+		}		
+	}
+}

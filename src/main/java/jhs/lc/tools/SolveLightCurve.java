@@ -51,7 +51,7 @@ public class SolveLightCurve extends AbstractTool {
 	private static final int TCP_WL = 7;
 	
 	private static final double DEF_VIDEO_DURATION = 60;
-	private static final double DEF_TREND_CHANGE_WEIGHT = 0.2;
+	private static final double DEF_TREND_CHANGE_WEIGHT = 0.1;
 
 	private void run(CommandLine cmdLine) throws Exception {
 		String[] args = cmdLine.getArgs();

@@ -9,6 +9,16 @@ public class NeuralLayerSpec {
 	private int maxInputsPerUnit = Integer.MAX_VALUE;
 	private ActivationFunctionType[] activationFunctions;
 
+	private String comment;
+	
+	public final String getComment() {
+		return comment;
+	}
+
+	public final void setComment(String comment) {
+		this.comment = comment;
+	}
+
 	@JsonProperty(required = true)
 	public final int getNumUnits() {
 		return numUnits;

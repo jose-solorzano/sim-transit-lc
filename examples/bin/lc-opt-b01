@@ -1,0 +1,16 @@
+#!/bin/bash
+
+projectDir=`dirname $0`/../..
+workDir=${projectDir}/work
+mkdir -p ${workDir}
+
+echo "BO1 optimization: Triangle transit, using RBF_T activation function."
+
+OPTS="-pop 50 -noi 300 -npci 100 -nagd 100"
+
+${projectDir}/bin/lc-opt ${OPTS} \
+	-i ${projectDir}/examples/lc/sim-b01.csv \
+	-o ${workDir}/opt-b01.csv \
+	-or ${workDir}/opt-b01.json \
+	-oi ${workDir}/opt-b01.png \
+	${projectDir}/examples/opt/optspec-b01.json
