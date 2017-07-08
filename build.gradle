@@ -28,7 +28,7 @@ task dumpDependencies {
   	cp += File.pathSeparator
     cp += String.valueOf(it);
   }
-  def depsFile = new File('./build/dependencies.txt')
+  def depsFile = new File('.dependencies.txt')
   depsFile.write(cp);
 }
 
