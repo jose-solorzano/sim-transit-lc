@@ -23,15 +23,7 @@ public class EstimateTransitProperties {
 	private static final int DEFAULT_WL = 7;
 	
 	private void run(CommandLine cmdLine) throws Exception {
-		Level level = Level.WARNING;
-		try {
-			String logText = cmdLine.getOptionValue("log");
-			if(logText != null) {
-				level = Level.parse(logText);
-			}
-		} finally {
-			logger.setLevel(level);
-		}
+		this.configureLoggingLevel(cmdLine);
 		Double orbitPeriod = this.getOptionDouble(cmdLine, "p", null);
 		if(orbitPeriod == null) {
 			throw new IllegalStateException("Option -p (orbit period) is required.");

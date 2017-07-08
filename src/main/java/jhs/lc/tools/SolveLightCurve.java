@@ -55,15 +55,7 @@ public class SolveLightCurve extends AbstractTool {
 
 	private void run(CommandLine cmdLine) throws Exception {
 		String[] args = cmdLine.getArgs();
-		Level level = Level.WARNING;
-		try {
-			String logText = cmdLine.getOptionValue("log");
-			if(logText != null) {
-				level = Level.parse(logText);
-			}
-		} finally {
-			logger.setLevel(level);
-		}
+		this.configureLoggingLevel(cmdLine);
 		if(args.length != 1) {
 			logger.info("run(): Command line arguments: " + Arrays.toString(args));
 			throw new IllegalArgumentException("One command line argument is required: The optimization specification JSON file.");

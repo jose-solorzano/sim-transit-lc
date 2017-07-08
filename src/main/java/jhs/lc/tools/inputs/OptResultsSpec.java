@@ -1,7 +1,6 @@
 package jhs.lc.tools.inputs;
 
 public class OptResultsSpec {
-	private double peakFraction;
 	private double orbitRadius;
 	private double rmse;
 	private double optElapsedSeconds;
@@ -14,14 +13,6 @@ public class OptResultsSpec {
 
 	public final void setOrbitRadius(double orbitRadius) {
 		this.orbitRadius = orbitRadius;
-	}
-
-	public final double getPeakFraction() {
-		return peakFraction;
-	}
-
-	public final void setPeakFraction(double peakFraction) {
-		this.peakFraction = peakFraction;
 	}
 
 	public final double getRmse() {

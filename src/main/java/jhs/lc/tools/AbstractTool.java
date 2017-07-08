@@ -1,5 +1,8 @@
 package jhs.lc.tools;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.apache.commons.cli.CommandLine;
 
 public abstract class AbstractTool {
@@ -24,6 +27,18 @@ public abstract class AbstractTool {
 			return Double.parseDouble(textValue);
 		} catch(NumberFormatException nfe) {
 			throw new IllegalStateException("Option " + option + " requires a numeric value.");
+		}
+	}
+	
+	protected void configureLoggingLevel(CommandLine cmdLine) {
+		Level level = Level.WARNING;
+		try {
+			String logText = cmdLine.getOptionValue("log");
+			if(logText != null) {
+				level = Level.parse(logText);
+			}
+		} finally {
+			Logger.getLogger("").setLevel(level);
 		}
 	}
 	
