@@ -7,18 +7,22 @@ import jhs.lc.geom.ParametricFluxFunctionSource;
 import jhs.math.nn.NeuralNetwork;
 import jhs.math.nn.NeuralNetworkStructure;
 import jhs.math.nn.PlainNeuralNetwork;
+import jhs.math.util.MathUtil;
 
 public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
+	private static final double LAMBDA_FACTOR = 0.03;
 	private final NeuralNetworkMetaInfo[] metaInfos;
 	private final InputFilterFactory inputFilterType;
 	private final double imageWidth, imageHeight;
+	private final double lambda;
 	
-	public NNFluxFunctionSource(NeuralNetworkMetaInfo[] structures, InputFilterFactory inputFilterType, double imageWidth, double imageHeight) {
+	public NNFluxFunctionSource(NeuralNetworkMetaInfo[] structures, InputFilterFactory inputFilterType, double imageWidth, double imageHeight, double lambda) {
 		super();
 		this.metaInfos = structures;
 		this.inputFilterType = inputFilterType;
 		this.imageWidth = imageWidth;
 		this.imageHeight = imageHeight;
+		this.lambda = lambda;
 	}
 
 	@Override
@@ -36,7 +40,10 @@ public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
 			nn[i] = new PlainNeuralNetwork(nns, nparams);
 			paramIndex = toParamIndex;
 		}
-		return NNFluxOrOpacityFunction.create(metaInfos, nn, inputFilter, imageWidth, imageHeight);
+		double sdParams = MathUtil.standardDev(parameters, 0);
+		double diffWithNormal = sdParams - 1.0;			
+		double extraOptimizerError = diffWithNormal * diffWithNormal * this.lambda * LAMBDA_FACTOR;
+		return NNFluxOrOpacityFunction.create(metaInfos, nn, inputFilter, imageWidth, imageHeight, extraOptimizerError);
 	}
 
 	@Override

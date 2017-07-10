@@ -7,8 +7,8 @@ import javax.imageio.ImageIO;
 
 import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
 import jhs.lc.geom.FluxOrOpacityFunction;
-import jhs.lc.geom.ImageOpacityFunction;
 import jhs.lc.geom.RotationAngleSphereFactory;
+import jhs.lc.opt.img.ImageOpacityFunction;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

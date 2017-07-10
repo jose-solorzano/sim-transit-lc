@@ -12,7 +12,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class SpecMapper {
 	private static ObjectMapper getObjectMapper() {
 		return new ObjectMapper()
-				.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);		
+				.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+				.enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
 	}
 	
 	public static SimSpec parseSimSpec(File inFile) throws JsonMappingException, JsonParseException, IOException {

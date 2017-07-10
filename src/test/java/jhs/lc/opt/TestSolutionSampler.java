@@ -18,9 +18,12 @@ public class TestSolutionSampler {
 	
 	@Test
 	public void testParametersVsSolution() {
-		Random random = new Random(11);
-		double baseRadius = 50;
-		double logRadiusSD = 0.01;
+		this.testParametersVsSolutionImpl(11, 50, 0.1);
+		this.testParametersVsSolutionImpl(13, 100, 0);
+	}
+	
+	private void testParametersVsSolutionImpl(int seed, double baseRadius, double logRadiusSD) {		
+		Random random = new Random(seed);
 		ParametricFluxFunctionSource opacitySource = this.getOpacitySource();	
 		SimulatedFluxSource fluxSource = new SimulatedFluxSource() {			
 			@Override
@@ -47,10 +50,13 @@ public class TestSolutionSampler {
 		assertEquals(NP1 + 1, np);
 		double[] parameters = new double[np];
 		for(int i = 0; i < np; i++) {
-			parameters[i] = random.nextGaussian();
+			parameters[i] = logRadiusSD == 0 && i == np - 1 ? 0 : random.nextGaussian();
 		}
 		Solution solution = sampler.parametersAsSolution(parameters);
-		assertEquals(solution.getOrbitRadius(), baseRadius, 1.0);
+		double maxRadius = baseRadius * Math.exp(logRadiusSD * 5);
+		double minRadius = baseRadius * Math.exp(-logRadiusSD * 5);
+		double maxDiff = Math.max(Math.abs(maxRadius - baseRadius), Math.abs(minRadius) - baseRadius);
+		assertEquals(solution.getOrbitRadius(), baseRadius, maxDiff + 0.00001);
 		double[] sp = sampler.solutionAsParameters(solution);
 		assertArrayEquals(parameters, sp, 0.0001);
 	}

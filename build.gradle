@@ -17,6 +17,7 @@ dependencies {
 	compile "org.apache.commons:commons-csv:1.1"
 	compile "com.fasterxml.jackson.core:jackson-databind:2.8.7"
 	compile "commons-cli:commons-cli:1.2"
+	compile "javax.validation:validation-api:1.0.0.GA"
 	compile fileTree(dir: 'libs', include: '*.jar')
 	testCompile 'junit:junit:4.12'
 }

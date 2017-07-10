@@ -10,4 +10,6 @@ public interface FluxOrOpacityFunction extends java.io.Serializable {
 	public double fluxOrOpacity(double x, double y, double z);
 	
 	public Rectangle2D getBoundingBox();
+	
+	public double getExtraOptimizerError();
 }

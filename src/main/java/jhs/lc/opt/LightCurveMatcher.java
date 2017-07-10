@@ -1,17 +1,12 @@
 package jhs.lc.opt;
 
-import java.util.Random;
-
 import jhs.lc.data.LightCurve;
 import jhs.math.util.MathUtil;
-
 import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.analysis.MultivariateRealFunction;
-import org.apache.commons.math.optimization.RealPointValuePair;
 
 public class LightCurveMatcher {
 	private static final double MAX_FLUX = 1.0;
-	private static final int WL = 7;
+	private static final int WL = 11;
 	private final double[] targetFluxArray;
 	private final double[] targetTrendChangeArray;
 	private final double targetCenterOfMass;
@@ -57,7 +52,7 @@ public class LightCurveMatcher {
 			sum += (diff * diff) * weight;
 			weightSum += weight;
 		}
-		return weightSum == 0 ? 0 : sum / weightSum;
+		return (weightSum == 0 ? 0 : sum / weightSum) / this.fluxVariance;
 	}
 
 	public final double ordinaryTrendChangeMeanSquaredError(double[] testTrendChangeArray) {
@@ -74,21 +69,20 @@ public class LightCurveMatcher {
 			sum += (diff * diff) * weight;
 			weightSum += weight;
 		}
-		return weightSum == 0 ? 0 : sum / weightSum;
+		return (weightSum == 0 ? 0 : sum / weightSum) / this.trendChangeVariance;
 	}
 	
 	public final double meanSquaredError(double[] testFluxArray, double[] testTrendChangeArray) {
 		double fluxError = this.ordinaryFluxMeanSquaredError(testFluxArray);
 		double trendChangeError = this.ordinaryTrendChangeMeanSquaredError(testTrendChangeArray);
 		double tcw = this.trendChangeWeight;
-		return (fluxError / this.fluxVariance) * (1 - tcw) + (trendChangeError / this.trendChangeVariance) * tcw;
+		return fluxError * (1 - tcw) + trendChangeError * tcw;
 	}
 	
 	public final double meanSquaredError(double[] testFluxArray) {
 		double[] testTrendChangeArray = trendChangeProfile(testFluxArray);
 		return this.meanSquaredError(testFluxArray, testTrendChangeArray);
 	}
-
 
 	public final FlexibleLightCurveMatchingResults flexibleMeanSquaredError(final double[] testFluxArray, final boolean shiftOnly) throws FunctionEvaluationException {
 		double[] testTrendChangeArray = LightCurve.trendChangeProfile(testFluxArray, WL);

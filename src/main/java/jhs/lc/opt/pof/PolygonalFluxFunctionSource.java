@@ -54,6 +54,11 @@ public class PolygonalFluxFunctionSource implements ParametricFluxFunctionSource
 				}
 				return 0;				
 			}
+			
+			@Override
+			public final double getExtraOptimizerError() {
+				return 0;
+			}
 		};
 	}
 

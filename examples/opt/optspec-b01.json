@@ -2,7 +2,7 @@
 	"widthPixels": 64,
 	"heightPixels": 64,
 	"orbitPeriod": 150,
-	"orbitRadius": 250,
+	"orbitRadius": 270,
 	"orbitRadiusFlexibility": 0.1,
 	"method": {
 		"type": "neural",

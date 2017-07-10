@@ -4,9 +4,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 
 import javax.imageio.ImageIO;
+import javax.validation.constraints.NotNull;
 
 import jhs.lc.geom.ParametricFluxFunctionSource;
-import jhs.lc.opt.ImageOpacityFunctionSource;
+import jhs.lc.opt.img.ImageOpacityFunctionSource;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -47,6 +48,9 @@ public class ImageOptMethod extends AbstractOptMethod {
 
 	@Override
 	public ParametricFluxFunctionSource createFluxFunctionSource(File context) throws Exception {
+		if(this.imageFilePath == null) {
+			throw new IllegalStateException("imageFilePath must be provided in image method specification.");
+		}
 		File imageFile;
 		if(new File(this.imageFilePath).exists()) {
 			imageFile = new File(this.imageFilePath);

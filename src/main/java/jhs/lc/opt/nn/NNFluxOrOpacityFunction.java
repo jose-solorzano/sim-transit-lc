@@ -13,22 +13,24 @@ public final class NNFluxOrOpacityFunction implements FluxOrOpacityFunction {
 	private final InputFilter inputFilter;
 	private final double scale;
 	private final Rectangle2D boundingBox;
-	
+	private final double extraOptimizerError;
+
 	public NNFluxOrOpacityFunction(NeuralNetworkMetaInfo[] neuralNetworkSpecs, NeuralNetwork[] neuralNetworks,
-			InputFilter inputFilter, double scale, Rectangle2D boundingBox) {
+			InputFilter inputFilter, double scale, Rectangle2D boundingBox, double extraOptimizerError) {
 		super();
 		this.neuralNetworkSpecs = neuralNetworkSpecs;
 		this.neuralNetworks = neuralNetworks;
 		this.inputFilter = inputFilter;
 		this.scale = scale;
 		this.boundingBox = boundingBox;
+		this.extraOptimizerError = extraOptimizerError;
 	}
 
-	public static NNFluxOrOpacityFunction create(NeuralNetworkMetaInfo[] neuralNetworkSpecs, NeuralNetwork[] neuralNetworks, InputFilter inputFilter, double imageWidth, double imageHeight) {
+	public static NNFluxOrOpacityFunction create(NeuralNetworkMetaInfo[] neuralNetworkSpecs, NeuralNetwork[] neuralNetworks, InputFilter inputFilter, double imageWidth, double imageHeight, double extraOptimizerError) {
 		Rectangle2D boundingBox = new Rectangle2D.Double(-imageWidth / 2.0, -imageHeight / 2.0, imageWidth, imageHeight);
 		double dim = Math.sqrt((imageWidth * imageWidth + imageHeight * imageHeight) / 2);
 		double scale = SF / dim;
-		return new NNFluxOrOpacityFunction(neuralNetworkSpecs, neuralNetworks, inputFilter, scale, boundingBox);
+		return new NNFluxOrOpacityFunction(neuralNetworkSpecs, neuralNetworks, inputFilter, scale, boundingBox, extraOptimizerError);
 	}
 
 	@Override
@@ -78,5 +80,10 @@ public final class NNFluxOrOpacityFunction implements FluxOrOpacityFunction {
 	@Override
 	public final Rectangle2D getBoundingBox() {
 		return this.boundingBox;
+	}
+	
+	@Override
+	public final double getExtraOptimizerError() {
+		return this.extraOptimizerError;
 	}
 }

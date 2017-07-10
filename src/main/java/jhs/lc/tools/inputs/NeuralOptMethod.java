@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class NeuralOptMethod extends AbstractOptMethod {
 	private double imageWidth;
 	private double imageHeight;
+	private double lambda = 1.0;
 
 	private InputFilterType inputFilter = InputFilterType.PLAIN;	
 	private NeuralNetworkSpec[] networks;
@@ -60,6 +61,14 @@ public class NeuralOptMethod extends AbstractOptMethod {
 		this.imageHeight = imageHeight;
 	}
 
+	public final double getLambda() {
+		return lambda;
+	}
+
+	public final void setLambda(double lambda) {
+		this.lambda = lambda;
+	}
+
 	@JsonProperty(required = false)
 	public final InputFilterType getInputFilter() {
 		return inputFilter;
@@ -74,7 +83,7 @@ public class NeuralOptMethod extends AbstractOptMethod {
 		InputFilterType inputType = this.inputFilter;
 		InputFilterFactory inputFilterFactory = inputType.getFactory();
 		NeuralNetworkMetaInfo[] metaInfos = this.createMetaInfos(context, inputFilterFactory);
-		return new NNFluxFunctionSource(metaInfos, inputFilterFactory, imageWidth, imageHeight);
+		return new NNFluxFunctionSource(metaInfos, inputFilterFactory, imageWidth, imageHeight, lambda);
 	}
 	
 	private NeuralNetworkMetaInfo[] createMetaInfos(File context, InputFilterFactory inputFilterFactory) throws Exception {

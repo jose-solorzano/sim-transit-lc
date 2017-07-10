@@ -4,6 +4,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
 
 import jhs.lc.geom.FluxOrOpacityFunction;
 import jhs.lc.geom.LimbDarkeningParams;
@@ -41,6 +42,11 @@ public class TestFastApproximateFluxSource {
 					return 0;
 				}
 			}
+			
+			@Override
+			public final double getExtraOptimizerError() {
+				return 0;
+			}
 		};
 		double orbitRadius = 200.0;
 		double orbitalPeriod = 200.0;
@@ -51,23 +57,33 @@ public class TestFastApproximateFluxSource {
 		double startTimestamp = -(timeSpan / 2);
 		double endTimestamp = +(timeSpan / 2);
 		double[] timestamps = AngularSimulation.timestamps(startTimestamp, endTimestamp, 51);
+		
+		double inclineAngle = 0.002;
 
-		SimulatedFluxSource angularFluxSource = this.getFluxSource(true, timestamps, orbitalPeriod);
+		SimulatedFluxSource angularFluxSource = this.getFluxSource(true, timestamps, orbitalPeriod, inclineAngle);
 		double peakFraction = 0.5;
 		double[] flux1 = angularFluxSource.produceModeledFlux(peakFraction, brightnessSource, orbitRadius).getFluxArray();
 		double minFlux1 = MathUtil.min(flux1);
 		System.out.println("MinFlux1: "+ minFlux1);
-		SimulatedFluxSource fastFluxSource = this.getFluxSource(false, timestamps, orbitalPeriod);
+		SimulatedFluxSource fastFluxSource = this.getFluxSource(false, timestamps, orbitalPeriod, inclineAngle);
 		assertTrue(fastFluxSource instanceof FastApproximateFluxSource);
 		double[] flux2 = fastFluxSource.produceModeledFlux(peakFraction, brightnessSource, orbitRadius).getFluxArray();
 		double minFlux2 = MathUtil.min(flux2);
 		System.out.println("MinFlux2: "+ minFlux2);
 		assertArrayEquals(flux1, flux2, 0.001);
+		
+		// Twice the orbital period, and twice the radius.
+		double doubleRadius = orbitRadius * 2;
+		double doublePeriod = orbitalPeriod * 2;
+		SimulatedFluxSource doubleFastFluxSource = this.getFluxSource(false, timestamps, doublePeriod, 0);
+		double[] doubleFlux = doubleFastFluxSource.produceModeledFlux(peakFraction, brightnessSource, doubleRadius).getFluxArray();
+		SimulatedFluxSource fastFluxSource2 = this.getFluxSource(false, timestamps, orbitalPeriod, 0);
+		double[] flux2NoIncline = fastFluxSource2.produceModeledFlux(peakFraction, brightnessSource, orbitRadius).getFluxArray();
+		assertArrayEquals(flux2NoIncline, doubleFlux, 0.000001);		
 	}	
 
-	private SimulatedFluxSource getFluxSource(boolean angular, double[] timestamps, double orbitalPeriod) {
+	private SimulatedFluxSource getFluxSource(boolean angular, double[] timestamps, double orbitalPeriod, double inclineAngle) {
 		LimbDarkeningParams ldParams = new LimbDarkeningParams(0.90, -0.2, 0.1);
-		double inclineAngle = 0.002;
 		int widthPixels = 100;
 		int heightPixels = 100;
 		if(angular) {

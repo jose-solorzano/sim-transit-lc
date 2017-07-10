@@ -57,6 +57,11 @@ public class TestEvaluatableSurfaceSphere {
 		public Rectangle2D getBoundingBox() {
 			return null;
 		}
+		
+		@Override
+		public final double getExtraOptimizerError() {
+			return 0;
+		}
 	}
 
 }

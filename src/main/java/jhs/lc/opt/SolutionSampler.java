@@ -5,6 +5,8 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import org.apache.commons.math.FunctionEvaluationException;
+
 import jhs.lc.data.LightCurve;
 import jhs.lc.geom.FluxOrOpacityFunction;
 import jhs.lc.geom.ParametricFluxFunctionSource;
@@ -129,7 +131,8 @@ public class SolutionSampler {
 			throw new IllegalStateException("Simulation orbit radius is zero.");
 		}
 		double logDiff = Math.log(orbitRadius / this.baseOrbitRadius);
-		return logDiff / this.logRadiusSD;
+		double lrs = this.logRadiusSD;
+		return lrs == 0 ? 0 : logDiff / this.logRadiusSD;
 	}
 	
 	public final Solution parametersAsSolution(double[] optimizerParameters) {
@@ -293,6 +296,20 @@ public class SolutionSampler {
 		int problemArcPixels = (int) Math.round(this.fluxSource.numPixelsInTimeSpanArc(bf, orbitRadius));
 		return new ImageState(imageElementInfo, problemArcPixels);
 	}
+
+	public EvaluationInfo getEvaluationInfo(double[] fluxArray, double trendChangeWeight, Solution solution) throws FunctionEvaluationException {
+		SimulatedFlux sf = solution.produceModeledFlux();
+		double[] modeledFlux = sf.getFluxArray();
+		LightCurveMatcher matcher = new LightCurveMatcher(fluxArray, trendChangeWeight);
+		double mse = MathUtil.euclideanDistanceSquared(fluxArray, modeledFlux) / fluxArray.length;
+		double rmse = Math.sqrt(mse);
+		FlexibleLightCurveMatchingResults r = matcher.flexibleMeanSquaredError(modeledFlux, true);
+		double loss = r.getMinimizedError();
+		double fluxLoss = matcher.ordinaryFluxMeanSquaredError(modeledFlux);
+		double trendChangeLoss = matcher.ordinaryTrendChangeMeanSquaredError(modeledFlux);
+		return new EvaluationInfo(rmse, loss, fluxLoss, trendChangeLoss);
+	}
+	
 
 	private static class DisplacementInfo {
 		private final double noChangeRange;

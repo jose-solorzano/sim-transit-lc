@@ -14,13 +14,13 @@ import javax.imageio.ImageIO;
 
 import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
 import jhs.lc.geom.FluxOrOpacityFunction;
-import jhs.lc.geom.ImageOpacityFunction;
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.Point3D;
 import jhs.lc.geom.RotationAngleSphereFactory;
 import jhs.lc.geom.SolidSphere;
 import jhs.lc.geom.Sphere;
 import jhs.lc.geom.SphereCollectionSphereFactory;
+import jhs.lc.opt.img.ImageOpacityFunction;
 import jhs.math.util.MathUtil;
 
 import org.junit.Test;
@@ -44,6 +44,11 @@ public class TestSimulation {
 			public double fluxOrOpacity(double x, double y, double z) {
 				double d = Math.sqrt(x * x + y * y);
 				return d < discRadius ? 0 : Double.NaN;
+			}
+			
+			@Override
+			public final double getExtraOptimizerError() {
+				return 0;
 			}
 		};
 		RotationAngleSphereFactory sphereFactory = new EvaluatableSurfaceSphereFactory(brightnessSource);

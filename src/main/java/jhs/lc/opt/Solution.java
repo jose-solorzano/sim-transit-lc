@@ -65,6 +65,10 @@ public class Solution implements java.io.Serializable {
 	public final SimulatedFlux produceModeledFlux() {
 		return this.modeledFlux;
 	}
+	
+	public final double getExtraOptimizerError() {
+		return this.brightnessFunction.getExtraOptimizerError();
+	}
 
 	private double minWidth() {
 		Rectangle2D transitBounds = this.brightnessFunction.getBoundingBox();

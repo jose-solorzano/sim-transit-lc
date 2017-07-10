@@ -2,8 +2,11 @@ package jhs.lc.tools;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -21,6 +24,7 @@ import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.ParametricFluxFunctionSource;
 import jhs.lc.jmf.BufferedImageVideoProducer;
 import jhs.lc.opt.CSLightCurveFitter;
+import jhs.lc.opt.EvaluationInfo;
 import jhs.lc.opt.Solution;
 import jhs.lc.opt.SolutionSampler;
 import jhs.lc.sims.AngleUnsupportedException;
@@ -51,7 +55,7 @@ public class SolveLightCurve extends AbstractTool {
 	private static final int TCP_WL = 7;
 	
 	private static final double DEF_VIDEO_DURATION = 60;
-	private static final double DEF_TREND_CHANGE_WEIGHT = 0.1;
+	private static final double DEF_TREND_CHANGE_WEIGHT = 0.5;
 
 	private void run(CommandLine cmdLine) throws Exception {
 		String[] args = cmdLine.getArgs();
@@ -74,7 +78,7 @@ public class SolveLightCurve extends AbstractTool {
 		double[] fluxArray = LightCurvePoint.fluxArray(lightCurve);
 		double[] timestamps = LightCurvePoint.timestamps(lightCurve);
 		String seedText = cmdLine.getOptionValue("seed");
-		long seed = seedText == null ? 1 : Long.parseLong(seedText);
+		long seed = seedText == null ? 201707081111L : Long.parseLong(seedText);
 		Random random = new Random(seed * 7 - 11);
 		
 		//double minIndex = LimbDarkeningParams.minIndex(fluxArray);
@@ -86,10 +90,11 @@ public class SolveLightCurve extends AbstractTool {
 		int numClusteringIterations = this.getOptionInt(cmdLine, "noi", DEF_MAX_ITERATIONS);
 		int numGradientDescentIterations = this.getOptionInt(cmdLine, "nagd", DEF_MAX_AGD_ITERATIONS);
 		int numPostClusteringIterations = this.getOptionInt(cmdLine, "npci", DEF_MAX_CONS_ITERATIONS);
+		double trendChangeWeight = DEF_TREND_CHANGE_WEIGHT; //TODO
 		logger.info("Population size: " + populationSize + ".");
 		logger.info("Max iterations: " + numClusteringIterations + ".");
 		long time1 = System.currentTimeMillis();
-		Solution solution = this.solve(lightCurve, sampler, populationSize, numClusteringIterations, numPostClusteringIterations, numGradientDescentIterations);		
+		Solution solution = this.solve(lightCurve, sampler, populationSize, numClusteringIterations, numPostClusteringIterations, numGradientDescentIterations, trendChangeWeight);		
 		long time2 = System.currentTimeMillis();
 		double elapsedSeconds = (time2 - time1) / 1000.0;
 		
@@ -102,7 +107,7 @@ public class SolveLightCurve extends AbstractTool {
 
 		String resultsFilePath = cmdLine.getOptionValue("or");
 		if(resultsFilePath != null) {
-			this.writeResults(resultsFilePath, optSpec, sampler, lightCurve, solution, fluxArray, elapsedSeconds);
+			this.writeResults(resultsFilePath, optSpec, sampler, lightCurve, trendChangeWeight, solution, fluxArray, elapsedSeconds);
 		}		
 
 		String transitImageFileName = cmdLine.getOptionValue("oi");
@@ -128,7 +133,9 @@ public class SolveLightCurve extends AbstractTool {
 		int numPixels = DEF_OUT_NUM_PIXELS;
 		BufferedImage image = solution.produceDepiction(numPixels);
 		File outFile = new File(imageFileName);
-		ImageIO.write(image, "png", outFile);
+		try(OutputStream out = new BufferedOutputStream(new FileOutputStream(outFile), 100000)) {
+			ImageIO.write(image, "png", out);
+		}
 		System.out.println("Wrote " + outFile);
 	}	
 	
@@ -143,7 +150,7 @@ public class SolveLightCurve extends AbstractTool {
         System.out.println("Wrote " + outFile);		
 	}
 		
-	private Solution solve(LightCurvePoint[] lightCurve, SolutionSampler sampler, int populationSize, int numClusteringIterations, int numPostClusteringIterations, int numGradientDescentIterations) throws MathException {
+	private Solution solve(LightCurvePoint[] lightCurve, SolutionSampler sampler, int populationSize, int numClusteringIterations, int numPostClusteringIterations, int numGradientDescentIterations, double trendChangeWeight) throws MathException {
 		CSLightCurveFitter fitter = new CSLightCurveFitter(sampler, populationSize) {
 			@Override
 			protected void informProgress(String stage, int iteration, double error) {
@@ -154,7 +161,7 @@ public class SolveLightCurve extends AbstractTool {
 		};
 		// TODO: configure with options
 		fitter.setInitialPoolSize(populationSize * 5);
-		fitter.setTrendChangeWeight(DEF_TREND_CHANGE_WEIGHT);
+		fitter.setTrendChangeWeight(trendChangeWeight);
 		fitter.setCircuitShuffliness(0.5);
 		fitter.setDisplacementFactor(0.04);
 		fitter.setExpansionFactor(3.0);
@@ -167,16 +174,15 @@ public class SolveLightCurve extends AbstractTool {
 		return solution;
 	}
 	
-	private void writeResults(String resultsFilePath, OptSpec optSpec, SolutionSampler sampler, LightCurvePoint[] lightCurve, Solution solution, double[] fluxArray, double elapsedSeconds) throws Exception {
-		double[] weights = sampler.createFluxWeights(fluxArray, 0.5);
-		double mse = CSLightCurveFitter.meanSquaredError(lightCurve, weights, solution);
+	private void writeResults(String resultsFilePath, OptSpec optSpec, SolutionSampler sampler, LightCurvePoint[] lightCurve, double trendChangeWeight, Solution solution, double[] fluxArray, double elapsedSeconds) throws Exception {
+		EvaluationInfo ei = sampler.getEvaluationInfo(fluxArray, trendChangeWeight, solution);
 		if(logger.isLoggable(Level.INFO)) {
-			logger.info("writeResults(): rmse=" + Math.sqrt(mse));
+			logger.info("writeResults(): rmse=" + ei.getRmse() + ", loss=" + ei.getLoss());
 		}
 		OptResultsSpec spec = new OptResultsSpec();
 		spec.setOrbitRadius(solution.getOrbitRadius());
 		spec.setOptElapsedSeconds(elapsedSeconds);
-		spec.setRmse(Math.sqrt(mse));
+		spec.setRmse(ei.getRmse());
 		spec.setParameters(solution.getOpacityFunctionParameters());
 		spec.setMethod(optSpec.getMethod());
 		File resultsFile = new File(resultsFilePath);
@@ -236,6 +242,7 @@ public class SolveLightCurve extends AbstractTool {
 		double orbitalPeriod = optSpec.getOrbitPeriod();
 		int widthPixels = optSpec.getWidthPixels();
 		int heightPixels = optSpec.getHeightPixels();
+		logger.info("getFluxSource(): inclineAngle=" + inclineAngle + ", orbitalPeriod=" + orbitalPeriod + ", withPixels=" + widthPixels + ", heightPixels=" + heightPixels);
 		if(cmdLine.hasOption("angular")) {
 			return new AngularFluxSource(timestamps, widthPixels, heightPixels, inclineAngle, orbitalPeriod, ldParams);
 		}

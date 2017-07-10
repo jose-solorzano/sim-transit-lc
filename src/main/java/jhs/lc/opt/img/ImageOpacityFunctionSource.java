@@ -1,9 +1,8 @@
-package jhs.lc.opt;
+package jhs.lc.opt.img;
 
 import java.awt.image.BufferedImage;
 
 import jhs.lc.geom.FluxOrOpacityFunction;
-import jhs.lc.geom.ImageOpacityFunction;
 import jhs.lc.geom.ImageUtil;
 import jhs.lc.geom.ParametricFluxFunctionSource;
 import jhs.math.classification.ClassificationUtil;
@@ -40,15 +39,17 @@ public class ImageOpacityFunctionSource implements ParametricFluxFunctionSource 
 	
 	@Override
 	public FluxOrOpacityFunction getFluxOrOpacityFunction(double[] parameters) {
-		final double xoffset = parameters[0];
-		final double yoffset = parameters[1];
+		double xoffset = parameters[0];
+		double yoffset = parameters[1];
 		double imageWidthLogit = parameters[2];
 		double imageHeightLogit = this.aspectRatioPreserved ? imageWidthLogit : parameters[3];
 		double imageWidthP = ClassificationUtil.logitToProbability(imageWidthLogit);
 		double imageHeightP = this.aspectRatioPreserved ? imageWidthP : ClassificationUtil.logitToProbability(imageHeightLogit);
-		final double imageWidth = this.minWidth * (1 - imageWidthP) + this.maxWidth * imageWidthP;
-		final double imageHeight = this.minHeight * (1 - imageHeightP) + this.maxHeight * imageHeightP;
-		return new ImageOpacityFunction(brightnessMatrix, (float) xoffset, (float) yoffset, numColumns, numRows, imageWidth, imageHeight);
+		double imageWidth = this.minWidth * (1 - imageWidthP) + this.maxWidth * imageWidthP;
+		double imageHeight = this.minHeight * (1 - imageHeightP) + this.maxHeight * imageHeightP;
+		double topLeftX = xoffset - imageWidth / 2;
+		double topLeftY = yoffset - imageHeight / 2;
+		return new ImageOpacityFunction(brightnessMatrix, (float) topLeftX, (float) topLeftY, numColumns, numRows, imageWidth, imageHeight);
 	}
 
 	@Override
