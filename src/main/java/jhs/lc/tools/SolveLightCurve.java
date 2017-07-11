@@ -55,7 +55,7 @@ public class SolveLightCurve extends AbstractTool {
 	private static final int TCP_WL = 7;
 	
 	private static final double DEF_VIDEO_DURATION = 60;
-	private static final double DEF_TREND_CHANGE_WEIGHT = 0.5;
+	private static final double DEF_TREND_CHANGE_WEIGHT = 0.85;
 
 	private void run(CommandLine cmdLine) throws Exception {
 		String[] args = cmdLine.getArgs();
@@ -160,11 +160,11 @@ public class SolveLightCurve extends AbstractTool {
 			}
 		};
 		// TODO: configure with options
-		fitter.setInitialPoolSize(populationSize * 5);
+		fitter.setInitialPoolSize(populationSize);
 		fitter.setTrendChangeWeight(trendChangeWeight);
-		fitter.setCircuitShuffliness(0.5);
-		fitter.setDisplacementFactor(0.04);
-		fitter.setExpansionFactor(3.0);
+		fitter.setCircuitShuffliness(0.25);
+		fitter.setDisplacementFactor(0.01);
+		fitter.setExpansionFactor(2.0);
 		fitter.setMaxCSIterationsWithClustering(numClusteringIterations);
 		fitter.setMaxExtraCSIterations(numPostClusteringIterations);
 		fitter.setMaxEliminationIterations(0);

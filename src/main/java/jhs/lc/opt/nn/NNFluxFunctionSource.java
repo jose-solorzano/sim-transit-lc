@@ -10,7 +10,7 @@ import jhs.math.nn.PlainNeuralNetwork;
 import jhs.math.util.MathUtil;
 
 public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
-	private static final double LAMBDA_FACTOR = 0.03;
+	private static final double LAMBDA_FACTOR = 0.003;
 	private final NeuralNetworkMetaInfo[] metaInfos;
 	private final InputFilterFactory inputFilterType;
 	private final double imageWidth, imageHeight;

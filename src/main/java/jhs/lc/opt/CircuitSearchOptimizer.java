@@ -41,7 +41,7 @@ public class CircuitSearchOptimizer {
 	private double displacementFactor = 0.03;
 	private double convergeDistance = 0.0001;
 	private double circuitShuffliness = 0.5;
-	private double crossoverProbability = 0.75;
+	private double crossoverProbability = 0;
 	
 	private double agdGradientFactor = 0.3;
 	
@@ -280,10 +280,10 @@ public class CircuitSearchOptimizer {
 		double moveSd = diffSd * this.displacementFactor;
 		params1 = this.movePoint(params1, moveSd);
 		params2 = this.movePoint(params2, moveSd);
-		difference = MathUtil.subtract(params2, params1);
+		//difference = MathUtil.subtract(params2, params1);
 
 		boolean crossover = this.random.nextDouble() < this.crossoverProbability;
-		Particle candidate = crossover ? this.crossover(errorFunction, params1, params2) : this.newParticleFromBaseline(errorFunction, params1, difference, 0, 1.0);
+		Particle candidate = crossover ? this.crossover(errorFunction, params1, params2) : this.newParticleInHyperrectangle(errorFunction, params1, params2, 0, 1.0);
 
 		double candidateError = candidate.evaluation;
 		if(candidateError <= error1 && candidateError <= error2) {
@@ -291,18 +291,31 @@ public class CircuitSearchOptimizer {
 		}
 		double ef = this.expansionFactor;
 		if(candidateError <= error1) {
-			Particle secondCandidate = this.newParticleFromBaseline(errorFunction, params1, difference, 1.0, 1.0 + ef);
+			Particle secondCandidate = this.newParticleInHyperrectangle(errorFunction, params1, params2, 1.0, 1.0 + ef);
 			return secondCandidate.evaluation < candidateError ? secondCandidate : candidate;
 		} else if(candidateError <= error2) {
-			Particle secondCandidate = this.newParticleFromBaseline(errorFunction, params1, difference, -ef, 0);
+			Particle secondCandidate = this.newParticleInHyperrectangle(errorFunction, params1, params2, -ef, 0);
 			return secondCandidate.evaluation < candidateError ? secondCandidate : candidate;
 		}
 		else {
-			Particle secondCandidate = this.newParticleFromBaseline(errorFunction, params1, difference, -ef, 1.0 + ef);
+			Particle secondCandidate = this.newParticleInHyperrectangle(errorFunction, params1, params2, -ef, 1.0 + ef);
 			return secondCandidate.evaluation < candidateError ? secondCandidate : candidate;			
 		}
 	}
-	
+
+	private Particle newParticleInHyperrectangle(CircuitSearchEvaluator errorFunction, double[] point1, double[] point2, double fromFraction, double toFraction) throws MathException {
+		Random r = this.random;
+		int length = point1.length;
+		double[] newParams = new double[length];
+		for(int i = 0; i < length; i++) {
+			double p = fromFraction + r.nextDouble() * (toFraction - fromFraction);
+			newParams[i] = point1[i] * (1 - p) + point2[i] * p;
+		}
+		CircuitSearchParamEvaluation eval = errorFunction.evaluate(newParams);
+		return new Particle(newParams, eval.getClusteringPosition(), eval.getError());
+	}
+
+
 	private Particle crossover(CircuitSearchEvaluator errorFunction, double[] params1, double[] params2) throws FunctionEvaluationException {
 		Random r = this.random;
 		if(params1.length <= 1) {
@@ -320,13 +333,15 @@ public class CircuitSearchOptimizer {
 		return new Particle(newParams, evaluation.getClusteringPosition(), evaluation.getError());
 	}
 
+	/*
 	private Particle newParticleFromBaseline(CircuitSearchEvaluator errorFunction, double[] baselineParams, double[] directionVector, double fromFraction, double toFraction) throws MathException {
 		double p = fromFraction + this.random.nextDouble() * (toFraction - fromFraction);
 		double[] newParams = MathUtil.add(baselineParams, MathUtil.multiply(directionVector, p));
 		CircuitSearchParamEvaluation eval = errorFunction.evaluate(newParams);
 		return new Particle(newParams, eval.getClusteringPosition(), eval.getError());
 	}
-	
+	*/
+
 	/*
 	private double[] alterVector(double[] vector) {
 		Random r = this.random;
@@ -381,16 +396,16 @@ public class CircuitSearchOptimizer {
 	}
 	
 	private Node insertAtDistanceBasedLocation(Node head, Particle particle) {
-		double[] position = particle.clusteringPosition;
-		double distanceToHead = MathUtil.euclideanDistance(position, head.particle.clusteringPosition);
+		double[] point = particle.parameters;
+		double distanceToHead = MathUtil.euclideanDistance(point, head.particle.parameters);
 		double distanceToPrior = distanceToHead;
 		double minDistanceChange = distanceToHead;
 		Node insertAfter = null;
 		Node pointer = head;
 		Node next;
 		while((next = pointer.next) != null) {
-			double distancePointerNext = MathUtil.euclideanDistance(pointer.particle.clusteringPosition, next.particle.clusteringPosition);
-			double distanceParticleNext =  MathUtil.euclideanDistance(position, next.particle.clusteringPosition);
+			double distancePointerNext = MathUtil.euclideanDistance(pointer.particle.parameters, next.particle.parameters);
+			double distanceParticleNext =  MathUtil.euclideanDistance(point, next.particle.parameters);
 			double distanceChange = distanceToPrior + distanceParticleNext - distancePointerNext;
 			if(distanceChange < minDistanceChange) {
 				minDistanceChange = distanceChange;
