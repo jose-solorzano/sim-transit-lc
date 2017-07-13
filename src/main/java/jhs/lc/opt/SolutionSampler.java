@@ -21,6 +21,7 @@ public class SolutionSampler {
 	private static final int NUM_EXTRA_PARAMS = 1;
 	
 	private static final int WL = 5;
+	private static final double NPF = 200.0; //TODO %%% TESTING
 	private static final double WSD = 0.5;
 	
 	private final Random random;
@@ -293,7 +294,7 @@ public class SolutionSampler {
 		FluxOrOpacityFunction bf = solution.getBrightnessFunction();
 		ImageElementInfo imageElementInfo = this.fluxSource.createImageElementInfo(bf);
 		double orbitRadius = this.getOrbitRadius(optimizerParameters);
-		int problemArcPixels = (int) Math.round(this.fluxSource.numPixelsInTimeSpanArc(bf, orbitRadius));
+		int problemArcPixels = (int) Math.round(this.fluxSource.numPixelsInTimeSpanArc(bf, orbitRadius) * NPF);
 		return new ImageState(imageElementInfo, problemArcPixels);
 	}
 
@@ -306,7 +307,7 @@ public class SolutionSampler {
 		FlexibleLightCurveMatchingResults r = matcher.flexibleMeanSquaredError(modeledFlux, true);
 		double loss = r.getMinimizedError();
 		double fluxLoss = matcher.ordinaryFluxMeanSquaredError(modeledFlux);
-		double trendChangeLoss = matcher.ordinaryTrendChangeMeanSquaredError(modeledFlux);
+		double trendChangeLoss = matcher.weightedTrendChangeMeanSquaredError(modeledFlux);
 		return new EvaluationInfo(rmse, loss, fluxLoss, trendChangeLoss);
 	}
 	

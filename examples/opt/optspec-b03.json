@@ -1,0 +1,41 @@
+{
+	"widthPixels": 110,
+	"heightPixels": 55,
+	"orbitPeriod": 150,
+	"orbitRadius": 305,
+	"orbitRadiusFlexibility": 0.03,
+	"method": {
+		"type": "neural",
+		"imageWidth": 5.0,
+		"imageHeight": 2.0,
+		"inputFilter": "shift_rotate",
+		"networks": [
+			{
+				"comment": "This NN will represent the planet.",
+				"outputType": "binary",
+				"outputActivationFunction": "simple_max",
+				"hiddenLayers": [
+					{ "numUnits": 1, "activationFunctions": [ "rbf0_c" ], 
+						"comment": "Disc centered at origin." }					
+				]
+			},
+			{
+				"comment": "This NN will represent the ring.",
+				"outputType": "opacity",
+				"outputActivationFunction": "simple_max",
+				"hiddenLayers": [
+					{ "numUnits": 2, 
+						"maxInputsPerUnit": 1, 
+						"activationFunctions": [ "linear_no_bias" ], 
+						"comment": "Compress/expand X, Y." },
+					{ "numUnits": 1, 
+						"activationFunctions": [ "rbf0_c" ], 
+						"comment": "Disc centered at origin in bent space." },
+					{ "numUnits": 1, 
+						"activationFunctions": [ "pulse" ], 
+						"comment": "Selects ring out of disc." }
+				]											
+			}
+		]		
+	}
+}

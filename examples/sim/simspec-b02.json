@@ -1,0 +1,18 @@
+{
+	"widthPixels": 500,
+	"heightPixels": 500,
+	"noiseFraction": 0.0003,
+	"inclineAngle": 0.002,
+	"orbitRadius": 200,
+	"orbitPeriod": 100,
+	"startTime": -0.18,
+	"endTime": 0.18,
+	"numSteps": 150,
+	"limbDarkeningParams": [ 0.95, -0.25, 0.05 ],
+	"transitShape": {
+		"type": "image",
+		"imageFilePath": "../img/x.png",
+		"imageWidth": 1.2,
+		"imageHeight": 1.2
+	}
+}

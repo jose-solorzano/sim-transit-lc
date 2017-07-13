@@ -25,6 +25,7 @@ import jhs.lc.geom.ParametricFluxFunctionSource;
 import jhs.lc.jmf.BufferedImageVideoProducer;
 import jhs.lc.opt.CSLightCurveFitter;
 import jhs.lc.opt.EvaluationInfo;
+import jhs.lc.opt.LightCurveMatcher;
 import jhs.lc.opt.Solution;
 import jhs.lc.opt.SolutionSampler;
 import jhs.lc.sims.AngleUnsupportedException;
@@ -52,10 +53,9 @@ public class SolveLightCurve extends AbstractTool {
 	private static final int DEF_MAX_AGD_ITERATIONS = 100;	
 	private static final int DEF_POP_SIZE = 100;
 	private static final int DEF_OUT_NUM_PIXELS = 100000;
-	private static final int TCP_WL = 7;
 	
 	private static final double DEF_VIDEO_DURATION = 60;
-	private static final double DEF_TREND_CHANGE_WEIGHT = 0.85;
+	private static final double DEF_TREND_CHANGE_WEIGHT = 0.99;
 
 	private void run(CommandLine cmdLine) throws Exception {
 		String[] args = cmdLine.getArgs();
@@ -93,6 +93,7 @@ public class SolveLightCurve extends AbstractTool {
 		double trendChangeWeight = DEF_TREND_CHANGE_WEIGHT; //TODO
 		logger.info("Population size: " + populationSize + ".");
 		logger.info("Max iterations: " + numClusteringIterations + ".");
+		logger.info("Initial orbit radius: " + optSpec.getOrbitRadius());
 		long time1 = System.currentTimeMillis();
 		Solution solution = this.solve(lightCurve, sampler, populationSize, numClusteringIterations, numPostClusteringIterations, numGradientDescentIterations, trendChangeWeight);		
 		long time2 = System.currentTimeMillis();
@@ -162,9 +163,9 @@ public class SolveLightCurve extends AbstractTool {
 		// TODO: configure with options
 		fitter.setInitialPoolSize(populationSize);
 		fitter.setTrendChangeWeight(trendChangeWeight);
-		fitter.setCircuitShuffliness(0.25);
-		fitter.setDisplacementFactor(0.01);
-		fitter.setExpansionFactor(2.0);
+		fitter.setCircuitShuffliness(0.25); //TODO %%% TESTING
+		fitter.setDisplacementFactor(0.02); //TODO %%% TESTING 0.01
+		fitter.setExpansionFactor(4.0); //TODO %%% TESTING
 		fitter.setMaxCSIterationsWithClustering(numClusteringIterations);
 		fitter.setMaxExtraCSIterations(numPostClusteringIterations);
 		fitter.setMaxEliminationIterations(0);
@@ -177,6 +178,7 @@ public class SolveLightCurve extends AbstractTool {
 	private void writeResults(String resultsFilePath, OptSpec optSpec, SolutionSampler sampler, LightCurvePoint[] lightCurve, double trendChangeWeight, Solution solution, double[] fluxArray, double elapsedSeconds) throws Exception {
 		EvaluationInfo ei = sampler.getEvaluationInfo(fluxArray, trendChangeWeight, solution);
 		if(logger.isLoggable(Level.INFO)) {
+			logger.info("writeResults(): orbitRadius=" + solution.getOrbitRadius() + " (from " + optSpec.getOrbitRadius() + ").");
 			logger.info("writeResults(): rmse=" + ei.getRmse() + ", loss=" + ei.getLoss());
 		}
 		OptResultsSpec spec = new OptResultsSpec();
@@ -205,8 +207,8 @@ public class SolveLightCurve extends AbstractTool {
 	private void writeData(LightCurvePoint[] lightCurve, Solution solution, String outFilePath) throws IOException {
 		double[] obsFluxArray = LightCurvePoint.fluxArray(lightCurve);
 		double[] modeledFlux = solution.produceModeledFlux().getFluxArray();
-		double[] obsTrendChangeProfile = LightCurve.trendChangeProfile(obsFluxArray, TCP_WL);
-		double[] modeledTrendChangeProfile = LightCurve.trendChangeProfile(modeledFlux, TCP_WL);
+		double[] obsTrendChangeProfile = LightCurveMatcher.trendChangeProfile(obsFluxArray);
+		double[] modeledTrendChangeProfile = LightCurveMatcher.trendChangeProfile(modeledFlux);
 		File file = new File(outFilePath);
 		PrintWriter out = new PrintWriter(file);
 		try {

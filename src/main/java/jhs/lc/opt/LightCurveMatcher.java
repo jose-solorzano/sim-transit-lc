@@ -6,7 +6,8 @@ import org.apache.commons.math.FunctionEvaluationException;
 
 public class LightCurveMatcher {
 	private static final double MAX_FLUX = 1.0;
-	private static final int WL = 11;
+	private static final double WLF = 0.08;
+	private static final double NTCW = 0.67; //TODO %%% TESTING
 	private final double[] targetFluxArray;
 	private final double[] targetTrendChangeArray;
 	private final double targetCenterOfMass;
@@ -35,7 +36,11 @@ public class LightCurveMatcher {
 	}
 	
 	public static double[] trendChangeProfile(double[] fluxArray) {
-		return LightCurve.trendChangeProfile(fluxArray, WL);
+		int wl = (int) Math.round(WLF * fluxArray.length);
+		if(wl < 3) {
+			wl = 3;
+		}
+		return LightCurve.trendChangeProfile(fluxArray, wl);
 	}
 
 	public final double ordinaryFluxMeanSquaredError(double[] testFluxArray) {
@@ -55,7 +60,7 @@ public class LightCurveMatcher {
 		return (weightSum == 0 ? 0 : sum / weightSum) / this.fluxVariance;
 	}
 
-	public final double ordinaryTrendChangeMeanSquaredError(double[] testTrendChangeArray) {
+	public final double weightedTrendChangeMeanSquaredError(double[] testTrendChangeArray) {
 		double[] targetTrendChangeArray = this.targetTrendChangeArray;		
 		int length = targetTrendChangeArray.length;
 		if(length != testTrendChangeArray.length) {
@@ -64,8 +69,9 @@ public class LightCurveMatcher {
 		double sum = 0;
 		double weightSum = 0;
 		for(int i = 0; i < length; i++) {
-			double weight = 1.0;
-			double diff = testTrendChangeArray[i] - targetTrendChangeArray[i];
+			double targetTrendChange = targetTrendChangeArray[i];
+			double weight = targetTrendChange < 0 ? NTCW : (1 - NTCW);
+			double diff = testTrendChangeArray[i] - targetTrendChange;
 			sum += (diff * diff) * weight;
 			weightSum += weight;
 		}
@@ -74,7 +80,7 @@ public class LightCurveMatcher {
 	
 	public final double meanSquaredError(double[] testFluxArray, double[] testTrendChangeArray) {
 		double fluxError = this.ordinaryFluxMeanSquaredError(testFluxArray);
-		double trendChangeError = this.ordinaryTrendChangeMeanSquaredError(testTrendChangeArray);
+		double trendChangeError = this.weightedTrendChangeMeanSquaredError(testTrendChangeArray);
 		double tcw = this.trendChangeWeight;
 		return fluxError * (1 - tcw) + trendChangeError * tcw;
 	}
@@ -85,7 +91,7 @@ public class LightCurveMatcher {
 	}
 
 	public final FlexibleLightCurveMatchingResults flexibleMeanSquaredError(final double[] testFluxArray, final boolean shiftOnly) throws FunctionEvaluationException {
-		double[] testTrendChangeArray = LightCurve.trendChangeProfile(testFluxArray, WL);
+		double[] testTrendChangeArray = trendChangeProfile(testFluxArray);
 		double testCenterOfMass = LightCurve.centerOfMass(testFluxArray);
 		double testMassDeviation = shiftOnly ? Double.NaN : LightCurve.massDeviation(testFluxArray, testCenterOfMass);
 		double skewA = shiftOnly ? 1.0 : testMassDeviation / this.targetMassDeviation;				

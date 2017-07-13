@@ -18,7 +18,7 @@ public class ApproximateGradientDescentOptimizer {
 	private final Random random;
 	private int maxIterations = 2000;
 	private int maxSearchIterations = 10;
-	private double initialGradientFactor = 1.0;
+	private double initialGradientFactor = 0.1;
 	private double gfAlpha = 0.2;
 	private double searchFactor = 2.0;
 	
@@ -141,6 +141,7 @@ public class ApproximateGradientDescentOptimizer {
 		this.numEvaluations++;
 		double baseError = errorFunction.value(basePoint);
 		double factor = baseError < pointValue.getValue() ? this.searchFactor : 1.0 / this.searchFactor;
+		
 		double gf = gradientFactor;
 		int n = this.maxSearchIterations;
 		for(int i = 0; i < n; i++) {

@@ -9,6 +9,8 @@ import java.util.Set;
 import jhs.math.regression.linear.WeightedLinearRegression;
 
 public class MathUtil {
+	private static final double USK = 1.733;
+	
 	private MathUtil() {}
 	
 	public static final int bounded(int value, int min, int max) {
@@ -452,6 +454,15 @@ public class MathUtil {
 		double[] values = new double[length];
 		for(int i = 0; i < length; i++) {
 			values[i] = random.nextDouble();
+		}
+		return values;
+	}
+
+	public static double[] sampleUniformSymmetric(Random random, double sd, int length) {
+		double[] values = new double[length];
+		double range = sd * USK;
+		for(int i = 0; i < length; i++) {
+			values[i] = -range + random.nextDouble() * 2 * range;
 		}
 		return values;
 	}

@@ -35,7 +35,7 @@ public class CSLightCurveFitter {
 	private double trendChangeWeight = 0.2;
 	
 	//private double lambda = 0.3;
-	private double epsilonFactor = 0.1;
+	private double epsilonFactor = 3.0;
 
 	public CSLightCurveFitter(SolutionSampler sampler, int populationSize) {
 		this.sampler = sampler;
@@ -147,9 +147,10 @@ public class CSLightCurveFitter {
 
 	public Solution optimizeStandardErrorCS(double[] fluxArray) throws MathException {
 		boolean flexible = true;
+		boolean shiftOnly = true;
 		double comf = LightCurve.centerOfMassAsFraction(fluxArray);
 		this.sampler.setPeakFraction(comf);
-		CircuitSearchEvaluator errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, flexible, this.trendChangeWeight);
+		CircuitSearchEvaluator errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, flexible, shiftOnly, this.trendChangeWeight);
 		return this.optimizeCircuitSearch(errorFunction);
 	}
 
@@ -163,11 +164,12 @@ public class CSLightCurveFitter {
 		}
 		this.sampler.setPeakFraction(newComf);
 		boolean flexible = false;
-		MultivariateRealFunction errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, flexible, this.trendChangeWeight);
+		boolean shiftOnly = true;
+		MultivariateRealFunction errorFunction = LocalErrorFunction.create(this.sampler, fluxArray, flexible, shiftOnly, this.trendChangeWeight);
 		if(logger.isLoggable(Level.INFO)) {
 			double[] params = this.sampler.solutionAsParameters(initialSolution);
 			double error = errorFunction.value(params);
-			MultivariateRealFunction fErrorFunction = LocalErrorFunction.create(this.sampler, fluxArray, true, this.trendChangeWeight);
+			MultivariateRealFunction fErrorFunction = LocalErrorFunction.create(this.sampler, fluxArray, true, false, this.trendChangeWeight);
 			double ferror = fErrorFunction.value(params);
 			logger.info("optimizeStandardErrorAGD(): Initial solution non-flexible error is " + error + " and flexible error is " + ferror);
 		}
@@ -251,20 +253,22 @@ public class CSLightCurveFitter {
 		//private final double lambda;
 		private final LightCurveMatcher matcher;
 		private final boolean flexible;
+		private final boolean shiftOnly;
 		private final double tcCosd, tcWidth;
 
-		public LocalErrorFunction(SolutionSampler sampler, double[] fluxArray, double trendChangeWeight, boolean flexible) {
+		public LocalErrorFunction(SolutionSampler sampler, double[] fluxArray, double trendChangeWeight, boolean flexible, boolean shiftOnly) {
 			this.sampler = sampler;
 			//this.lambda = lambda;
 			this.matcher = new LightCurveMatcher(fluxArray, trendChangeWeight);
 			this.flexible = flexible;
+			this.shiftOnly = shiftOnly;
 			double[] trendChangeProfile = LightCurveMatcher.trendChangeProfile(fluxArray);
 			this.tcCosd = SeriesUtil.centerOfSquaredDev(trendChangeProfile, 0);
 			this.tcWidth = SeriesUtil.seriesWidth(trendChangeProfile, 0, this.tcCosd);
 		}
 
-		public static LocalErrorFunction create(SolutionSampler sampler, double[] fluxArray, boolean flexible, double trendChangeWeight) {
-			return new LocalErrorFunction(sampler, fluxArray, trendChangeWeight, flexible);
+		public static LocalErrorFunction create(SolutionSampler sampler, double[] fluxArray, boolean flexible, boolean shiftOnly, double trendChangeWeight) {
+			return new LocalErrorFunction(sampler, fluxArray, trendChangeWeight, flexible, shiftOnly);
 		}
 		
 		@Override
@@ -274,8 +278,7 @@ public class CSLightCurveFitter {
 			double[] modeledFlux = sf.getFluxArray();
 			double baseError;
 			if(this.flexible) {
-				boolean shiftOnly = true;
-				FlexibleLightCurveMatchingResults r = this.matcher.flexibleMeanSquaredError(modeledFlux, shiftOnly);
+				FlexibleLightCurveMatchingResults r = this.matcher.flexibleMeanSquaredError(modeledFlux, this.shiftOnly);
 				baseError = r.getMinimizedError(); // + r.getBendMetric() * this.lambda * 0.01;
 			}
 			else {
@@ -285,9 +288,9 @@ public class CSLightCurveFitter {
 			//double diffWithNormal = sdParams - 1.0;			
 			//double error = baseError + (diffWithNormal * diffWithNormal * this.lambda);
 			double error = baseError + solution.getExtraOptimizerError();
-			//TODO Improve clustering position
-			double[] clusteringPosition = this.getClusteringPosition(modeledFlux);
-			//double[] clusteringPosition = sf.getClusteringPosition();
+			//TODO %%% TESTING clustering position
+			//double[] clusteringPosition = this.getClusteringPosition(modeledFlux);
+			double[] clusteringPosition = sf.getClusteringPosition();
 			return new CircuitSearchParamEvaluation(error, clusteringPosition);
 		}
 
