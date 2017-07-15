@@ -43,7 +43,7 @@ public class CircuitSearchOptimizer {
 	private double convergeDistance = 0.0001;
 	private double circuitShuffliness = 0.5;
 	private double crossoverProbability = 0;
-	private double outlierErrorSDFactor = 6.0;
+	private double outlierErrorSDFactor = 1E10;
 	
 	private double agdGradientFactor = 0.3;
 	
@@ -196,10 +196,10 @@ public class CircuitSearchOptimizer {
 	}
 	
 	private boolean converged(List<Particle> workingSet) {
-		double[] meanPosition = ItemUtil.meanPosition(workingSet);
+		double[] meanPosition = ItemUtil.meanPosition(workingSet, Particle::getParameters);
 		double maxDiffSq = Double.NEGATIVE_INFINITY;
 		for(Particle particle : workingSet) {
-			double pmds = MathUtil.maxSquaredDiff(particle.clusteringPosition, meanPosition);
+			double pmds = MathUtil.maxSquaredDiff(particle.parameters, meanPosition);
 			if(pmds > maxDiffSq) {
 				maxDiffSq = pmds;
 			}

@@ -55,7 +55,6 @@ public class SolveLightCurve extends AbstractTool {
 	private static final int DEF_OUT_NUM_PIXELS = 100000;
 	
 	private static final double DEF_VIDEO_DURATION = 60;
-	private static final double DEF_TREND_CHANGE_WEIGHT = 0.99;
 
 	private void run(CommandLine cmdLine) throws Exception {
 		String[] args = cmdLine.getArgs();
@@ -90,12 +89,11 @@ public class SolveLightCurve extends AbstractTool {
 		int numClusteringIterations = this.getOptionInt(cmdLine, "noi", DEF_MAX_ITERATIONS);
 		int numGradientDescentIterations = this.getOptionInt(cmdLine, "nagd", DEF_MAX_AGD_ITERATIONS);
 		int numPostClusteringIterations = this.getOptionInt(cmdLine, "npci", DEF_MAX_CONS_ITERATIONS);
-		double trendChangeWeight = DEF_TREND_CHANGE_WEIGHT; //TODO
 		logger.info("Population size: " + populationSize + ".");
 		logger.info("Max iterations: " + numClusteringIterations + ".");
 		logger.info("Initial orbit radius: " + optSpec.getOrbitRadius());
 		long time1 = System.currentTimeMillis();
-		Solution solution = this.solve(lightCurve, sampler, populationSize, numClusteringIterations, numPostClusteringIterations, numGradientDescentIterations, trendChangeWeight);		
+		Solution solution = this.solve(lightCurve, sampler, populationSize, numClusteringIterations, numPostClusteringIterations, numGradientDescentIterations);		
 		long time2 = System.currentTimeMillis();
 		double elapsedSeconds = (time2 - time1) / 1000.0;
 		
@@ -108,7 +106,7 @@ public class SolveLightCurve extends AbstractTool {
 
 		String resultsFilePath = cmdLine.getOptionValue("or");
 		if(resultsFilePath != null) {
-			this.writeResults(resultsFilePath, optSpec, sampler, lightCurve, trendChangeWeight, solution, fluxArray, elapsedSeconds);
+			this.writeResults(resultsFilePath, optSpec, sampler, lightCurve, solution, fluxArray, elapsedSeconds);
 		}		
 
 		String transitImageFileName = cmdLine.getOptionValue("oi");
@@ -151,7 +149,7 @@ public class SolveLightCurve extends AbstractTool {
         System.out.println("Wrote " + outFile);		
 	}
 		
-	private Solution solve(LightCurvePoint[] lightCurve, SolutionSampler sampler, int populationSize, int numClusteringIterations, int numPostClusteringIterations, int numGradientDescentIterations, double trendChangeWeight) throws MathException {
+	private Solution solve(LightCurvePoint[] lightCurve, SolutionSampler sampler, int populationSize, int numClusteringIterations, int numPostClusteringIterations, int numGradientDescentIterations) throws MathException {
 		CSLightCurveFitter fitter = new CSLightCurveFitter(sampler, populationSize) {
 			@Override
 			protected void informProgress(String stage, int iteration, double error) {
@@ -162,10 +160,9 @@ public class SolveLightCurve extends AbstractTool {
 		};
 		// TODO: configure with options
 		fitter.setInitialPoolSize(populationSize);
-		fitter.setTrendChangeWeight(trendChangeWeight);
-		fitter.setCircuitShuffliness(0.25); //TODO %%% TESTING
-		fitter.setDisplacementFactor(0.02); //TODO %%% TESTING 0.01
-		fitter.setExpansionFactor(4.0); //TODO %%% TESTING
+		fitter.setCircuitShuffliness(0.2);
+		fitter.setDisplacementFactor(0.01);
+		fitter.setExpansionFactor(2.0);
 		fitter.setMaxCSIterationsWithClustering(numClusteringIterations);
 		fitter.setMaxExtraCSIterations(numPostClusteringIterations);
 		fitter.setMaxEliminationIterations(0);
@@ -175,8 +172,8 @@ public class SolveLightCurve extends AbstractTool {
 		return solution;
 	}
 	
-	private void writeResults(String resultsFilePath, OptSpec optSpec, SolutionSampler sampler, LightCurvePoint[] lightCurve, double trendChangeWeight, Solution solution, double[] fluxArray, double elapsedSeconds) throws Exception {
-		EvaluationInfo ei = sampler.getEvaluationInfo(fluxArray, trendChangeWeight, solution);
+	private void writeResults(String resultsFilePath, OptSpec optSpec, SolutionSampler sampler, LightCurvePoint[] lightCurve, Solution solution, double[] fluxArray, double elapsedSeconds) throws Exception {
+		EvaluationInfo ei = sampler.getEvaluationInfo(fluxArray, solution);
 		if(logger.isLoggable(Level.INFO)) {
 			logger.info("writeResults(): orbitRadius=" + solution.getOrbitRadius() + " (from " + optSpec.getOrbitRadius() + ").");
 			logger.info("writeResults(): rmse=" + ei.getRmse() + ", loss=" + ei.getLoss());

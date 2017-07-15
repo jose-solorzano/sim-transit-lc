@@ -490,7 +490,20 @@ public class MathUtil {
 		double area = random.nextDouble() * totalArea;
 		return -Math.log(1 - coefficient * area) / coefficient;
 	}
+
+	public static double[] sampleTriangular(Random random, int length) {
+		double[] values = new double[length];
+		for(int i = 0; i < length; i++) {
+			values[i] = nextTriangular(random);
+		}
+		return values;
+	}
 	
+	public static double nextTriangular(Random random) {
+		double p = random.nextDouble();
+		return p <= 0.5 ? (-1 + Math.sqrt(1 - 2 * p)) / -2 : 1 - (-1 + Math.sqrt(1 - 2 * (1 - p))) / -2;		
+	}
+
 	public static void fillNaNWithMean(double[] values) {
 		int length = values.length;
 		double sum = 0;
@@ -528,6 +541,10 @@ public class MathUtil {
 			}
 		}
 		return maxDiffSq;
+	}
+	
+	public static double mse(double[] vector1, double[] vector2) {
+		return euclideanDistanceSquared(vector1, 0, vector1.length, vector2, 0) / vector1.length;
 	}
 
 	public static double euclideanDistance(double[] point1, double[] point2) {
