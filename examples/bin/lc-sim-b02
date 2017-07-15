@@ -1,0 +1,9 @@
+#!/bin/bash
+
+projectDir=`dirname $0`/../..
+workDir=${projectDir}/work
+mkdir -p ${workDir}
+
+echo "BO2: Simulation of X in transit."
+
+${projectDir}/bin/lc-sim -o ${workDir}/sim-b02.csv -video ${workDir}/sim-b02.mov ${projectDir}/examples/sim/simspec-b02.json

@@ -1,12 +1,14 @@
 package jhs.lc.sims;
 
 public final class ImageElement {
+	final double x, y;
 	final int colIdx;
 	final int rowIdx;
 	final double brightness;
-	
-	public ImageElement(int colIdx, int rowIdx, double brightness) {
-		super();
+
+	public ImageElement(double x, double y, int colIdx, int rowIdx, double brightness) {
+		this.x = x;
+		this.y = y;
 		this.colIdx = colIdx;
 		this.rowIdx = rowIdx;
 		this.brightness = brightness;

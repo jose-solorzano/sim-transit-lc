@@ -32,16 +32,18 @@ public class CircuitSearchOptimizer {
 	
 	private int initialPoolSize = 1000;
 	
-	private int maxTotalIterations = 2000;
-	private int maxIterationsWithClustering = 100;
+	private int maxTotalIterations = 400;
+	private int maxIterationsWithClustering = 200;
 	private int maxClusterAlgoSteps = 3;
 	private int maxEliminationIterations = 0;
+	private int numParticlesPerCluster = 2;
 	
 	private double expansionFactor = 3.0;
 	private double displacementFactor = 0.03;
 	private double convergeDistance = 0.0001;
 	private double circuitShuffliness = 0.5;
 	private double crossoverProbability = 0;
+	private double outlierErrorSDFactor = 1E10;
 	
 	private double agdGradientFactor = 0.3;
 	
@@ -147,7 +149,7 @@ public class CircuitSearchOptimizer {
 			if(i == 0) {
 				workingSet = newParticles;
 			} else if(clusteringPhase) {
-				workingSet = this.extractBestWithClustering(n, ListUtil.concat(workingSet, newParticles));
+				workingSet = this.extractBestWithClustering(n, ListUtil.concat(workingSet, newParticles), true);
 			}
 			else {
 				workingSet = this.extractBest(n, ListUtil.concat(workingSet, newParticles));
@@ -162,6 +164,7 @@ public class CircuitSearchOptimizer {
 			}
 		}
 		List<RealPointValuePair> pointValues = ListUtil.map(workingSet, p -> p.getPointValuePair());
+		
 		return this.eliminationViaAGD(pointValues, errorFunction, i);
 	}	
 	
@@ -193,10 +196,10 @@ public class CircuitSearchOptimizer {
 	}
 	
 	private boolean converged(List<Particle> workingSet) {
-		double[] meanPosition = ItemUtil.meanPosition(workingSet);
+		double[] meanPosition = ItemUtil.meanPosition(workingSet, Particle::getParameters);
 		double maxDiffSq = Double.NEGATIVE_INFINITY;
 		for(Particle particle : workingSet) {
-			double pmds = MathUtil.maxSquaredDiff(particle.clusteringPosition, meanPosition);
+			double pmds = MathUtil.maxSquaredDiff(particle.parameters, meanPosition);
 			if(pmds > maxDiffSq) {
 				maxDiffSq = pmds;
 			}
@@ -224,35 +227,53 @@ public class CircuitSearchOptimizer {
 	private List<Particle> extractBest(int n, List<Particle> particles) {
 		List<Particle> sortedParticles = new ArrayList<>(particles);
 		Collections.sort(sortedParticles);
-		return sortedParticles.subList(0, n);
+		int top = Math.min(n, sortedParticles.size());
+		return sortedParticles.subList(0, top);
 	}
 	
-	private List<Particle> extractBestWithClustering(int n, List<Particle> particles) {
-		KMeansClusteringProducer<Particle> clusterEngine = new KMeansClusteringProducer<>(this.random, n, this.maxClusterAlgoSteps);
+	private List<Particle> extractBestWithClustering(int n, List<Particle> particles, boolean withOutlierRemoval) {
+		int nppc = this.numParticlesPerCluster;
+		if(nppc < 1) {
+			nppc = 1;
+		}
+		int numClusters = n / nppc;
+		if(numClusters < 1) {
+			numClusters = 1;
+		}
+		KMeansClusteringProducer<Particle> clusterEngine = new KMeansClusteringProducer<>(this.random, numClusters, this.maxClusterAlgoSteps);
 		VectorialClusteringResults<Particle> clusterResults = clusterEngine.produceClustering(particles);		
 		List<Particle> result = new ArrayList<>();
-		int missingCount = 0;
 		for(VectorialCluster<Particle> cluster : clusterResults.getClusters()) {
-			Particle particle = this.getBestParticle(cluster.getItems());
-			if(particle != null) {
-				result.add(particle);
-			} 
-			else {
-				missingCount++;
-			}
+			List<Particle> cp = this.extractBest(nppc, cluster.getItems());
+			result.addAll(cp);
 		}
-		if(missingCount > 0) {
-			Set<Particle> resultSet = new HashSet<>(result);
+		Set<Particle> origResultSet = new HashSet<>(result);
+		if(withOutlierRemoval) {
+			result = this.removeErrorOutliers(result);
+		}
+		if(result.size() < n) {
 			for(Particle particle : ListUtil.sorted(particles)) {
-				if(missingCount == 0) {
-					break;
-				}
-				if(!resultSet.contains(particle)) {
+				if(!origResultSet.contains(particle)) {
 					result.add(particle);
-					missingCount--;
+					if(result.size() >= n) {
+						break;
+					}
 				}
 			}
 		}
+		if(result.size() != n) {
+			throw new IllegalStateException("result.size()=" + result.size() + ", particles.size()=" + particles.size());
+		}
+		return result;
+	}
+	
+	private List<Particle> removeErrorOutliers(List<Particle> particles) {
+		double[] errors = ArrayUtil.doubleValueVector(particles, Particle::getValue);
+		double errorMedian = MathUtil.median(errors, true);
+		double errorSD = MathUtil.standardDev(errors, errorMedian);
+		double maxError = errorMedian + errorSD * this.outlierErrorSDFactor;
+		List<Particle> result = new ArrayList<Particle>(particles);
+		result.removeIf(p -> p.getValue() > maxError);
 		return result;
 	}
 	 
@@ -468,11 +489,11 @@ public class CircuitSearchOptimizer {
 		}
 		List<Particle> pool = new ArrayList<>();		
 		for(int i = 0; i < poolSize; i++) {
-			double[] params = MathUtil.sampleGaussian(r, 1.0, vectorLength);
+			double[] params = MathUtil.sampleUniformSymmetric(r, 1.0, vectorLength);
 			CircuitSearchParamEvaluation eval = errorFunction.evaluate(params);
 			pool.add(new Particle(params, eval.getClusteringPosition(), eval.getError()));
 		}
-		return this.extractBestWithClustering(n, pool);
+		return this.extractBestWithClustering(n, pool, false);
 	}
 	
 	protected void informProgress(int iteration, RealPointValuePair pointValue) {		

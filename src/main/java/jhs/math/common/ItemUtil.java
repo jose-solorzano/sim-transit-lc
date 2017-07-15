@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 
 import jhs.math.regression.linear.WeightedLinearRegression;
 import jhs.math.util.MathUtil;
@@ -123,6 +124,21 @@ public class ItemUtil {
 			values[i] = items.get(i).getPosition()[feature];
 		}
 		return values;
+	}
+
+	public static <T> double[] meanPosition(List<T> allItems, Function<T,double[]> function) {
+		if(allItems.isEmpty()) {
+			throw new IllegalArgumentException("Empty item list.");
+		}
+		double[] firstPosition = function.apply(allItems.get(0));
+		int numVars = firstPosition.length;
+		double[] meanArray = new double[numVars];
+		for(T item : allItems) {
+			double[] position = function.apply(item);
+			MathUtil.addInPlace(meanArray, position);
+		}
+		MathUtil.divideInPlace(meanArray, allItems.size());
+		return meanArray;		
 	}
 
 	public static double[] meanPosition(List<? extends VectorialItem> allItems) {

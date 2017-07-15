@@ -1,0 +1,26 @@
+{
+	"widthPixels": 80,
+	"heightPixels": 80,
+	"orbitPeriod": 150,
+	"orbitRadius": 305,
+	"orbitRadiusFlexibility": 0.03,
+	"method": {
+		"type": "neural",
+		"imageWidth": 2.0,
+		"imageHeight": 2.0,
+		"comment": "The shift_rotate input filter will move the origin and rotate the image.",
+		"inputFilter": "shift_rotate",
+		"networks": {
+			"outputType": "binary",
+			"outputActivationFunction": "simple_max",
+			"hiddenLayers": [
+				{ "numUnits": 4, "maxInputsPerUnit": 1, 
+					"activationFunctions": [ "linear_no_bias" ],
+					"comment": "Transforms (x, y) into (x * k1, y * k2, x * k3, y * k4)." },
+				{ "numUnits": 2, "maxInputsPerUnit": 2, 
+					"activationFunctions": [ "rbf0_s" ],
+					"comment": "Two squares centered at origin in altered spaces." }
+			]
+		}		
+	}
+}

@@ -21,6 +21,7 @@ public class SolutionSampler {
 	private static final int NUM_EXTRA_PARAMS = 1;
 	
 	private static final int WL = 5;
+	private static final double NPF = 200.0;
 	private static final double WSD = 0.5;
 	
 	private final Random random;
@@ -293,20 +294,19 @@ public class SolutionSampler {
 		FluxOrOpacityFunction bf = solution.getBrightnessFunction();
 		ImageElementInfo imageElementInfo = this.fluxSource.createImageElementInfo(bf);
 		double orbitRadius = this.getOrbitRadius(optimizerParameters);
-		int problemArcPixels = (int) Math.round(this.fluxSource.numPixelsInTimeSpanArc(bf, orbitRadius));
+		int problemArcPixels = (int) Math.round(this.fluxSource.numPixelsInTimeSpanArc(bf, orbitRadius) * NPF);
 		return new ImageState(imageElementInfo, problemArcPixels);
 	}
 
-	public EvaluationInfo getEvaluationInfo(double[] fluxArray, double trendChangeWeight, Solution solution) throws FunctionEvaluationException {
+	public EvaluationInfo getEvaluationInfo(double[] fluxArray, Solution solution) throws FunctionEvaluationException {
 		SimulatedFlux sf = solution.produceModeledFlux();
 		double[] modeledFlux = sf.getFluxArray();
-		LightCurveMatcher matcher = new LightCurveMatcher(fluxArray, trendChangeWeight);
+		LightCurveMatcher matcher = new LightCurveMatcher(fluxArray);
 		double mse = MathUtil.euclideanDistanceSquared(fluxArray, modeledFlux) / fluxArray.length;
 		double rmse = Math.sqrt(mse);
-		FlexibleLightCurveMatchingResults r = matcher.flexibleMeanSquaredError(modeledFlux, true);
-		double loss = r.getMinimizedError();
-		double fluxLoss = matcher.ordinaryFluxMeanSquaredError(modeledFlux);
-		double trendChangeLoss = matcher.ordinaryTrendChangeMeanSquaredError(modeledFlux);
+		double loss = matcher.loss(modeledFlux);
+		double fluxLoss = matcher.fluxLoss(modeledFlux);
+		double trendChangeLoss = matcher.trendChangeLoss(modeledFlux);
 		return new EvaluationInfo(rmse, loss, fluxLoss, trendChangeLoss);
 	}
 	
