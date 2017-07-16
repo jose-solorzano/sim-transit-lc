@@ -138,12 +138,13 @@ public class CSLightCurveFitter {
 	public Solution optimizeStandardErrorCS(double[] fluxArray) throws MathException {
 		double comf = LightCurve.centerOfMassAsFraction(fluxArray);
 		this.sampler.setPeakFraction(comf);
-		CircuitSearchEvaluator errorFunction = LocalErrorFunction.create(this.sampler, fluxArray);
-		return this.optimizeCircuitSearch(errorFunction);
+		CircuitSearchEvaluator prepErrorFunction = new LocalErrorFunction(sampler, fluxArray, 1, 0, 3);
+		CircuitSearchEvaluator resolveErrorFunction = new LocalErrorFunction(sampler, fluxArray, 3, 0, 1);
+		return this.optimizeCircuitSearch(prepErrorFunction, resolveErrorFunction);
 	}
 
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
-		MultivariateRealFunction errorFunction = LocalErrorFunction.create(this.sampler, fluxArray);
+		MultivariateRealFunction errorFunction = new LocalErrorFunction(sampler, fluxArray, 1, 0, 0);
 		return this.optimizeAGD(fluxArray, initialSolution, errorFunction, maxIterations);
 	}
 
@@ -163,7 +164,7 @@ public class CSLightCurveFitter {
 		return sampler.parametersAsSolution(optPoint.getPointRef());
 	}
 
-	public Solution optimizeCircuitSearch(CircuitSearchEvaluator errorFunction) throws MathException {
+	public Solution optimizeCircuitSearch(CircuitSearchEvaluator prepErrorFunction, CircuitSearchEvaluator resolveErrorFunction) throws MathException {
 		SolutionSampler sampler = this.sampler;
 		Random random = sampler.getRandom();
 		CircuitSearchOptimizer optimizer = new CircuitSearchOptimizer(random, this.populationSize) {
@@ -181,15 +182,10 @@ public class CSLightCurveFitter {
 		optimizer.setMaxTotalIterations(this.maxCSIterationsWithClustering + this.maxExtraCSIterations);
 		optimizer.setMaxEliminationIterations(this.maxEliminationIterations);
 		int vectorLength = sampler.getNumParameters();
-		RealPointValuePair result = optimizer.optimize(errorFunction, vectorLength);
+		RealPointValuePair result = optimizer.optimize(prepErrorFunction, resolveErrorFunction, vectorLength);
 
 		Solution solution = sampler.parametersAsSolution(result.getPointRef());
 
-		if(logger.isLoggable(Level.INFO)) {
-			double[] params = sampler.solutionAsParameters(solution);
-			logger.info("optimizeCircuitSearch(): Last error from CS: " + errorFunction.evaluate(params).getError());
-		}
-		
 		return solution;
 	}
 
@@ -225,17 +221,13 @@ public class CSLightCurveFitter {
 		private final LightCurveMatcher matcher;
 		private final double tcCosd, tcWidth;
 
-		public LocalErrorFunction(SolutionSampler sampler, double[] fluxArray) {
+		public LocalErrorFunction(SolutionSampler sampler, double[] fluxArray, double w0, double w1, double w2) {
 			this.sampler = sampler;
 			//this.lambda = lambda;
-			this.matcher = new LightCurveMatcher(fluxArray);
+			this.matcher = new LightCurveMatcher(fluxArray, w0, w1, w2);
 			double[] trendChangeProfile = LightCurveMatcher.trendChangeProfile(fluxArray);
 			this.tcCosd = SeriesUtil.centerOfSquaredDev(trendChangeProfile, 0);
 			this.tcWidth = SeriesUtil.seriesWidth(trendChangeProfile, 0, this.tcCosd);
-		}
-
-		public static LocalErrorFunction create(SolutionSampler sampler, double[] fluxArray) {
-			return new LocalErrorFunction(sampler, fluxArray);
 		}
 		
 		@Override

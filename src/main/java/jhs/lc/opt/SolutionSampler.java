@@ -301,7 +301,8 @@ public class SolutionSampler {
 	public EvaluationInfo getEvaluationInfo(double[] fluxArray, Solution solution) throws FunctionEvaluationException {
 		SimulatedFlux sf = solution.produceModeledFlux();
 		double[] modeledFlux = sf.getFluxArray();
-		LightCurveMatcher matcher = new LightCurveMatcher(fluxArray);
+		double w0 = 1, w1 = 0, w2 = 0;
+		LightCurveMatcher matcher = new LightCurveMatcher(fluxArray, w0, w1, w2);
 		double mse = MathUtil.euclideanDistanceSquared(fluxArray, modeledFlux) / fluxArray.length;
 		double rmse = Math.sqrt(mse);
 		double loss = matcher.loss(modeledFlux);

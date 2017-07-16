@@ -6,7 +6,7 @@ mkdir -p ${workDir}
 
 echo "BO3 optimization: Models an inclined single-ring planet."
 
-OPTS="-log INFO -pop 100 -noi 400 -npci 200 -nagd 400"
+OPTS="-log INFO -pop 150 -noi 300 -npci 50 -nagd 200"
 
 ${projectDir}/bin/lc-opt ${OPTS} \
 	-i ${projectDir}/examples/lc/sim-b03.csv \
