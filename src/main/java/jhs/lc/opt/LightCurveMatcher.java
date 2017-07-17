@@ -5,12 +5,9 @@ import jhs.math.util.MathUtil;
 import org.apache.commons.math.FunctionEvaluationException;
 
 public class LightCurveMatcher {
-	private static final double WLF = 0.08;
-	
-	private static final double SW = 1;
-	private static final double STW = 0;
-	private static final double STCW = 1;
-	
+	private static final double WLF = 0.09;
+		
+	private final double w0, w1, w2;
 	private final double[] targetFluxArray;
 	private final double[] targetTrendArray;
 	private final double[] targetTrendChangeArray;
@@ -18,7 +15,10 @@ public class LightCurveMatcher {
 	private final double trendVariance;
 	private final double trendChangeVariance;
 
-	public LightCurveMatcher(double[] targetFluxArray) {
+	public LightCurveMatcher(double[] targetFluxArray, double w0, double w1, double w2) {
+		this.w0 = w0;
+		this.w1 = w1;
+		this.w2 = w2;
 		this.targetFluxArray = targetFluxArray;
 		this.targetTrendArray = trendProfile(targetFluxArray);
 		this.targetTrendChangeArray = trendProfile(this.targetTrendArray);
@@ -54,7 +54,7 @@ public class LightCurveMatcher {
 		double sMse = MathUtil.mse(testFluxArray, this.targetFluxArray) / this.fluxVariance;
 		double stMse = MathUtil.mse(testTrendArray, this.targetTrendArray) / this.trendVariance;
 		double stcMse = MathUtil.mse(testTrendChangeArray, this.targetTrendChangeArray) / this.trendChangeVariance;
-		return (sMse * SW + stMse * STW + stcMse * STCW) / (SW + STW + STCW);
+		return (sMse * w0 + stMse * w1 + stcMse * w2) / (w0 + w1 + w2);
 	}
 	
 	public double fluxLoss(double[] testFluxArray) {

@@ -42,8 +42,7 @@ public class CircuitSearchOptimizer {
 	private double displacementFactor = 0.03;
 	private double convergeDistance = 0.0001;
 	private double circuitShuffliness = 0.5;
-	private double crossoverProbability = 0;
-	private double outlierErrorSDFactor = 1E10;
+	private double outlierErrorSDFactor = 1E7;
 	
 	private double agdGradientFactor = 0.3;
 	
@@ -137,14 +136,27 @@ public class CircuitSearchOptimizer {
 	}
 
 	@SuppressWarnings("unchecked")
-	public RealPointValuePair optimize(CircuitSearchEvaluator errorFunction, int vectorLength) throws MathException {
+	public RealPointValuePair optimize(CircuitSearchEvaluator prepErrorFunction, CircuitSearchEvaluator resolveErrorFunction, int vectorLength) throws MathException {
 		int n = this.populationSize;
 		int maxIterations = this.maxTotalIterations;
 		int maxIterationsWithClustering = this.maxIterationsWithClustering;
+		CircuitSearchEvaluator errorFunction = prepErrorFunction;
+		CircuitSearchEvaluator altErrorFunction = resolveErrorFunction;		
+		boolean consolidationHasNotRun = true;
 		List<Particle> workingSet = this.createInitialWorkingSet(n, vectorLength, errorFunction);
 		int i;
 		for(i = 0; i < maxIterations; i++) {
 			boolean clusteringPhase = i < maxIterationsWithClustering;
+			if(i != 0 && !clusteringPhase && consolidationHasNotRun) {
+				consolidationHasNotRun = false;
+				if(errorFunction != resolveErrorFunction) {
+					if(logger.isLoggable(Level.INFO)) {
+						logger.info("---- Switching evaluation function ----");
+					}
+					errorFunction = resolveErrorFunction;
+					workingSet = this.revalidateWorkingSet(workingSet, errorFunction);
+				}
+			}
 			List<Particle> newParticles = this.circuitSearch(workingSet, errorFunction, clusteringPhase);
 			if(i == 0) {
 				workingSet = newParticles;
@@ -162,11 +174,37 @@ public class CircuitSearchOptimizer {
 			if(this.converged(workingSet)) {
 				break;
 			}
+			if(i != 0 && consolidationHasNotRun && (i % 15 == 0)) {
+				if(logger.isLoggable(Level.INFO)) {
+					logger.info("---- Switching evaluation function ----");
+				}
+				CircuitSearchEvaluator helper = errorFunction;
+				errorFunction = altErrorFunction;
+				altErrorFunction = helper;
+				workingSet = this.revalidateWorkingSet(workingSet, errorFunction);
+				
+			}
 		}
-		List<RealPointValuePair> pointValues = ListUtil.map(workingSet, p -> p.getPointValuePair());
-		
+		if(errorFunction != resolveErrorFunction) {
+			if(logger.isLoggable(Level.INFO)) {
+				logger.info("---- Switching evaluation function ----");
+			}
+			errorFunction = resolveErrorFunction;
+			workingSet = this.revalidateWorkingSet(workingSet, errorFunction);			
+		}
+		List<RealPointValuePair> pointValues = ListUtil.map(workingSet, p -> p.getPointValuePair());		
 		return this.eliminationViaAGD(pointValues, errorFunction, i);
 	}	
+	
+	private List<Particle> revalidateWorkingSet(List<Particle> particles, CircuitSearchEvaluator errorFunction) throws FunctionEvaluationException {
+		List<Particle> result = new ArrayList<>();
+		for(Particle p : particles) {
+			double[] parameters = p.parameters;
+			CircuitSearchParamEvaluation eval = errorFunction.evaluate(parameters);
+			result.add(new Particle(parameters, eval.getClusteringPosition(), eval.getError()));
+		}
+		return result;
+	}
 	
 	private RealPointValuePair eliminationViaAGD(List<RealPointValuePair> pointValues, final CircuitSearchEvaluator errorFunction, int baseIteration) throws MathException {
 		MultivariateRealFunction gdErrorFunction = new MultivariateRealFunction() {			
@@ -183,8 +221,8 @@ public class CircuitSearchOptimizer {
 		for(int i = 0; i < maxAgdIterations && currentPointValues.size() > 1; i++) {
 			List<RealPointValuePair> newPointValues = new ArrayList<>();
 			for(RealPointValuePair pointValue : currentPointValues) {
-				//TODO: Should be done for every point?
-				double[] epsilon = errorFunction.recommendEpsilon(pointValue.getPointRef());
+				double[] epsilon = new double[pointValue.getPointRef().length];
+				Arrays.fill(epsilon, 0.01);
 				RealPointValuePair newPointValue = agdOptimizer.doOneStep(pointValue, gdErrorFunction, agdgf, epsilon);
 				newPointValues.add(newPointValue);
 			}
@@ -303,8 +341,7 @@ public class CircuitSearchOptimizer {
 		params2 = this.movePoint(params2, moveSd);
 		//difference = MathUtil.subtract(params2, params1);
 
-		boolean crossover = this.random.nextDouble() < this.crossoverProbability;
-		Particle candidate = crossover ? this.crossover(errorFunction, params1, params2) : this.newParticleInHyperrectangle(errorFunction, params1, params2, 0, 1.0);
+		Particle candidate = this.newParticleInHyperrectangle(errorFunction, params1, params2, 0, 1.0);
 
 		double candidateError = candidate.evaluation;
 		if(candidateError <= error1 && candidateError <= error2) {
@@ -336,7 +373,7 @@ public class CircuitSearchOptimizer {
 		return new Particle(newParams, eval.getClusteringPosition(), eval.getError());
 	}
 
-
+	/*
 	private Particle crossover(CircuitSearchEvaluator errorFunction, double[] params1, double[] params2) throws FunctionEvaluationException {
 		Random r = this.random;
 		if(params1.length <= 1) {
@@ -353,6 +390,7 @@ public class CircuitSearchOptimizer {
 		CircuitSearchParamEvaluation evaluation = errorFunction.evaluate(newParams);
 		return new Particle(newParams, evaluation.getClusteringPosition(), evaluation.getError());
 	}
+	*/
 
 	/*
 	private Particle newParticleFromBaseline(CircuitSearchEvaluator errorFunction, double[] baselineParams, double[] directionVector, double fromFraction, double toFraction) throws MathException {

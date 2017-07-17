@@ -160,9 +160,9 @@ public class SolveLightCurve extends AbstractTool {
 		};
 		// TODO: configure with options
 		fitter.setInitialPoolSize(populationSize);
-		fitter.setCircuitShuffliness(0.2);
-		fitter.setDisplacementFactor(0.01);
-		fitter.setExpansionFactor(2.0);
+		fitter.setCircuitShuffliness(0.5);
+		fitter.setDisplacementFactor(0.04);
+		fitter.setExpansionFactor(3.0);
 		fitter.setMaxCSIterationsWithClustering(numClusteringIterations);
 		fitter.setMaxExtraCSIterations(numPostClusteringIterations);
 		fitter.setMaxEliminationIterations(0);
