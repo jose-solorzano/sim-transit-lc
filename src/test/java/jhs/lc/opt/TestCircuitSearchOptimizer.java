@@ -31,7 +31,7 @@ public class TestCircuitSearchOptimizer {
 		optimizer.setCircuitShuffliness(1.0);
 		CustomErrorFunction errorFunction = new CustomErrorFunction();
 		RealPointValuePair rsr = this.randomSearch(errorFunction, random, vectorLength);
-		RealPointValuePair result = optimizer.optimize(errorFunction, errorFunction, vectorLength);
+		RealPointValuePair result = optimizer.optimize(vectorLength, errorFunction);
 		System.out.println("RandSearch: " + Arrays.toString(rsr.getPoint()) + " | " + rsr.getValue());
 		System.out.println("Result: " + Arrays.toString(result.getPoint()) + " | " + result.getValue());
 		assertTrue(result.getValue() < rsr.getValue());
@@ -55,7 +55,7 @@ public class TestCircuitSearchOptimizer {
 		optimizer.setConvergeDistance(0.003);
 		double[] minimum = MathUtil.sampleGaussian(random, 1.0, vectorLength);
 		CircuitSearchEvaluator errorFunction = new DistanceSqErrorFunction(minimum);
-		RealPointValuePair result = optimizer.optimize(errorFunction, errorFunction, vectorLength);
+		RealPointValuePair result = optimizer.optimize(vectorLength, errorFunction);
 		double[] resultPoint = result.getPointRef();
 		int numMatches = 0;
 		for(int i = 0; i < minimum.length; i++) {

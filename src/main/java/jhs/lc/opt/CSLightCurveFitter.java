@@ -14,14 +14,15 @@ import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealPointValuePair;
 
 public class CSLightCurveFitter {	
-	private static final Logger logger = Logger.getLogger(CSLightCurveFitter.class.getName());
+	//private static final Logger logger = Logger.getLogger(CSLightCurveFitter.class.getName());
 	private final SolutionSampler sampler;
 	private final int populationSize;
 	
 	private int initialPoolSize = 1000;
 	
+	private int maxCSWarmUpIterations = 50;
 	private int maxCSIterationsWithClustering = 100;
-	private int maxExtraCSIterations = 5;
+	private int maxExtraCSIterations = 10;
 	private int maxEliminationIterations = 0;
 	private int maxGradientDescentIterations = 10;
 
@@ -46,13 +47,17 @@ public class CSLightCurveFitter {
 		this.initialPoolSize = initialPoolSize;
 	}
 
-//	public final double getLambda() {
-//		return lambda;
-//	}
-//
-//	public final void setLambda(double lambda) {
-//		this.lambda = lambda;
-//	}
+	public final int getMaxCSWarmUpIterations() {
+		return maxCSWarmUpIterations;
+	}
+
+	public final void setMaxCSWarmUpIterations(int maxCSWarmUpIterations) {
+		this.maxCSWarmUpIterations = maxCSWarmUpIterations;
+	}
+
+	public final int getPopulationSize() {
+		return populationSize;
+	}
 
 	public final double getEpsilonFactor() {
 		return epsilonFactor;
@@ -138,12 +143,12 @@ public class CSLightCurveFitter {
 	public Solution optimizeStandardErrorCS(double[] fluxArray) throws MathException {
 		CircuitSearchEvaluator lfWarmUp = new SizingLossFunction(sampler, fluxArray);
 		CircuitSearchEvaluator lf1 = new PrimaryLossFunction(sampler, fluxArray, 1, 0, 3);
-		CircuitSearchEvaluator resolveErrorFunction = new PrimaryLossFunction(sampler, fluxArray, 3, 0, 1);
-		return this.optimizeCircuitSearch();
+		CircuitSearchEvaluator lf2 = new PrimaryLossFunction(sampler, fluxArray, 3, 0, 1);
+		return this.optimizeCircuitSearch(lfWarmUp, lf1, lf2);
 	}
 
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
-		MultivariateRealFunction errorFunction = new AbstractLossFunction(sampler, fluxArray, 1, 0, 0);
+		MultivariateRealFunction errorFunction = new PrimaryLossFunction(sampler, fluxArray, 1, 0, 0);
 		return this.optimizeAGD(fluxArray, initialSolution, errorFunction, maxIterations);
 	}
 
@@ -177,7 +182,7 @@ public class CSLightCurveFitter {
 		optimizer.setConvergeDistance(this.convergeDistance);
 		optimizer.setDisplacementFactor(this.displacementFactor);
 		optimizer.setExpansionFactor(this.expansionFactor);
-		optimizer.setMaxWarmUpIterations(this.maxWarmUpIterations);
+		optimizer.setMaxWarmUpIterations(this.maxCSWarmUpIterations);
 		optimizer.setMaxConsolidationIterations(this.maxExtraCSIterations);
 		optimizer.setMaxIterationsWithClustering(this.maxCSIterationsWithClustering);
 		optimizer.setMaxEliminationIterations(this.maxEliminationIterations);
