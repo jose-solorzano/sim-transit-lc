@@ -7,10 +7,8 @@ import java.util.logging.Logger;
 
 import jhs.lc.data.LightCurve;
 import jhs.lc.data.LightCurvePoint;
-import jhs.lc.sims.SimulatedFlux;
 import jhs.math.util.MathUtil;
 
-import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealPointValuePair;
@@ -129,22 +127,23 @@ public class CSLightCurveFitter {
 	}
 
 	public Solution optimize(LightCurvePoint[] lightCurve) throws MathException {
-		double[] allFluxes = LightCurvePoint.fluxArray(lightCurve);
-		Solution solutionStage1 = this.optimizeStandardErrorCS(allFluxes);
-		Solution solutionStage3 = this.optimizeStandardErrorAGD(allFluxes, solutionStage1, this.maxGradientDescentIterations);
+		double[] fluxArray = LightCurvePoint.fluxArray(lightCurve);
+		double comf = LightCurve.centerOfMassAsFraction(fluxArray);
+		this.sampler.setPeakFraction(comf);
+		Solution solutionStage1 = this.optimizeStandardErrorCS(fluxArray);
+		Solution solutionStage3 = this.optimizeStandardErrorAGD(fluxArray, solutionStage1, this.maxGradientDescentIterations);
 		return solutionStage3;
 	}
 
 	public Solution optimizeStandardErrorCS(double[] fluxArray) throws MathException {
-		double comf = LightCurve.centerOfMassAsFraction(fluxArray);
-		this.sampler.setPeakFraction(comf);
-		CircuitSearchEvaluator prepErrorFunction = new LocalErrorFunction(sampler, fluxArray, 1, 0, 3);
-		CircuitSearchEvaluator resolveErrorFunction = new LocalErrorFunction(sampler, fluxArray, 3, 0, 1);
-		return this.optimizeCircuitSearch(prepErrorFunction, resolveErrorFunction);
+		CircuitSearchEvaluator lfWarmUp = new SizingLossFunction(sampler, fluxArray);
+		CircuitSearchEvaluator lf1 = new PrimaryLossFunction(sampler, fluxArray, 1, 0, 3);
+		CircuitSearchEvaluator resolveErrorFunction = new PrimaryLossFunction(sampler, fluxArray, 3, 0, 1);
+		return this.optimizeCircuitSearch();
 	}
 
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
-		MultivariateRealFunction errorFunction = new LocalErrorFunction(sampler, fluxArray, 1, 0, 0);
+		MultivariateRealFunction errorFunction = new AbstractLossFunction(sampler, fluxArray, 1, 0, 0);
 		return this.optimizeAGD(fluxArray, initialSolution, errorFunction, maxIterations);
 	}
 
@@ -164,7 +163,7 @@ public class CSLightCurveFitter {
 		return sampler.parametersAsSolution(optPoint.getPointRef());
 	}
 
-	public Solution optimizeCircuitSearch(CircuitSearchEvaluator prepErrorFunction, CircuitSearchEvaluator resolveErrorFunction) throws MathException {
+	public Solution optimizeCircuitSearch(CircuitSearchEvaluator warmUpErrorFunction, CircuitSearchEvaluator ... alternatingErrorFunctions) throws MathException {
 		SolutionSampler sampler = this.sampler;
 		Random random = sampler.getRandom();
 		CircuitSearchOptimizer optimizer = new CircuitSearchOptimizer(random, this.populationSize) {
@@ -178,11 +177,12 @@ public class CSLightCurveFitter {
 		optimizer.setConvergeDistance(this.convergeDistance);
 		optimizer.setDisplacementFactor(this.displacementFactor);
 		optimizer.setExpansionFactor(this.expansionFactor);
+		optimizer.setMaxWarmUpIterations(this.maxWarmUpIterations);
+		optimizer.setMaxConsolidationIterations(this.maxExtraCSIterations);
 		optimizer.setMaxIterationsWithClustering(this.maxCSIterationsWithClustering);
-		optimizer.setMaxTotalIterations(this.maxCSIterationsWithClustering + this.maxExtraCSIterations);
 		optimizer.setMaxEliminationIterations(this.maxEliminationIterations);
 		int vectorLength = sampler.getNumParameters();
-		RealPointValuePair result = optimizer.optimize(prepErrorFunction, resolveErrorFunction, vectorLength);
+		RealPointValuePair result = optimizer.optimize(vectorLength, warmUpErrorFunction, alternatingErrorFunctions);
 
 		Solution solution = sampler.parametersAsSolution(result.getPointRef());
 
@@ -213,49 +213,5 @@ public class CSLightCurveFitter {
 			weightSum += weight;
 		}
 		return weightSum == 0 ? 0 : sum / weightSum;
-	}
-
-	private static class LocalErrorFunction implements MultivariateRealFunction, CircuitSearchEvaluator {
-		private final SolutionSampler sampler;
-		//private final double lambda;
-		private final LightCurveMatcher matcher;
-		private final double tcCosd, tcWidth;
-
-		public LocalErrorFunction(SolutionSampler sampler, double[] fluxArray, double w0, double w1, double w2) {
-			this.sampler = sampler;
-			//this.lambda = lambda;
-			this.matcher = new LightCurveMatcher(fluxArray, w0, w1, w2);
-			double[] trendChangeProfile = LightCurveMatcher.trendChangeProfile(fluxArray);
-			this.tcCosd = SeriesUtil.centerOfSquaredDev(trendChangeProfile, 0);
-			this.tcWidth = SeriesUtil.seriesWidth(trendChangeProfile, 0, this.tcCosd);
-		}
-		
-		@Override
-		public CircuitSearchParamEvaluation evaluate(double[] params) throws FunctionEvaluationException, IllegalArgumentException {
-			Solution solution = this.sampler.parametersAsSolution(params);
-			SimulatedFlux sf = solution.produceModeledFlux();
-			double[] modeledFlux = sf.getFluxArray();
-			double baseError = this.matcher.loss(modeledFlux);
-			double error = baseError + solution.getExtraOptimizerError();
-			//TODO Improve clustering posiition
-			//double[] clusteringPosition = this.getClusteringPosition(modeledFlux);
-			double[] clusteringPosition = sf.getClusteringPosition();
-			return new CircuitSearchParamEvaluation(error, clusteringPosition);
-		}
-
-		@Override
-		public final double value(double[] parameters) throws FunctionEvaluationException, IllegalArgumentException {
-			return this.evaluate(parameters).getError();
-		}
-		
-		private double[] getClusteringPosition(double[] modeledFlux) {
-			double[] trendChangeArray = LightCurveMatcher.trendChangeProfile(modeledFlux);
-			return SeriesUtil.skewSeries(trendChangeArray, 0, this.tcCosd, this.tcWidth);
-		}
-
-		@Override
-		public final double[] recommendEpsilon(double[] params) {
-			return this.sampler.minimalChangeThreshold(params, 1.0);
-		}		
 	}
 }

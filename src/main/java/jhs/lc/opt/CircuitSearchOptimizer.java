@@ -31,9 +31,11 @@ public class CircuitSearchOptimizer {
 	private final int populationSize;
 	
 	private int initialPoolSize = 1000;
-	
-	private int maxTotalIterations = 400;
+
+	private int maxWarmUpIterations = 50;	
 	private int maxIterationsWithClustering = 200;
+	private int maxConsolidationIterations = 50;
+
 	private int maxClusterAlgoSteps = 3;
 	private int maxEliminationIterations = 0;
 	private int numParticlesPerCluster = 2;
@@ -59,12 +61,37 @@ public class CircuitSearchOptimizer {
 		this.circuitShuffliness = circuitShuffliness;
 	}
 
-	public final int getMaxTotalIterations() {
-		return maxTotalIterations;
+	
+	public final int getMaxWarmUpIterations() {
+		return maxWarmUpIterations;
 	}
 
-	public final void setMaxTotalIterations(int maxTotalIterations) {
-		this.maxTotalIterations = maxTotalIterations;
+	public final void setMaxWarmUpIterations(int maxWarmUpIterations) {
+		this.maxWarmUpIterations = maxWarmUpIterations;
+	}
+
+	public final int getMaxConsolidationIterations() {
+		return maxConsolidationIterations;
+	}
+
+	public final void setMaxConsolidationIterations(int maxConsolidationIterations) {
+		this.maxConsolidationIterations = maxConsolidationIterations;
+	}
+
+	public final int getNumParticlesPerCluster() {
+		return numParticlesPerCluster;
+	}
+
+	public final void setNumParticlesPerCluster(int numParticlesPerCluster) {
+		this.numParticlesPerCluster = numParticlesPerCluster;
+	}
+
+	public final double getOutlierErrorSDFactor() {
+		return outlierErrorSDFactor;
+	}
+
+	public final void setOutlierErrorSDFactor(double outlierErrorSDFactor) {
+		this.outlierErrorSDFactor = outlierErrorSDFactor;
 	}
 
 	public final int getMaxIterationsWithClustering() {
@@ -136,31 +163,50 @@ public class CircuitSearchOptimizer {
 	}
 
 	@SuppressWarnings("unchecked")
-	public RealPointValuePair optimize(CircuitSearchEvaluator prepErrorFunction, CircuitSearchEvaluator resolveErrorFunction, int vectorLength) throws MathException {
+	public RealPointValuePair optimize(int vectorLength, CircuitSearchEvaluator warmUpErrorFunction, CircuitSearchEvaluator ...  alternatingErrorFunctions) throws MathException {
 		int n = this.populationSize;
-		int maxIterations = this.maxTotalIterations;
-		int maxIterationsWithClustering = this.maxIterationsWithClustering;
-		CircuitSearchEvaluator errorFunction = prepErrorFunction;
-		CircuitSearchEvaluator altErrorFunction = resolveErrorFunction;		
-		boolean consolidationHasNotRun = true;
+		Phase phase = Phase.WARMUP;
+		CircuitSearchEvaluator errorFunction = warmUpErrorFunction;
 		List<Particle> workingSet = this.createInitialWorkingSet(n, vectorLength, errorFunction);
+		int maxWarmUpIterations = this.maxWarmUpIterations;
+		int maxIterationsWithClustering = this.maxIterationsWithClustering;
+		int maxConsolidationIterations = this.maxConsolidationIterations;
+		int maxWarmUpPlusClusteringIterations = maxWarmUpIterations + maxIterationsWithClustering;
+		int maxIterations = maxWarmUpIterations + maxIterationsWithClustering + maxConsolidationIterations;
+		int currentAltFunctionIndex = -1;
 		int i;
 		for(i = 0; i < maxIterations; i++) {
-			boolean clusteringPhase = i < maxIterationsWithClustering;
-			if(i != 0 && !clusteringPhase && consolidationHasNotRun) {
-				consolidationHasNotRun = false;
-				if(errorFunction != resolveErrorFunction) {
-					if(logger.isLoggable(Level.INFO)) {
-						logger.info("---- Switching evaluation function ----");
+			switch(phase) {
+			case WARMUP:
+				if(i == maxWarmUpIterations) {
+					this.informEndOfWarmUpPhase(ListUtil.map(workingSet, p -> p.getPointValuePair()));
+					phase = Phase.CLUSTERING;
+					if(alternatingErrorFunctions.length != 0) {
+						currentAltFunctionIndex = 0;
+						CircuitSearchEvaluator newErrorFunction = alternatingErrorFunctions[currentAltFunctionIndex];
+						if(newErrorFunction != errorFunction) {
+							if(logger.isLoggable(Level.INFO)) {
+								logger.info("---- Switching evaluation function ----");
+							}
+							errorFunction = newErrorFunction;
+							workingSet = this.revalidateWorkingSet(workingSet, errorFunction);							
+						}
 					}
-					errorFunction = resolveErrorFunction;
-					workingSet = this.revalidateWorkingSet(workingSet, errorFunction);
 				}
+				break;
+			case CLUSTERING: 
+				if(i == maxWarmUpPlusClusteringIterations) {
+					phase = Phase.CONSOLIDATION;					
+				}
+				break;
+			case CONSOLIDATION:
+				break;
 			}
-			List<Particle> newParticles = this.circuitSearch(workingSet, errorFunction, clusteringPhase);
+			boolean consolidationPhase = phase == Phase.CONSOLIDATION;
+			List<Particle> newParticles = this.circuitSearch(workingSet, errorFunction, !consolidationPhase);
 			if(i == 0) {
 				workingSet = newParticles;
-			} else if(clusteringPhase) {
+			} else if(!consolidationPhase) {
 				workingSet = this.extractBestWithClustering(n, ListUtil.concat(workingSet, newParticles), true);
 			}
 			else {
@@ -174,27 +220,29 @@ public class CircuitSearchOptimizer {
 			if(this.converged(workingSet)) {
 				break;
 			}
-			if(i != 0 && consolidationHasNotRun && (i % 15 == 0)) {
-				if(logger.isLoggable(Level.INFO)) {
-					logger.info("---- Switching evaluation function ----");
-				}
-				CircuitSearchEvaluator helper = errorFunction;
-				errorFunction = altErrorFunction;
-				altErrorFunction = helper;
-				workingSet = this.revalidateWorkingSet(workingSet, errorFunction);
-				
+			if(i != 0 && (i % 10 == 0)) {
+				if(currentAltFunctionIndex != -1) {
+					currentAltFunctionIndex++;
+					if(currentAltFunctionIndex >= alternatingErrorFunctions.length) {
+						currentAltFunctionIndex = 0;
+					}
+					CircuitSearchEvaluator newErrorFunction = alternatingErrorFunctions[currentAltFunctionIndex];
+					if(newErrorFunction != errorFunction) {
+						if(logger.isLoggable(Level.INFO)) {
+							logger.info("---- Switching evaluation function ----");
+						}
+						errorFunction = newErrorFunction;
+						workingSet = this.revalidateWorkingSet(workingSet, errorFunction);							
+					}
+				}				
 			}
-		}
-		if(errorFunction != resolveErrorFunction) {
-			if(logger.isLoggable(Level.INFO)) {
-				logger.info("---- Switching evaluation function ----");
-			}
-			errorFunction = resolveErrorFunction;
-			workingSet = this.revalidateWorkingSet(workingSet, errorFunction);			
 		}
 		List<RealPointValuePair> pointValues = ListUtil.map(workingSet, p -> p.getPointValuePair());		
 		return this.eliminationViaAGD(pointValues, errorFunction, i);
 	}	
+	
+	protected void informEndOfWarmUpPhase(List<RealPointValuePair> pointValues) {		
+	}
 	
 	private List<Particle> revalidateWorkingSet(List<Particle> particles, CircuitSearchEvaluator errorFunction) throws FunctionEvaluationException {
 		List<Particle> result = new ArrayList<>();
@@ -576,5 +624,9 @@ public class CircuitSearchOptimizer {
 			this.particle = particle;
 			this.next = next;
 		}
+	}
+	
+	private enum Phase {
+		WARMUP, CLUSTERING, CONSOLIDATION;
 	}
 }

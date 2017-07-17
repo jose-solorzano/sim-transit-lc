@@ -25,7 +25,7 @@ import jhs.lc.geom.ParametricFluxFunctionSource;
 import jhs.lc.jmf.BufferedImageVideoProducer;
 import jhs.lc.opt.CSLightCurveFitter;
 import jhs.lc.opt.EvaluationInfo;
-import jhs.lc.opt.LightCurveMatcher;
+import jhs.lc.opt.PrimaryLossFunction;
 import jhs.lc.opt.Solution;
 import jhs.lc.opt.SolutionSampler;
 import jhs.lc.sims.AngleUnsupportedException;
@@ -204,8 +204,8 @@ public class SolveLightCurve extends AbstractTool {
 	private void writeData(LightCurvePoint[] lightCurve, Solution solution, String outFilePath) throws IOException {
 		double[] obsFluxArray = LightCurvePoint.fluxArray(lightCurve);
 		double[] modeledFlux = solution.produceModeledFlux().getFluxArray();
-		double[] obsTrendChangeProfile = LightCurveMatcher.trendChangeProfile(obsFluxArray);
-		double[] modeledTrendChangeProfile = LightCurveMatcher.trendChangeProfile(modeledFlux);
+		double[] obsTrendChangeProfile = PrimaryLossFunction.trendChangeProfile(obsFluxArray);
+		double[] modeledTrendChangeProfile = PrimaryLossFunction.trendChangeProfile(modeledFlux);
 		File file = new File(outFilePath);
 		PrintWriter out = new PrintWriter(file);
 		try {
