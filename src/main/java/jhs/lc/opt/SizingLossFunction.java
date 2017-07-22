@@ -9,14 +9,14 @@ public class SizingLossFunction extends AbstractLossFunction {
 	
 	public SizingLossFunction(SolutionSampler sampler, double[] fluxArray, double centerOfMassFraction,
 			double massDevFraction, double mass) {
-		super(sampler, fluxArray);
+		super(sampler, 0.0);
 		this.centerOfMassFraction = centerOfMassFraction;
 		this.massDevFraction = massDevFraction;
 		this.mass = mass;
 	}
 	
 	public SizingLossFunction(SolutionSampler sampler, double[] fluxArray) {
-		super(sampler, fluxArray);
+		super(sampler, 0.0);
 		double com = LightCurve.centerOfMass(fluxArray);
 		this.centerOfMassFraction = com / (fluxArray.length - 1);
 		this.massDevFraction = LightCurve.massDeviationAsFraction(fluxArray, com);

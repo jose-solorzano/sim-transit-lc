@@ -7,9 +7,11 @@ import jhs.lc.sims.SimulatedFlux;
 
 public abstract class AbstractLossFunction implements MultivariateRealFunction, CircuitSearchEvaluator {
 	private final SolutionSampler sampler;
+	private final double extraErrorFactor;
 
-	public AbstractLossFunction(SolutionSampler sampler, double[] fluxArray) {
+	public AbstractLossFunction(SolutionSampler sampler, double extraErrorFactor) {
 		this.sampler = sampler;
+		this.extraErrorFactor = extraErrorFactor;
 	}
 	
 	protected abstract double baseLoss(double[] testFluxArray);
@@ -20,7 +22,7 @@ public abstract class AbstractLossFunction implements MultivariateRealFunction, 
 		SimulatedFlux sf = solution.produceModeledFlux();
 		double[] modeledFlux = sf.getFluxArray();
 		double baseError = this.baseLoss(modeledFlux);
-		double error = baseError + solution.getExtraOptimizerError();
+		double error = baseError + solution.getExtraOptimizerError() * this.extraErrorFactor;
 		double[] clusteringPosition = sf.getClusteringPosition();
 		return new CircuitSearchParamEvaluation(error, clusteringPosition);
 	}

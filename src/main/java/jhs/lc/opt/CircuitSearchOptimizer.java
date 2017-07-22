@@ -163,12 +163,12 @@ public class CircuitSearchOptimizer {
 	}
 
 	@SuppressWarnings("unchecked")
-	public RealPointValuePair optimize(int vectorLength, CircuitSearchEvaluator warmUpErrorFunction, CircuitSearchEvaluator ...  alternatingErrorFunctions) throws MathException {
+	public RealPointValuePair optimize(int vectorLength, CircuitSearchEvaluator warmUpErrorFunction, CircuitSearchEvaluator finalErrorFunction, CircuitSearchEvaluator ...  alternatingErrorFunctions) throws MathException {
 		int n = this.populationSize;
 		Phase phase = Phase.WARMUP;
-		CircuitSearchEvaluator errorFunction = warmUpErrorFunction;
-		List<Particle> workingSet = this.createInitialWorkingSet(n, vectorLength, errorFunction);
 		int maxWarmUpIterations = this.maxWarmUpIterations;
+		CircuitSearchEvaluator errorFunction = maxWarmUpIterations <= 0 && alternatingErrorFunctions.length > 0 ? alternatingErrorFunctions[0] : (maxWarmUpIterations <= 0 ? finalErrorFunction : warmUpErrorFunction);
+		List<Particle> workingSet = this.createInitialWorkingSet(n, vectorLength, errorFunction);
 		int maxIterationsWithClustering = this.maxIterationsWithClustering;
 		int maxConsolidationIterations = this.maxConsolidationIterations;
 		int maxWarmUpPlusClusteringIterations = maxWarmUpIterations + maxIterationsWithClustering;
@@ -178,7 +178,7 @@ public class CircuitSearchOptimizer {
 		for(i = 0; i < maxIterations; i++) {
 			switch(phase) {
 			case WARMUP:
-				if(i == maxWarmUpIterations) {
+				if(i >= maxWarmUpIterations) {
 					this.informEndOfWarmUpPhase(ListUtil.map(workingSet, p -> p.getPointValuePair()));
 					phase = Phase.CLUSTERING;
 					if(alternatingErrorFunctions.length != 0) {
@@ -195,8 +195,16 @@ public class CircuitSearchOptimizer {
 				}
 				break;
 			case CLUSTERING: 
-				if(i == maxWarmUpPlusClusteringIterations) {
-					phase = Phase.CONSOLIDATION;					
+				if(i >= maxWarmUpPlusClusteringIterations) {
+					this.informEndOfClusteringPhase(ListUtil.map(workingSet, p -> p.getPointValuePair()));
+					phase = Phase.CONSOLIDATION;
+					if(errorFunction != finalErrorFunction) {
+						if(logger.isLoggable(Level.INFO)) {
+							logger.info("---- Switching evaluation function ----");
+						}
+						errorFunction = finalErrorFunction;
+						workingSet = this.revalidateWorkingSet(workingSet, errorFunction);													
+					}
 				}
 				break;
 			case CONSOLIDATION:
@@ -220,7 +228,7 @@ public class CircuitSearchOptimizer {
 			if(this.converged(workingSet)) {
 				break;
 			}
-			if(i != 0 && (i % 10 == 0)) {
+			if(i != 0 && i != maxWarmUpIterations && (i % 20 == 0) && phase == Phase.CLUSTERING) {
 				if(currentAltFunctionIndex != -1) {
 					currentAltFunctionIndex++;
 					if(currentAltFunctionIndex >= alternatingErrorFunctions.length) {
@@ -237,13 +245,23 @@ public class CircuitSearchOptimizer {
 				}				
 			}
 		}
+		if(errorFunction != finalErrorFunction) {
+			if(logger.isLoggable(Level.INFO)) {
+				logger.info("---- Switching evaluation function ----");
+			}
+			errorFunction = finalErrorFunction;
+			workingSet = this.revalidateWorkingSet(workingSet, errorFunction);													
+		}
 		List<RealPointValuePair> pointValues = ListUtil.map(workingSet, p -> p.getPointValuePair());		
 		return this.eliminationViaAGD(pointValues, errorFunction, i);
 	}	
 	
 	protected void informEndOfWarmUpPhase(List<RealPointValuePair> pointValues) {		
 	}
-	
+
+	protected void informEndOfClusteringPhase(List<RealPointValuePair> pointValues) {
+	}
+
 	private List<Particle> revalidateWorkingSet(List<Particle> particles, CircuitSearchEvaluator errorFunction) throws FunctionEvaluationException {
 		List<Particle> result = new ArrayList<>();
 		for(Particle p : particles) {
@@ -414,7 +432,8 @@ public class CircuitSearchOptimizer {
 		int length = point1.length;
 		double[] newParams = new double[length];
 		for(int i = 0; i < length; i++) {
-			double p = fromFraction + r.nextDouble() * (toFraction - fromFraction);
+			double f = r.nextDouble();
+			double p = fromFraction + f * (toFraction - fromFraction);
 			newParams[i] = point1[i] * (1 - p) + point2[i] * p;
 		}
 		CircuitSearchParamEvaluation eval = errorFunction.evaluate(newParams);

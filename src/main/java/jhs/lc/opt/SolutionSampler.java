@@ -21,7 +21,7 @@ public class SolutionSampler {
 	private static final int NUM_EXTRA_PARAMS = 1;
 	
 	private static final int WL = 5;
-	private static final double NPF = 200.0;
+	private static final double NPF = 20.0;
 	private static final double WSD = 0.5;
 	
 	private final Random random;

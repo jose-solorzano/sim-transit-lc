@@ -31,6 +31,7 @@ public class TestActivationFunctions {
 
 	@Test
 	public void placeholder() {
+		this.checkDistribution(new PulseActivationFunction(NUM_INPUTS));
 	}
 	
 	@Test

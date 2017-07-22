@@ -37,6 +37,10 @@ public class LightCurve {
 	}
 
 	public static double massDeviation(double[] fluxArray, double centerOfMass) {
+		return Math.sqrt(massVariance(fluxArray, centerOfMass));
+	}
+		
+	public static double massVariance(double[] fluxArray, double centerOfMass) {		
 		int length = fluxArray.length;
 		double sumDev = 0;
 		double sumWeight = 0;
@@ -49,7 +53,7 @@ public class LightCurve {
 			double posDiff = i - centerOfMass;
 			sumDev += posDiff * posDiff * weight;
 		}
-		return sumWeight == 0 ? 0 : Math.sqrt(sumDev / sumWeight);
+		return sumWeight == 0 ? 0 : sumDev / sumWeight;
 	}
 
 	public static double centerOfMassAsFraction(double[] fluxArray) {

@@ -1,5 +1,6 @@
 package jhs.math.smoothing;
 
+import java.util.Arrays;
 
 public class GaussianSmoother implements SeriesSmoother {
 	private final FilterSmoother filterSmoother;
