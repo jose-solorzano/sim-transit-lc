@@ -38,7 +38,7 @@ public class CircuitSearchOptimizer {
 
 	private int maxClusterAlgoSteps = 3;
 	private int maxEliminationIterations = 0;
-	private int numParticlesPerCluster = 2;
+	private int numParticlesPerCluster = 1;
 	
 	private double expansionFactor = 3.0;
 	private double displacementFactor = 0.03;
@@ -181,16 +181,20 @@ public class CircuitSearchOptimizer {
 				if(i >= maxWarmUpIterations) {
 					this.informEndOfWarmUpPhase(ListUtil.map(workingSet, p -> p.getPointValuePair()));
 					phase = Phase.CLUSTERING;
+					CircuitSearchEvaluator newErrorFunction;
 					if(alternatingErrorFunctions.length != 0) {
 						currentAltFunctionIndex = 0;
-						CircuitSearchEvaluator newErrorFunction = alternatingErrorFunctions[currentAltFunctionIndex];
-						if(newErrorFunction != errorFunction) {
-							if(logger.isLoggable(Level.INFO)) {
-								logger.info("---- Switching evaluation function ----");
-							}
-							errorFunction = newErrorFunction;
-							workingSet = this.revalidateWorkingSet(workingSet, errorFunction);							
+						newErrorFunction = alternatingErrorFunctions[currentAltFunctionIndex];
+					}
+					else {
+						newErrorFunction = finalErrorFunction;
+					}
+					if(newErrorFunction != errorFunction) {
+						if(logger.isLoggable(Level.INFO)) {
+							logger.info("---- Switching evaluation function ----");
 						}
+						errorFunction = newErrorFunction;
+						workingSet = this.revalidateWorkingSet(workingSet, errorFunction);							
 					}
 				}
 				break;

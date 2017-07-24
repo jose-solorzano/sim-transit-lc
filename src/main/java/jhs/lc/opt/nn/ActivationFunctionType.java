@@ -10,6 +10,7 @@ import jhs.math.nn.aa.MaxActivationFunction;
 import jhs.math.nn.aa.MinActivationFunction;
 import jhs.math.nn.aa.MonodActivationFunction;
 import jhs.math.nn.aa.PiecewiseActivationFunction;
+import jhs.math.nn.aa.PlainSumActivationFunction;
 import jhs.math.nn.aa.PulseActivationFunction;
 import jhs.math.nn.aa.RbfActivationFunction;
 import jhs.math.nn.aa.RbfLogActivationFunction;
@@ -44,7 +45,8 @@ public enum ActivationFunctionType {
 	RBF0_C,
 	RBF0_S,
 	RBF0_T,
-	SUM, 
+	SIMPLE_SUM, 
+	PLAIN_SUM,
 	PULSE;
 	
 	private ActivationFunctionType() {
@@ -75,8 +77,10 @@ public enum ActivationFunctionType {
 			return new SimpleMinActivationFunction(numInputs);
 		case SIMPLE_MAX:
 			return new SimpleMaxActivationFunction(numInputs);
-		case SUM:
+		case SIMPLE_SUM:
 			return new SumActivationFunction(numInputs);
+		case PLAIN_SUM:
+			return new PlainSumActivationFunction(numInputs);
 		case ATAN:
 			return new AtanActivationFunction(numInputs);
 		case LINEAR:

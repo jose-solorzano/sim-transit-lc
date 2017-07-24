@@ -13,6 +13,7 @@ import jhs.math.nn.aa.MaxActivationFunction;
 import jhs.math.nn.aa.MinActivationFunction;
 import jhs.math.nn.aa.MonodActivationFunction;
 import jhs.math.nn.aa.PiecewiseActivationFunction;
+import jhs.math.nn.aa.PlainSumActivationFunction;
 import jhs.math.nn.aa.PulseActivationFunction;
 import jhs.math.nn.aa.RbfLogActivationFunction;
 import jhs.math.nn.aa.RbfOriginLogActivationFunction;
@@ -31,7 +32,6 @@ public class TestActivationFunctions {
 
 	@Test
 	public void placeholder() {
-		this.checkDistribution(new PulseActivationFunction(NUM_INPUTS));
 	}
 	
 	@Test
@@ -59,6 +59,7 @@ public class TestActivationFunctions {
 		this.checkDistribution(new RbfOriginLogActivationFunction(NUM_INPUTS, RbfType.TRIANGULAR));
 		this.checkDistribution(new RbfOriginLogActivationFunction(NUM_INPUTS, RbfType.SQUARE));		
 		this.checkDistribution(new SumActivationFunction(NUM_INPUTS));
+		this.checkDistribution(new PlainSumActivationFunction(NUM_INPUTS));
 	}
 	
 	@Test

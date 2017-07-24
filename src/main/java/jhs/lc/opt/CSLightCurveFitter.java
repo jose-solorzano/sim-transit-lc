@@ -143,24 +143,17 @@ public class CSLightCurveFitter {
 	}
 
 	public Solution optimizeStandardErrorCS(double[] fluxArray) throws MathException {
-		/*
 		CircuitSearchEvaluator lfWarmUp = new SizingLossFunction(sampler, fluxArray);
-		CircuitSearchEvaluator lf1 = new PrimaryLossFunction(sampler, fluxArray, 1, 0, 0);
-		CircuitSearchEvaluator lf2 = new PrimaryLossFunction(sampler, fluxArray, 2, 0, 1);
-		CircuitSearchEvaluator lf3 = new PrimaryLossFunction(sampler, fluxArray, 2, 0, 3);
-		CircuitSearchEvaluator lf4 = new PrimaryLossFunction(sampler, fluxArray, 4, 0, 1);
-		CircuitSearchEvaluator lf5 = new PrimaryLossFunction(sampler, fluxArray, 2, 1, 4);
-		CircuitSearchEvaluator lf6 = new PrimaryLossFunction(sampler, fluxArray, 5, 1, 1);
-		CircuitSearchEvaluator lf7 = new PrimaryLossFunction(sampler, fluxArray, 2, 3, 1);
-		return this.optimizeCircuitSearch(lfWarmUp, lf1, lf2, lf3, lf4, lf5, lf6, lf7);
-		*/
-		CircuitSearchEvaluator lfWarmUp = new SizingLossFunction(sampler, fluxArray);
+		//CircuitSearchEvaluator lfWarmUp = new PrimaryLossFunction(sampler, fluxArray, 1, 0, 1);
 		CircuitSearchEvaluator lfFinal = this.getDefaultLossFunction(fluxArray);
-		return this.optimizeCircuitSearch(lfWarmUp, lfFinal);
+		//CircuitSearchEvaluator lf1 = new PrimaryLossFunction(sampler, fluxArray, 1, 0, 0);
+		CircuitSearchEvaluator lf2 = new PrimaryLossFunction(sampler, fluxArray, 1, 0, 1);
+		CircuitSearchEvaluator lf3 = new PrimaryLossFunction(sampler, fluxArray, 3, 0, 1);
+		return this.optimizeCircuitSearch(lfWarmUp, lfFinal, lf2, lf3);
 	}
 	
 	private AbstractLossFunction getDefaultLossFunction(double[] fluxArray) {
-		return new PrimaryLossFunction(sampler, fluxArray, 3, 0, 1);		
+		return new PrimaryLossFunction(sampler, fluxArray, 3, 0, 1);
 	}
 
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
