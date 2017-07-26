@@ -70,19 +70,29 @@ public class Solution implements java.io.Serializable {
 		return this.brightnessFunction.getExtraOptimizerError();
 	}
 
-	private double minWidth() {
+	private double minWidth(boolean withStar) {
 		Rectangle2D transitBounds = this.brightnessFunction.getBoundingBox();
-		return MathUtil.max(2.0, (transitBounds.getX() + transitBounds.getWidth()) * 2, -transitBounds.getX() * 2) + PADDING * 2;		
+		if(withStar) {
+			return MathUtil.max(2.0, (transitBounds.getX() + transitBounds.getWidth()) * 2, -transitBounds.getX() * 2) + PADDING * 2;
+		}
+		else {
+			return transitBounds.getWidth();
+		}
 	}
 	
-	private double minHeight() {
+	private double minHeight(boolean withStar) {
 		Rectangle2D transitBounds = this.brightnessFunction.getBoundingBox();
-		return MathUtil.max(2.0, (transitBounds.getY() + transitBounds.getHeight()) * 2, -transitBounds.getY() * 2) + PADDING * 2;		
+		if(withStar) {
+			return MathUtil.max(2.0, (transitBounds.getY() + transitBounds.getHeight()) * 2, -transitBounds.getY() * 2) + PADDING * 2;
+		}
+		else {
+			return transitBounds.getHeight();
+		}
 	}
 	
 	public Dimension suggestImageDimension(int numPixels) {
-		double imageWidth = this.minWidth();
-		double imageHeight = this.minHeight();
+		double imageWidth = this.minWidth(true);
+		double imageHeight = this.minHeight(true);
 		if(imageHeight == 0) {
 			throw new IllegalStateException("Image has height of zero.");
 		}
@@ -91,10 +101,14 @@ public class Solution implements java.io.Serializable {
 		int widthPixels = (int) Math.round((double) numPixels / heightPixels);
 		return new Dimension(widthPixels, heightPixels);		
 	}
-	
+
 	public BufferedImage produceDepiction(int numPixels) {
-		double imageWidth = this.minWidth();
-		double imageHeight = this.minHeight();
+		return this.produceDepiction(numPixels, true);
+	}
+
+	public BufferedImage produceDepiction(int numPixels, boolean drawStarCircle) {
+		double imageWidth = this.minWidth(drawStarCircle);
+		double imageHeight = this.minHeight(drawStarCircle);
 		if(imageHeight == 0) {
 			throw new IllegalStateException("Image has height of zero.");
 		}
@@ -102,27 +116,15 @@ public class Solution implements java.io.Serializable {
 		int heightPixels = (int) Math.round(Math.sqrt(numPixels / aspectRatio));
 		int widthPixels = (int) Math.round((double) numPixels / heightPixels);
 		BufferedImage image = new BufferedImage(widthPixels, heightPixels, BufferedImage.TYPE_INT_ARGB);
-		Rectangle2D stellarImageRectangle = new Rectangle2D.Double(-imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
-		this.drawDepiction(image, stellarImageRectangle, this.brightnessFunction.getBoundingBox(), false);
+		Rectangle2D boundingBox = this.brightnessFunction.getBoundingBox();
+		Rectangle2D stellarImageRectangle = drawStarCircle ? 
+			new Rectangle2D.Double(-imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight) :
+			boundingBox;
+		this.drawDepiction(image, stellarImageRectangle, boundingBox, false, drawStarCircle);
 		return image;
 	}
-	
-	public Iterator<BufferedImage> produceModelImages(double inclineAngle, double orbitalPeriod, LimbDarkeningParams ldParams, double[] timestamps, double peakFraction, String timestampPrefix, int numPixels) {
-		RotationAngleSphereFactory sphereFactory = new EvaluatableSurfaceSphereFactory(this.brightnessFunction);
-		AngularSimulation simulation = new AngularSimulation(inclineAngle, this.orbitRadius, orbitalPeriod, ldParams, sphereFactory);
-		double noiseSd = 0;
-		double imageWidth = this.minWidth();
-		double imageHeight = this.minHeight();
-		if(imageHeight == 0) {
-			throw new IllegalStateException("Image has height of zero.");
-		}
-		double aspectRatio = imageWidth / imageHeight;
-		int heightPixels = (int) Math.round(Math.sqrt(numPixels / aspectRatio));
-		int widthPixels = (int) Math.round((double) numPixels / heightPixels);
-		return simulation.produceModelImages(timestamps, peakFraction, widthPixels, heightPixels, noiseSd, timestampPrefix);
-	}
-	
-	private void drawDepiction(BufferedImage image, Rectangle2D stellarImageRectangle, Rectangle2D transitBounds, boolean allowExtrapolation) {
+
+	private void drawDepiction(BufferedImage image, Rectangle2D stellarImageRectangle, Rectangle2D transitBounds, boolean allowExtrapolation, boolean drawStarCircle) {
 		double transitFromX = transitBounds.getX();
 		double transitFromY = transitBounds.getY();
 		double transitToX = transitFromX + transitBounds.getWidth();
@@ -139,14 +141,16 @@ public class Solution implements java.io.Serializable {
 			g.setColor(Color.WHITE);
 			g.fillRect(0, 0, numColumns, numRows);
 			double diameter = numColumns * 2.0 / stellarImageRectangle.getWidth();
-			double centerX = numColumns / 2.0;
-			double centerY = numRows / 2.0;
-			int sx = (int) Math.floor(centerX - diameter / 2);
-			int sy = (int) Math.floor(centerY - diameter / 2);
-			int sw = (int) Math.round(diameter);
-			int sh = sw;
-			g.setColor(Color.BLUE);
-			g.drawOval(sx, sy, sw, sh);
+			if(drawStarCircle) {
+				double centerX = numColumns / 2.0;
+				double centerY = numRows / 2.0;			
+				int sx = (int) Math.floor(centerX - diameter / 2);
+				int sy = (int) Math.floor(centerY - diameter / 2);
+				int sw = (int) Math.round(diameter);
+				int sh = sw;
+				g.setColor(Color.BLUE);
+				g.drawOval(sx, sy, sw, sh);
+			}
 			FluxOrOpacityFunction fof = this.brightnessFunction;
 			for(int c = 0; c < numColumns; c++) {
 				double x = fromX + (c + 0.5) * xf;
@@ -167,6 +171,21 @@ public class Solution implements java.io.Serializable {
 		} finally {
 			g.dispose();
 		}
+	}
+	
+	public Iterator<BufferedImage> produceModelImages(double inclineAngle, double orbitalPeriod, LimbDarkeningParams ldParams, double[] timestamps, double peakFraction, String timestampPrefix, int numPixels) {
+		RotationAngleSphereFactory sphereFactory = new EvaluatableSurfaceSphereFactory(this.brightnessFunction);
+		AngularSimulation simulation = new AngularSimulation(inclineAngle, this.orbitRadius, orbitalPeriod, ldParams, sphereFactory);
+		double noiseSd = 0;
+		double imageWidth = this.minWidth(true);
+		double imageHeight = this.minHeight(true);
+		if(imageHeight == 0) {
+			throw new IllegalStateException("Image has height of zero.");
+		}
+		double aspectRatio = imageWidth / imageHeight;
+		int heightPixels = (int) Math.round(Math.sqrt(numPixels / aspectRatio));
+		int widthPixels = (int) Math.round((double) numPixels / heightPixels);
+		return simulation.produceModelImages(timestamps, peakFraction, widthPixels, heightPixels, noiseSd, timestampPrefix);
 	}
 	
 	private Color getColor(double fluxOrOpacity) {

@@ -38,16 +38,16 @@ public class CircuitSearchOptimizer {
 
 	private int maxClusterAlgoSteps = 3;
 	private int maxEliminationIterations = 0;
-	private int numParticlesPerCluster = 1;
+	private int numParticlesPerCluster = 2;
 	
 	private double expansionFactor = 3.0;
 	private double displacementFactor = 0.03;
 	private double convergeDistance = 0.0001;
 	private double circuitShuffliness = 0.5;
-	private double outlierErrorSDFactor = 1E7;
+	private double outlierErrorSDFactor = 1.0;
 	
 	private double agdGradientFactor = 0.3;
-	
+		
 	public CircuitSearchOptimizer(Random random, int populationSize) {
 		this.random = random;
 		this.populationSize = populationSize;
@@ -200,7 +200,7 @@ public class CircuitSearchOptimizer {
 				break;
 			case CLUSTERING: 
 				if(i >= maxWarmUpPlusClusteringIterations) {
-					this.informEndOfClusteringPhase(ListUtil.map(workingSet, p -> p.getPointValuePair()));
+					this.informEndOfClusteringPhase(ListUtil.map(ListUtil.sorted(workingSet), p -> p.getPointValuePair()));
 					phase = Phase.CONSOLIDATION;
 					if(errorFunction != finalErrorFunction) {
 						if(logger.isLoggable(Level.INFO)) {
@@ -219,7 +219,10 @@ public class CircuitSearchOptimizer {
 			if(i == 0) {
 				workingSet = newParticles;
 			} else if(!consolidationPhase) {
-				workingSet = this.extractBestWithClustering(n, ListUtil.concat(workingSet, newParticles), true);
+				//List<Particle> wsWithoutOutliers = this.extractBestWithClustering(n * 2 / 3, workingSet, 1);
+				List<Particle> wsWithoutOutliers = this.removeErrorOutliers(workingSet);
+				List<Particle> clusteringSet = ListUtil.concat(wsWithoutOutliers, newParticles);
+				workingSet = this.extractBestWithClustering(n, clusteringSet, this.numParticlesPerCluster);
 			}
 			else {
 				workingSet = this.extractBest(n, ListUtil.concat(workingSet, newParticles));
@@ -339,8 +342,8 @@ public class CircuitSearchOptimizer {
 		return sortedParticles.subList(0, top);
 	}
 	
-	private List<Particle> extractBestWithClustering(int n, List<Particle> particles, boolean withOutlierRemoval) {
-		int nppc = this.numParticlesPerCluster;
+	private List<Particle> extractBestWithClustering(int n, List<Particle> particles, int numParticlesPerCluster) {
+		int nppc = numParticlesPerCluster;
 		if(nppc < 1) {
 			nppc = 1;
 		}
@@ -356,9 +359,6 @@ public class CircuitSearchOptimizer {
 			result.addAll(cp);
 		}
 		Set<Particle> origResultSet = new HashSet<>(result);
-		if(withOutlierRemoval) {
-			result = this.removeErrorOutliers(result);
-		}
 		if(result.size() < n) {
 			for(Particle particle : ListUtil.sorted(particles)) {
 				if(!origResultSet.contains(particle)) {
@@ -602,7 +602,7 @@ public class CircuitSearchOptimizer {
 			CircuitSearchParamEvaluation eval = errorFunction.evaluate(params);
 			pool.add(new Particle(params, eval.getClusteringPosition(), eval.getError()));
 		}
-		return this.extractBestWithClustering(n, pool, false);
+		return this.extractBestWithClustering(n, pool, 1);
 	}
 	
 	protected void informProgress(int iteration, RealPointValuePair pointValue) {		

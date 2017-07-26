@@ -1,7 +1,9 @@
 package jhs.lc.tools.inputs;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -26,8 +28,15 @@ public class SpecMapper {
 		return mapper.readValue(inFile, OptSpec.class);
 	}
 	
-	public static void writeOptResultsSpec(File outFile, OptResultsSpec spec) throws JsonMappingException, JsonGenerationException, IOException {
+	public static void writeObject(File outFile, Object spec) throws JsonMappingException, JsonGenerationException, IOException {
 		ObjectMapper mapper = getObjectMapper();
 		mapper.writerWithDefaultPrettyPrinter().writeValue(outFile, spec);		
+	}
+	
+	public static void writeObject(OutputStream out, Object spec) throws JsonMappingException, JsonGenerationException, IOException {
+		ObjectMapper mapper = getObjectMapper();
+		ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		mapper.writerWithDefaultPrettyPrinter().writeValue(bout, spec);		
+		out.write(bout.toByteArray());
 	}
 }

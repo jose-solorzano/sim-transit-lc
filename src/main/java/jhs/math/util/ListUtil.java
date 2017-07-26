@@ -11,6 +11,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ListUtil {
+	public static <T extends Comparable<T>> List<T> sortedDesc(List<T> list) {
+		List<T> copy = new ArrayList<>(list);
+		Collections.sort(copy);
+		Collections.reverse(copy);
+		return copy;		
+	}
+
 	public static <T extends Comparable<T>> List<T> sorted(List<T> list) {
 		List<T> copy = new ArrayList<>(list);
 		Collections.sort(copy);

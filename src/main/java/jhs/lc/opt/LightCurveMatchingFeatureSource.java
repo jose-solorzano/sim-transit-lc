@@ -70,10 +70,14 @@ public class LightCurveMatchingFeatureSource {
 		return (weightSum == 0 ? 0 : sum / weightSum) / variance;				
 	}
 
-	private double normMse(double[] testFluxArray) {
+	public final double normMse(double[] testFluxArray) {
 		return MathUtil.mse(this.targetFluxArray, testFluxArray) / this.fluxVariance;
 	}
-	
+
+	public final double rmse(double[] testFluxArray) {
+		return Math.sqrt(MathUtil.mse(this.targetFluxArray, testFluxArray));
+	}
+
 	private double sizeLoss(double[] testFluxArray) {
 		double testMass = LightCurve.mass(testFluxArray);
 		double diff = testMass - this.mass;

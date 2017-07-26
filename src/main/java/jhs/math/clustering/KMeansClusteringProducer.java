@@ -5,6 +5,7 @@ import java.util.Random;
 
 import jhs.math.common.ItemUtil;
 import jhs.math.common.VectorialItem;
+import jhs.math.util.ListUtil;
 
 public class KMeansClusteringProducer<T extends VectorialItem> implements VectorialClusteringProducer<T> {
 	private final Random random;
@@ -34,11 +35,15 @@ public class KMeansClusteringProducer<T extends VectorialItem> implements Vector
 
 	protected void informProgress(int iteration, double wcss, VectorialCluster<T>[] clusters) {		
 	}
-	
+
 	public VectorialClusteringResults<T> produceClustering(List<? extends T> items) {
+		return this.produceClustering(items, items);
+	}
+
+	public VectorialClusteringResults<T> produceClustering(List<? extends T> items, List<? extends T> initialItemPool) {
 		int k = this.k;
 		int numVars = ItemUtil.getNumContinuousVars(items);
-		VectorialCluster<T>[] clusters = this.initialClusters(k, items);
+		VectorialCluster<T>[] clusters = this.initialClusters(k, items, initialItemPool);
 		double initWcss = VectorialCluster.calculateWcss(clusters);
 		double wcss = initWcss;
 		int maxI = Math.min(items.size(), this.maxIterations);
@@ -55,14 +60,17 @@ public class KMeansClusteringProducer<T extends VectorialItem> implements Vector
 		return new VectorialClusteringResults<T>(clusters, numVars);
 	}	
 	
-	private VectorialCluster<T>[] initialClusters(int k, List<? extends T> items) {
+	private VectorialCluster<T>[] initialClusters(int k, List<? extends T> items, List<? extends T> initialItemPool) {
+		int size = initialItemPool.size();
+		if(size < k) {
+			throw new IllegalArgumentException("Cannot make " + k + " initial clusters with item pool of size " + initialItemPool.size() + ".");
+		}
 		Random random = this.random;
-		int size = items.size();
+		List<? extends T> clusterPoints = k == size ? initialItemPool : ListUtil.sample(initialItemPool, random, k);
 		@SuppressWarnings("unchecked")
 		VectorialCluster<T>[] clusters = new VectorialCluster[k];
 		for(int i = 0; i < k; i++) {
-			int index = Math.abs(random.nextInt() % size);
-			double[] clusterPosition = items.get(index).getPosition();
+			double[] clusterPosition = clusterPoints.get(i).getPosition();
 			clusters[i] = new VectorialCluster<T>(clusterPosition);
 		}
 		VectorialCluster.populateClusters(items, clusters);

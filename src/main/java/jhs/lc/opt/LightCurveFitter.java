@@ -16,7 +16,7 @@ import org.apache.commons.math.MathException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealPointValuePair;
 
-public class CSLightCurveFitter {	
+public class LightCurveFitter {	
 	//private static final Logger logger = Logger.getLogger(CSLightCurveFitter.class.getName());
 	private final SolutionSampler sampler;
 	private final int populationSize;
@@ -36,7 +36,7 @@ public class CSLightCurveFitter {
 	
 	private double epsilonFactor = 3.0;
 
-	public CSLightCurveFitter(SolutionSampler sampler, int populationSize) {
+	public LightCurveFitter(SolutionSampler sampler, int populationSize) {
 		this.sampler = sampler;
 		this.populationSize = populationSize;
 	}
@@ -144,16 +144,14 @@ public class CSLightCurveFitter {
 
 	public Solution optimizeStandardErrorCS(double[] fluxArray) throws MathException {
 		CircuitSearchEvaluator lfWarmUp = new SizingLossFunction(sampler, fluxArray);
-		//CircuitSearchEvaluator lfWarmUp = new PrimaryLossFunction(sampler, fluxArray, 1, 0, 1);
 		CircuitSearchEvaluator lfFinal = this.getDefaultLossFunction(fluxArray);
-		//CircuitSearchEvaluator lf1 = new PrimaryLossFunction(sampler, fluxArray, 1, 0, 0);
-		CircuitSearchEvaluator lf2 = new PrimaryLossFunction(sampler, fluxArray, 1, 0, 1);
-		CircuitSearchEvaluator lf3 = new PrimaryLossFunction(sampler, fluxArray, 3, 0, 1);
-		return this.optimizeCircuitSearch(lfWarmUp, lfFinal, lf2, lf3);
+		//CircuitSearchEvaluator lf1 = new PrimaryLossFunction(sampler, fluxArray, 3, 0, 1);
+		//CircuitSearchEvaluator lf2 = new PrimaryLossFunction(sampler, fluxArray, 2, 0, 1);
+		return this.optimizeCircuitSearch(lfWarmUp, lfFinal);
 	}
 	
 	private AbstractLossFunction getDefaultLossFunction(double[] fluxArray) {
-		return new PrimaryLossFunction(sampler, fluxArray, 3, 0, 1);
+		return new PrimaryLossFunction(sampler, fluxArray, 5, 1, 2);
 	}
 
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
@@ -166,7 +164,7 @@ public class CSLightCurveFitter {
 		ApproximateGradientDescentOptimizer optimizer = new ApproximateGradientDescentOptimizer(sampler.getRandom()) {
 			@Override
 			protected void informProgress(int iteration, RealPointValuePair pointValue) {
-				CSLightCurveFitter.this.informProgress("agd", iteration, pointValue.getValue());
+				LightCurveFitter.this.informProgress("agd", iteration, pointValue.getValue());
 			}			
 		};
 		optimizer.setMaxIterations(maxIterations);
@@ -183,12 +181,17 @@ public class CSLightCurveFitter {
 		CircuitSearchOptimizer optimizer = new CircuitSearchOptimizer(random, this.populationSize) {
 			@Override
 			protected void informProgress(int iteration, RealPointValuePair pointValue) {
-				CSLightCurveFitter.this.informProgress("circuit search", iteration, pointValue.getValue());
+				LightCurveFitter.this.informProgress("circuit search", iteration, pointValue.getValue());
 			}
 
 			@Override
 			protected void informEndOfWarmUpPhase(List<RealPointValuePair> pointValues) {
-				CSLightCurveFitter.this.informEndOfWarmUpPhase(sampler, pointValues);
+				LightCurveFitter.this.informEndOfWarmUpPhase(sampler, pointValues);
+			}
+
+			@Override
+			protected void informEndOfClusteringPhase(List<RealPointValuePair> pointValues) {
+				LightCurveFitter.this.informEndOfClusteringPhase(sampler, pointValues);
 			}						
 		};
 		optimizer.setInitialPoolSize(this.initialPoolSize);
@@ -213,7 +216,10 @@ public class CSLightCurveFitter {
 	
 	protected void informEndOfWarmUpPhase(SolutionSampler sampler, List<RealPointValuePair> pointValues) {		
 	}
-	
+
+	protected void informEndOfClusteringPhase(SolutionSampler sampler, List<RealPointValuePair> pointValues) {		
+	}
+
 	public static double meanSquaredError(LightCurvePoint[] lightCurve, double[] weights, Solution solution) {
 		double[] fluxArray = LightCurvePoint.fluxArray(lightCurve);
 		return meanSquaredError(fluxArray, weights, solution);
