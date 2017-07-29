@@ -6,7 +6,7 @@ mkdir -p ${workDir}
 
 echo "BO1 optimization: Triangle transit, using RBF_T activation function."
 
-OPTS="-pop 75 -noi 300 -npci 100 -nagd 100"
+OPTS="-log INFO -pop 75 -noi 300 -nagd 50"
 
 ${projectDir}/bin/lc-opt ${OPTS} \
 	-i ${projectDir}/examples/lc/sim-b01.csv \

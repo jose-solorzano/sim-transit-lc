@@ -10,18 +10,20 @@ import jhs.math.nn.PlainNeuralNetwork;
 import jhs.math.util.MathUtil;
 
 public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
-	private static final double LAMBDA_FACTOR = 0.01;
+	private static final double LAMBDA_FACTOR = 0.3;
 	private final NeuralNetworkMetaInfo[] metaInfos;
 	private final InputFilterFactory inputFilterType;
 	private final double imageWidth, imageHeight;
+	private final double parameterRange;
 	private final double lambda;
-	
-	public NNFluxFunctionSource(NeuralNetworkMetaInfo[] structures, InputFilterFactory inputFilterType, double imageWidth, double imageHeight, double lambda) {
+		
+	public NNFluxFunctionSource(NeuralNetworkMetaInfo[] structures, InputFilterFactory inputFilterType, double imageWidth, double imageHeight, double parameterRange, double lambda) {
 		super();
 		this.metaInfos = structures;
 		this.inputFilterType = inputFilterType;
 		this.imageWidth = imageWidth;
 		this.imageHeight = imageHeight;
+		this.parameterRange = parameterRange;
 		this.lambda = lambda;
 	}
 
@@ -40,9 +42,7 @@ public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
 			nn[i] = new PlainNeuralNetwork(nns, nparams);
 			paramIndex = toParamIndex;
 		}
-		double sdParams = MathUtil.standardDev(parameters, 0);
-		double diffWithNormal = sdParams - 1.0;			
-		double extraOptimizerError = diffWithNormal * diffWithNormal * this.lambda * LAMBDA_FACTOR;
+		double extraOptimizerError = getRegularizationError(parameters, this.parameterRange, this.lambda * LAMBDA_FACTOR);
 		return NNFluxOrOpacityFunction.create(metaInfos, nn, inputFilter, imageWidth, imageHeight, extraOptimizerError);
 	}
 
@@ -61,4 +61,20 @@ public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
 		// NN activation functions take care of scaling.
 		return 1.0;
 	}	
+	
+	static double getRegularizationError(double[] parameters, double parameterRange, double rawLambda) {
+		double max = parameterRange / 2;
+		double min = -max;
+		double sumDiffSq = 0;
+		int numDiffs = 0;
+		for(int i = 0; i < parameters.length; i++) {
+			double x = parameters[i];
+			if(x > max || x < min) {
+				double diff = x >= 0 ? x - max : x - min;
+				sumDiffSq += diff * diff;
+				numDiffs++;
+			}
+		}
+		return numDiffs == 0 ? 0 : rawLambda * sumDiffSq / numDiffs;
+	}
 }

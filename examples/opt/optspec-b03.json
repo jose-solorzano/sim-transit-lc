@@ -2,8 +2,8 @@
 	"widthPixels": 110,
 	"heightPixels": 55,
 	"orbitPeriod": 150,
-	"orbitRadius": 296,
-	"orbitRadiusFlexibility": 0.02,
+	"orbitRadius": 301,
+	"orbitRadiusFlexibility": 0.003,
 	"method": {
 		"type": "neural",
 		"imageWidth": 5.0,

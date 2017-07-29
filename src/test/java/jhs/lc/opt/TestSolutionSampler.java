@@ -1,7 +1,9 @@
 package jhs.lc.opt;
 
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
@@ -18,11 +20,11 @@ public class TestSolutionSampler {
 	
 	@Test
 	public void testParametersVsSolution() {
-		this.testParametersVsSolutionImpl(11, 50, 0.1);
-		this.testParametersVsSolutionImpl(13, 100, 0);
+		this.testParametersVsSolutionImpl(11, 90, 110);
+		this.testParametersVsSolutionImpl(13, 150, 150);
 	}
 	
-	private void testParametersVsSolutionImpl(int seed, double baseRadius, double logRadiusSD) {		
+	private void testParametersVsSolutionImpl(int seed, double minRadius, double maxRadius) {		
 		Random random = new Random(seed);
 		ParametricFluxFunctionSource opacitySource = this.getOpacitySource();	
 		SimulatedFluxSource fluxSource = new SimulatedFluxSource() {			
@@ -44,21 +46,31 @@ public class TestSolutionSampler {
 				return null;
 			}
 		};
-		SolutionSampler sampler = new SolutionSampler(random, baseRadius, logRadiusSD, fluxSource, opacitySource);
+		SolutionSampler sampler = new SolutionSampler(random, fluxSource, opacitySource, minRadius, maxRadius);
 		int np = sampler.getNumParameters();
-		assertEquals(opacitySource.getNumParameters() + 1, np);
-		assertEquals(NP1 + 1, np);
+		int expectedExtraParams = minRadius == maxRadius ? 0 : 1;
+		assertEquals(opacitySource.getNumParameters() + expectedExtraParams, np);
+		assertEquals(NP1 + expectedExtraParams, np);
 		double[] parameters = new double[np];
 		for(int i = 0; i < np; i++) {
-			parameters[i] = logRadiusSD == 0 && i == np - 1 ? 0 : random.nextGaussian();
+			parameters[i] = minRadius == maxRadius && i == np - 1 ? 0 : random.nextGaussian();
 		}
 		Solution solution = sampler.parametersAsSolution(parameters);
-		double maxRadius = baseRadius * Math.exp(logRadiusSD * 5);
-		double minRadius = baseRadius * Math.exp(-logRadiusSD * 5);
-		double maxDiff = Math.max(Math.abs(maxRadius - baseRadius), Math.abs(minRadius) - baseRadius);
-		assertEquals(solution.getOrbitRadius(), baseRadius, maxDiff + 0.00001);
+		assertTrue(solution.getOrbitRadius() <= maxRadius);
+		assertTrue(solution.getOrbitRadius() >= minRadius);
 		double[] sp = sampler.solutionAsParameters(solution);
 		assertArrayEquals(parameters, sp, 0.0001);
+		if(minRadius == maxRadius) {
+			assertEquals(0, sampler.getExtraParamError(parameters), 0.00001);
+		}
+		else {
+			parameters[np - 1] = 2.0;
+			assertEquals(0, sampler.getExtraParamError(parameters), 0.00001);
+			parameters[np - 1] = -2.0;
+			assertEquals(0, sampler.getExtraParamError(parameters), 0.00001);
+			parameters[np - 1] = 0;
+			assertEquals(0, sampler.getExtraParamError(parameters), 0.00001);			
+		}
 	}
 	
 	private ParametricFluxFunctionSource getOpacitySource() {

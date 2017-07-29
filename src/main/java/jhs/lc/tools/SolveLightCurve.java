@@ -254,8 +254,10 @@ public class SolveLightCurve extends AbstractTool {
 	private void writeResults(String resultsFilePath, OptSpec optSpec, SolutionSampler sampler, LightCurvePoint[] lightCurve, Solution solution, double[] fluxArray, double elapsedSeconds) throws Exception {
 		EvaluationInfo ei = sampler.getEvaluationInfo(fluxArray, solution);
 		if(logger.isLoggable(Level.INFO)) {
-			logger.info("writeResults(): orbitRadius=" + solution.getOrbitRadius() + " (from " + optSpec.getOrbitRadius() + ").");
-			logger.info("writeResults(): rmse=" + ei.getRmse() + ", trendChangeLoss=" + ei.getTrendChangeLoss());
+			logger.info("orbitRadius=" + solution.getOrbitRadius() + " (from " + optSpec.getOrbitRadius() + ").");
+			logger.info("rmse=" + ei.getRmse());
+			logger.info("trendLoss=" + ei.getTrendLoss());
+			logger.info("trendChangeLoss=" + ei.getTrendChangeLoss());
 		}
 		OptResultsSpec spec = new OptResultsSpec();
 		spec.setOrbitRadius(solution.getOrbitRadius());
@@ -303,14 +305,20 @@ public class SolveLightCurve extends AbstractTool {
 		AbstractOptMethod method = optSpec.getMethod();
 		ParametricFluxFunctionSource ffs = method.createFluxFunctionSource(contextFile);
 		SimulatedFluxSource fluxSource = this.getFluxSource(cmdLine, optSpec, timestamps, ldParams, contextFile);
+		double baseRadius = optSpec.getOrbitRadius();
 		double orf = optSpec.getOrbitRadiusFlexibility();
-		double logRadiusSD = Math.log(1 + orf);
+		if(orf < 0) {
+			throw new IllegalStateException("orbitRadiusFlexibility cannot be negative.");
+		}
+		double minRadius = orf == 0 ? baseRadius : baseRadius / (1 + orf);
+		double maxRadius = orf == 0 ? baseRadius : baseRadius * (1 + orf);
+		logger.info("minOrbitRadius=" + minRadius + ", maxOrbitRadius=" + maxRadius);
 		SolutionSampler ss = new SolutionSampler(
 			random, 
-			optSpec.getOrbitRadius(), 
-			logRadiusSD, 
 			fluxSource, 
-			ffs
+			ffs,
+			minRadius,
+			maxRadius
 		);
 		return ss;
 	}
