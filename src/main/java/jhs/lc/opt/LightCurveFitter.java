@@ -1,6 +1,5 @@
 package jhs.lc.opt;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
@@ -143,15 +142,19 @@ public class LightCurveFitter {
 	}
 
 	public Solution optimizeStandardErrorCS(double[] fluxArray) throws MathException {
-		CircuitSearchEvaluator lfWarmUp = new SizingLossFunction(sampler, fluxArray);
-		CircuitSearchEvaluator lfFinal = this.getDefaultLossFunction(fluxArray);
+		//ClusteredEvaluator lfWarmUp = new SizingLossFunction(sampler, fluxArray);
+		ClusteredEvaluator lfFinal = this.getDefaultLossFunction(fluxArray);
 		//CircuitSearchEvaluator lf1 = new PrimaryLossFunction(sampler, fluxArray, 3, 0, 1);
 		//CircuitSearchEvaluator lf2 = new PrimaryLossFunction(sampler, fluxArray, 2, 0, 1);
-		return this.optimizeCircuitSearch(lfWarmUp, lfFinal);
+
+		
+		//TODO testing PSO
+		//return this.optimizeCircuitSearch(lfWarmUp, lfFinal);
+		return this.optimizeWithCPSO(lfFinal);
 	}
 	
 	private AbstractLossFunction getDefaultLossFunction(double[] fluxArray) {
-		return new PrimaryLossFunction(sampler, fluxArray, 5, 1, 2);
+		return new PrimaryLossFunction(sampler, fluxArray, 1, 0, 1);
 	}
 
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
@@ -175,7 +178,7 @@ public class LightCurveFitter {
 		return sampler.parametersAsSolution(optPoint.getPointRef());
 	}
 
-	public Solution optimizeCircuitSearch(CircuitSearchEvaluator warmUpErrorFunction, CircuitSearchEvaluator finalErrorFunction, CircuitSearchEvaluator ... alternatingErrorFunctions) throws MathException {
+	public Solution optimizeCircuitSearch(ClusteredEvaluator warmUpErrorFunction, ClusteredEvaluator finalErrorFunction, ClusteredEvaluator ... alternatingErrorFunctions) throws MathException {
 		SolutionSampler sampler = this.sampler;
 		Random random = sampler.getRandom();
 		CircuitSearchOptimizer optimizer = new CircuitSearchOptimizer(random, this.populationSize) {
@@ -208,6 +211,22 @@ public class LightCurveFitter {
 
 		Solution solution = sampler.parametersAsSolution(result.getPointRef());
 
+		return solution;
+	}
+
+	public Solution optimizeWithCPSO(ClusteredEvaluator errorFunction) throws MathException {
+		SolutionSampler sampler = this.sampler;
+		Random random = sampler.getRandom();
+		DiversifiedParticleSwarmOptimizer optimizer = new DiversifiedParticleSwarmOptimizer(random, this.populationSize) {
+			@Override
+			protected void informProgress(int iteration, RealPointValuePair pointValue) {
+				LightCurveFitter.this.informProgress("CPSO", iteration, pointValue.getValue());
+			}
+		};
+		optimizer.setMaxIterations(this.maxCSIterationsWithClustering);
+		int vectorLength = sampler.getNumParameters();
+		RealPointValuePair result = optimizer.optimize(vectorLength, errorFunction);
+		Solution solution = sampler.parametersAsSolution(result.getPointRef());
 		return solution;
 	}
 

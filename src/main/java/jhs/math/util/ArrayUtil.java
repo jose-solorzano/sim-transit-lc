@@ -470,6 +470,19 @@ public class ArrayUtil {
 		}
 		return ranks;
 	}
+	
+	public static <T> int[] ranks(T[] objects, Function<T,Double> mapper) {
+		DoubleIndex[] dia = new DoubleIndex[objects.length];
+		for(int i = 0; i < objects.length; i++) {
+			dia[i] =  new DoubleIndex(mapper.apply(objects[i]), i);
+		}
+		Arrays.sort(dia);
+		int[] ranks = new int[objects.length];
+		for(int i = 0; i < objects.length; i++) {
+			ranks[dia[i].index] = i;
+		}
+		return ranks;		
+	}
 
 	public static int[] sortIndexes(double[] values) {
 		DoubleIndex[] dia = new DoubleIndex[values.length];

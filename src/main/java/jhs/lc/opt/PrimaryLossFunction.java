@@ -64,8 +64,14 @@ public class PrimaryLossFunction extends AbstractLossFunction {
 		return MathUtil.mse(testFluxArray, this.targetFluxArray) / this.fluxVariance;
 	}
 	
+	public double trendLoss(double[] testFluxArray) {
+		double[] testTrendArray = trendProfile(testFluxArray);
+		return MathUtil.mse(testTrendArray, this.targetTrendArray) / this.trendVariance;
+	}
+	
 	public double trendChangeLoss(double[] testFluxArray) {
 		double[] testTrendChangeArray = trendChangeProfile(testFluxArray);
 		return MathUtil.mse(testTrendChangeArray, this.targetTrendChangeArray) / this.trendChangeVariance;
 	}
+
 }

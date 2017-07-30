@@ -1,10 +1,10 @@
 package jhs.lc.opt;
 
-public class CircuitSearchParamEvaluation {
+public class ClusteredParamEvaluation {
 	private final double error;
 	private final double[] clusteringPosition;
 	
-	public CircuitSearchParamEvaluation(double error, double[] clusteringPosition) {
+	public ClusteredParamEvaluation(double error, double[] clusteringPosition) {
 		super();
 		this.error = error;
 		this.clusteringPosition = clusteringPosition;
