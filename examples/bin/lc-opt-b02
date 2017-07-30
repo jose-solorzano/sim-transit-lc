@@ -6,7 +6,7 @@ mkdir -p ${workDir}
 
 echo "BO2 optimization: Models an 'X', using 2 RBF0_S activation functions in a rotated space."
 
-OPTS="-log INFO -pop 100 -noi 300 -nagd 50"
+OPTS="-log INFO -pop 100 -noi 350 -nagd 50"
 
 ${projectDir}/bin/lc-opt ${OPTS} \
 	-i ${projectDir}/examples/lc/sim-b02.csv \

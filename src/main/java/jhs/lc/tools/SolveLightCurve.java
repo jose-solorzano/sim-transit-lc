@@ -253,17 +253,21 @@ public class SolveLightCurve extends AbstractTool {
 	
 	private void writeResults(String resultsFilePath, OptSpec optSpec, SolutionSampler sampler, LightCurvePoint[] lightCurve, Solution solution, double[] fluxArray, double elapsedSeconds) throws Exception {
 		EvaluationInfo ei = sampler.getEvaluationInfo(fluxArray, solution);
+		double[] ofParameters = solution.getOpacityFunctionParameters();
+		double paramStdev = MathUtil.standardDev(ofParameters, 0);
 		if(logger.isLoggable(Level.INFO)) {
 			logger.info("orbitRadius=" + solution.getOrbitRadius() + " (from " + optSpec.getOrbitRadius() + ").");
 			logger.info("rmse=" + ei.getRmse());
 			logger.info("trendLoss=" + ei.getTrendLoss());
 			logger.info("trendChangeLoss=" + ei.getTrendChangeLoss());
+			logger.info("Parameter SD: " + paramStdev);
 		}
 		OptResultsSpec spec = new OptResultsSpec();
 		spec.setOrbitRadius(solution.getOrbitRadius());
 		spec.setOptElapsedSeconds(elapsedSeconds);
 		spec.setRmse(ei.getRmse());
-		spec.setParameters(solution.getOpacityFunctionParameters());
+		spec.setParameters(ofParameters);
+		spec.setParamStandardDev(paramStdev);
 		spec.setMethod(optSpec.getMethod());
 		File resultsFile = new File(resultsFilePath);
 		SpecMapper.writeObject(resultsFile, spec);

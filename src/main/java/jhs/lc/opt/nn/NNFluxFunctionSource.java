@@ -15,15 +15,16 @@ public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
 	private final InputFilterFactory inputFilterType;
 	private final double imageWidth, imageHeight;
 	private final double parameterRange;
+	private final double combinedParameterRange;
 	private final double lambda;
 		
-	public NNFluxFunctionSource(NeuralNetworkMetaInfo[] structures, InputFilterFactory inputFilterType, double imageWidth, double imageHeight, double parameterRange, double lambda) {
-		super();
+	public NNFluxFunctionSource(NeuralNetworkMetaInfo[] structures, InputFilterFactory inputFilterType, double imageWidth, double imageHeight, double parameterRange, double combinedParameterRange, double lambda) {
 		this.metaInfos = structures;
 		this.inputFilterType = inputFilterType;
 		this.imageWidth = imageWidth;
 		this.imageHeight = imageHeight;
 		this.parameterRange = parameterRange;
+		this.combinedParameterRange = combinedParameterRange;
 		this.lambda = lambda;
 	}
 
@@ -42,7 +43,7 @@ public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
 			nn[i] = new PlainNeuralNetwork(nns, nparams);
 			paramIndex = toParamIndex;
 		}
-		double extraOptimizerError = getRegularizationError(parameters, this.parameterRange, this.lambda * LAMBDA_FACTOR);
+		double extraOptimizerError = getRegularizationError(parameters, this.parameterRange, this.combinedParameterRange, this.lambda * LAMBDA_FACTOR);
 		return NNFluxOrOpacityFunction.create(metaInfos, nn, inputFilter, imageWidth, imageHeight, extraOptimizerError);
 	}
 
@@ -62,7 +63,7 @@ public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
 		return 1.0;
 	}	
 	
-	static double getRegularizationError(double[] parameters, double parameterRange, double rawLambda) {
+	static double getRegularizationError(double[] parameters, double parameterRange, double combinedParameterRange, double rawLambda) {
 		double max = parameterRange / 2;
 		double min = -max;
 		double sumDiffSq = 0;
@@ -75,6 +76,12 @@ public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
 				numDiffs++;
 			}
 		}
-		return numDiffs == 0 ? 0 : rawLambda * sumDiffSq / numDiffs;
+		double loss = numDiffs == 0 ? 0 : rawLambda * sumDiffSq / numDiffs;
+		double sdT2 = MathUtil.standardDev(parameters, 0) * 2;
+		if(sdT2 > combinedParameterRange) {
+			double diff = sdT2 - combinedParameterRange;
+			loss += diff * diff * rawLambda;
+		}
+		return loss;
 	}
 }

@@ -45,7 +45,7 @@ public class TestShiftRotateInputFilter {
 		InputFilterFactory factory = new ShiftRotateInputFilterFactory();
 		InputFilter filter = factory.createInputFilter(new double[] { shiftX, shiftY, angle / ShiftRotateInputFilterFactory.PI_FACTOR });
 		double[] result = filter.getInput(inX, inY);
-		assertEquals(outX, result[0], 0.0001);
-		assertEquals(outY, result[1], 0.0001);
+		assertEquals(outX / ShiftRotateInputFilterFactory.K, result[0], 0.0001);
+		assertEquals(outY / ShiftRotateInputFilterFactory.K, result[1], 0.0001);
 	}
 }

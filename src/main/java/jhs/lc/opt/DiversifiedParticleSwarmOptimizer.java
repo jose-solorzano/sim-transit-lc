@@ -37,8 +37,8 @@ public class DiversifiedParticleSwarmOptimizer {
 	private double omega = 0.2;
 	private double phi = +2.0;
 	
-	private double weightDecayHalfFraction = 0.13; //TODO testing 0.09491;
- 	private double initialVelocitySd = 2.0; //TODO testing 1.0
+	private double weightDecayHalfFraction = 0.09491;
+ 	private double initialVelocitySd = 1.0;
 	
 	public DiversifiedParticleSwarmOptimizer(Random random, int populationSize) {
 		this.random = random;
@@ -75,7 +75,7 @@ public class DiversifiedParticleSwarmOptimizer {
 
 	public RealPointValuePair optimize(int vectorLength, ClusteredEvaluator errorFunction) throws MathException {
 		int n = this.populationSize;
-		double[] weights = this.createWeights(n);
+		double[] weights = this.createGlobalWeights(n);
 		List<Particle> workingSet = this.createSwarm(n, vectorLength, errorFunction);
 		int maxIterations = this.maxIterations;
 		Position bestPosition = null;
@@ -100,7 +100,7 @@ public class DiversifiedParticleSwarmOptimizer {
 		return bestPosition.getPointValuePair();
 	}	
 
-	private double[] createWeights(int n) {
+	private double[] createGlobalWeights(int n) {
 		double[] weights = new double[n];
 		double halfFraction = this.weightDecayHalfFraction;
 		double k = 1.0 / (halfFraction * n);
@@ -122,12 +122,36 @@ public class DiversifiedParticleSwarmOptimizer {
 		}
 	}
 	
-	private void updateVelocities(List<Particle> particles, double[] weights) {
+	private void updateVelocities(List<Particle> particles, double[] globalWeights) {
 		for(Particle particle : particles) {
+			double[] weights = this.getParticleWeights(particle, particles, globalWeights);
 			this.updateVelocity(particle, particles, weights);
 		}
 	}
-	
+
+	private double[] getParticleWeights(Particle particle, List<Particle> particles, double[] globalWeights) {
+		return globalWeights;
+		/*
+		double[] sourceCP = particle.currentPosition.clusteringPosition;
+		double denom = Math.sqrt(sourceCP.length);
+		double[] weights = new double[globalWeights.length];
+		boolean hasNonZero = false;
+		for(int i = 0; i < weights.length; i++) {
+			Particle targetParticle = particles.get(i);
+			double[] targetCP = targetParticle.bestPosition.clusteringPosition;
+			double distanceMetric = Math.log1p(12 * MathUtil.euclideanDistance(sourceCP, targetCP) / denom);
+			if(distanceMetric != 0) {
+				hasNonZero = true;
+				weights[i] = globalWeights[i] / distanceMetric;
+			}
+		}
+		if(!hasNonZero) {
+			return globalWeights;
+		}
+		return weights;
+		*/
+	}
+
 	private void updateVelocity(Particle particle, List<Particle> particles, double[] weights) {
 		Random r = this.random;
 		double omega = this.omega;
@@ -187,9 +211,11 @@ public class DiversifiedParticleSwarmOptimizer {
 			logger.info("Creating initial pool of " + n + " particles.");
 		}
 		double ivsd = this.initialVelocitySd;
+		double psd = ivsd / 2;
 		List<Particle> pool = new ArrayList<>();		
+		//double[][] initParams = createInitialParams(r, n, psd, vectorLength);
 		for(int i = 0; i < n; i++) {
-			double[] params = MathUtil.sampleUniformSymmetric(r, ivsd / 2.0, vectorLength);
+			double[] params = sampleParams(r, psd, vectorLength);
 			ClusteredParamEvaluation eval = errorFunction.evaluate(params);
 			Position position = new Position(params, eval.getClusteringPosition(), eval.getError());
 			Particle particle = new Particle();
@@ -200,6 +226,30 @@ public class DiversifiedParticleSwarmOptimizer {
 		}
 		return pool;
 	}
+
+	private static double[] sampleParams(Random r, double baseSd, int vectorLength) {
+		return MathUtil.sampleUniformSymmetric(r, baseSd, vectorLength);
+	}
+
+	/*
+	private static double[][] createInitialParams(Random r, int n, double sd, int vectorLength) {
+		double[][] paramMatrix = new double[n][vectorLength];
+		double[] valuePool = new double[n];
+		double range = 3.466 * sd;
+		double step = range / (n + 1);
+		double start = -0.5 * range;
+		for(int i = 0; i < n; i++) {
+			valuePool[i] = start + step * (i + 1);
+		}
+		for(int v = 0; v < vectorLength; v++) {
+			ArrayUtil.shuffle(valuePool, r);
+			for(int i = 0; i < n; i++) {
+				paramMatrix[i][v] = valuePool[i];
+			}
+		}
+		return paramMatrix;
+	}
+	*/
 	
 	protected void informProgress(int iteration, RealPointValuePair pointValue) {		
 	}

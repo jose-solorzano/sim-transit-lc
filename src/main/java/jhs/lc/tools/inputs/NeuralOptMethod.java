@@ -31,6 +31,7 @@ public class NeuralOptMethod extends AbstractOptMethod {
 	private double imageHeight;
 	private double lambda = 1.0;
 	private double parameterRange = 7.0;
+	private double combinedParameterRange = 4.0;
 
 	private InputFilterType inputFilter = InputFilterType.PLAIN;	
 	private NeuralNetworkSpec[] networks;
@@ -92,7 +93,7 @@ public class NeuralOptMethod extends AbstractOptMethod {
 		InputFilterType inputType = this.inputFilter;
 		InputFilterFactory inputFilterFactory = inputType.getFactory();
 		NeuralNetworkMetaInfo[] metaInfos = this.createMetaInfos(context, inputFilterFactory);
-		return new NNFluxFunctionSource(metaInfos, inputFilterFactory, imageWidth, imageHeight, parameterRange, lambda);
+		return new NNFluxFunctionSource(metaInfos, inputFilterFactory, imageWidth, imageHeight, parameterRange, combinedParameterRange, lambda);
 	}
 	
 	private NeuralNetworkMetaInfo[] createMetaInfos(File context, InputFilterFactory inputFilterFactory) throws Exception {

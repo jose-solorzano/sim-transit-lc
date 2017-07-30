@@ -5,7 +5,7 @@ import jhs.lc.opt.nn.InputFilterFactory;
 
 public final class ShiftRotateInputFilterFactory implements InputFilterFactory {
 	static final double PI_FACTOR = 1.813;
-	private static final double K = Math.sqrt(2);
+	static final double K = Math.sqrt(2);
 			
 	@Override
 	public final int getNumParameters() {
