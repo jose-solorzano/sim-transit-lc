@@ -13,53 +13,42 @@ import jhs.lc.geom.ParametricFluxFunctionSource;
 import jhs.lc.sims.ImageElementInfo;
 import jhs.lc.sims.SimulatedFlux;
 import jhs.lc.sims.SimulatedFluxSource;
+import jhs.math.classification.ClassificationUtil;
 import jhs.math.util.ArrayUtil;
 import jhs.math.util.MathUtil;
 
 public class SolutionSampler {
 	private static final Logger logger = Logger.getLogger(SolutionSampler.class.getName());
-	private static final int NUM_EXTRA_PARAMS = 1;
+	private static final int MAX_DISP_ITERATIONS = 10;
+	private static final double NPF = 20.0;
+	private static final double PRECISION = 1E-6;
+	private static final double OR_LAMBDA = 0.03;
 	
-	private static final int WL = 5;
-	private static final double NPF = 200.0;
-	private static final double WSD = 0.5;
+	private static final double MAX_LOGIT = 15.0;
+	private static final double LOGIT_FACTOR = 3.0;
+	private static final double PENALIZED_OR_PARAM = MAX_LOGIT * 0.7 / LOGIT_FACTOR;
 	
 	private final Random random;
-	private final double baseOrbitRadius;
-	private final double logRadiusSD;
 	private final SimulatedFluxSource fluxSource;
 	private final ParametricFluxFunctionSource opacitySource;
+
+	private final double minOrbitRadius;
+	private final double maxOrbitRadius;
 	
-	private double numMutateParamsFraction = 0.20;
-	private double mutateSD = 0.03;
 	private double peakFraction = 0.5;
 
-	public SolutionSampler(Random random, double baseRadius, double logRadiusSD,
-			SimulatedFluxSource fluxSource, ParametricFluxFunctionSource opacitySource) {
-		if(baseRadius <= 1.0) {
-			throw new IllegalArgumentException("Invalid baseRadius: " + baseRadius);
+	public SolutionSampler(Random random, SimulatedFluxSource fluxSource, ParametricFluxFunctionSource opacitySource, double minOrbitRadius, double maxOrbitRadius) {
+		if(minOrbitRadius <= 1.0) {
+			throw new IllegalArgumentException("Invalid minOrbitRadius: " + minOrbitRadius);
 		}
+		if(maxOrbitRadius < minOrbitRadius) {
+			throw new IllegalArgumentException("maxOrbitRadius < minOrbitRadius");
+		}
+		this.minOrbitRadius = minOrbitRadius;
+		this.maxOrbitRadius = maxOrbitRadius;
 		this.random = random;
-		this.baseOrbitRadius = baseRadius;
-		this.logRadiusSD = logRadiusSD;
 		this.fluxSource = fluxSource;
 		this.opacitySource = opacitySource;
-	}
-
-	public final double getNumMutateParamsFraction() {
-		return numMutateParamsFraction;
-	}
-
-	public final void setNumMutateParamsFraction(double numMutateParamsFraction) {
-		this.numMutateParamsFraction = numMutateParamsFraction;
-	}
-
-	public final double getMutateSD() {
-		return mutateSD;
-	}
-
-	public final void setMutateSD(double mutateSD) {
-		this.mutateSD = mutateSD;
 	}
 
 	public Random getRandom() {
@@ -73,39 +62,17 @@ public class SolutionSampler {
 	public void setPeakFraction(double peakFraction) {
 		this.peakFraction = peakFraction;
 	}
-
-	public double[] createFluxWeights(double[] fluxArray, double shapeBias) {
-		if(fluxArray.length < 2) {
-			throw new IllegalArgumentException("Length of flux array must be at least 2.");
-		}
-		if(shapeBias < 0 || shapeBias > 1) {
-			throw new IllegalArgumentException("shapeBias must be between zero and one, not " + shapeBias + ".");
-		}
-		double[] trendChangeProfile = LightCurve.trendChangeProfile(fluxArray, WL);
-		double tcsd = MathUtil.standardDev(trendChangeProfile, 0);
-		double[] weights = new double[fluxArray.length];
-		double threshold = -tcsd * WSD;
-		for(int i = 0; i < fluxArray.length; i++) {
-			if(trendChangeProfile[i] <= threshold) {
-				weights[i] = shapeBias;
-			}
-			else {
-				weights[i] = 1 - shapeBias;
-			}
-		}
-		return weights;
-	}
-
-	public final Solution sample() {
-		double[] osParameters = this.sampleOpacityFunctionParameters();
-		FluxOrOpacityFunction of = this.opacitySource.getFluxOrOpacityFunction(osParameters);
-		double orbitRadius = this.baseOrbitRadius * Math.exp(this.random.nextGaussian() * this.logRadiusSD);
-		SimulatedFlux modeledFlux = this.fluxSource.produceModeledFlux(this.peakFraction, of, orbitRadius);
-		return new Solution(this.fluxSource, of, orbitRadius, peakFraction, osParameters, modeledFlux);
+	
+	private boolean hasOrbitRadiusParameter() {
+		return this.minOrbitRadius != this.maxOrbitRadius;
 	}
 	
+	private int getNumExtraParameters() {
+		return this.hasOrbitRadiusParameter() ? 1 : 0;
+	}
+
 	public final int getNumParameters() {
-		return this.opacitySource.getNumParameters() + NUM_EXTRA_PARAMS;
+		return this.opacitySource.getNumParameters() + this.getNumExtraParameters();
 	}
 	
 	public final double[] solutionAsParameters(Solution solution) {
@@ -121,19 +88,39 @@ public class SolutionSampler {
 			double scale = source.getParameterScale(i);
 			parameters[i] = solParameters[i] / (scale == 0 ? 1 : scale);
 		}
-		int extraIndex = solParameters.length;
-		parameters[extraIndex++] = this.getOrbitRadiusChangeParameter(solution);
+		if(parameters.length > solParameters.length) {
+			int extraIndex = solParameters.length;
+			parameters[extraIndex++] = this.getOrbitRadiusChangeParameter(solution);
+		}
 		return parameters;
 	}
 	
 	private double getOrbitRadiusChangeParameter(Solution solution) {
-		double orbitRadius = solution.getOrbitRadius();
-		if(orbitRadius == 0) {
-			throw new IllegalStateException("Simulation orbit radius is zero.");
+		if(!this.hasOrbitRadiusParameter()) {
+			return 0;
 		}
-		double logDiff = Math.log(orbitRadius / this.baseOrbitRadius);
-		double lrs = this.logRadiusSD;
-		return lrs == 0 ? 0 : logDiff / this.logRadiusSD;
+		double orbitRadius = solution.getOrbitRadius();
+		double p = (orbitRadius - this.minOrbitRadius) / (this.maxOrbitRadius - this.minOrbitRadius);
+		if(Double.isNaN(p) || Double.isInfinite(p)) {
+			throw new IllegalStateException("orbitRadius: " + orbitRadius);
+		}
+		if(p <= 0) {
+			p = 0;
+		}
+		else if(p >= 1) {
+			p = 1;
+		}
+		double logit = ClassificationUtil.probabilityToLogit(p);
+		if(Double.isNaN(logit)) {
+			throw new IllegalStateException("p: " + p);
+		}
+		if(logit < -MAX_LOGIT) {
+			logit = -MAX_LOGIT;
+		}
+		else if(logit > MAX_LOGIT) {
+			logit = MAX_LOGIT;
+		}
+		return logit / LOGIT_FACTOR;
 	}
 	
 	public final Solution parametersAsSolution(double[] optimizerParameters) {
@@ -148,20 +135,20 @@ public class SolutionSampler {
 	}
 	
 	private int getOrbitRadiusChangeParamIndex() {
-		return this.opacitySource.getNumParameters();		
+		return this.hasOrbitRadiusParameter() ? this.opacitySource.getNumParameters() : -1;		
 	}
 	
 	private double getOrbitRadius(double[] optimizerParameters) {
+		double range = this.maxOrbitRadius - this.minOrbitRadius;
+		if(range == 0) {
+			return this.minOrbitRadius;
+		}
 		int orcIndex = this.getOrbitRadiusChangeParamIndex();
 		double changeParam = optimizerParameters[orcIndex];
-		double logDiff = changeParam * this.logRadiusSD;
-		return this.baseOrbitRadius * Math.exp(logDiff);
+		double logit = changeParam * LOGIT_FACTOR;
+		return this.minOrbitRadius + ClassificationUtil.logitToProbability(logit) * range;
 	}
 
-	public final double sampleParameter(int paramIndex) {
-		return this.random.nextGaussian();
-	}
-	
 	private double[] opacitySourceParameters(double[] optimizerParameters) {
 		ParametricFluxFunctionSource source = this.opacitySource;
 		int np = source.getNumParameters();
@@ -173,16 +160,17 @@ public class SolutionSampler {
 		return osParameters;
 	}
 	
-	private double[] sampleOpacityFunctionParameters() {
-		ParametricFluxFunctionSource source = this.opacitySource;
-		Random r = this.random;
-		int n = source.getNumParameters();
-		double[] parameters = new double[n];
-		for(int i = 0; i < n; i++) {
-			double scale = source.getParameterScale(i);
-			parameters[i] = r.nextGaussian() * scale;
+	public final double getExtraParamError(double[] optimizerParameters) {
+		int orcIndex = this.getOrbitRadiusChangeParamIndex();
+		if(orcIndex == -1) {
+			return 0;
 		}
-		return parameters;
+		double changeParam = optimizerParameters[orcIndex];
+		if(changeParam <= +PENALIZED_OR_PARAM && changeParam >= -PENALIZED_OR_PARAM) {
+			return 0;
+		}
+		double diff = changeParam - (changeParam >= 0 ? +PENALIZED_OR_PARAM : -PENALIZED_OR_PARAM);
+		return diff * diff * OR_LAMBDA;		
 	}
 	
 	public double[] minimalChangeThreshold(double[] optimizerParameters, double epsilon) {
@@ -238,9 +226,6 @@ public class SolutionSampler {
 		}
 		return new DisplacementInfo(totalDisp, apparentVarType);
 	}
-	
-	private static final double PRECISION = 1E-6;
-	private static final int MAX_DISP_ITERATIONS = 10;
 	
 	private DisplacementInfo vectorDisplacementInfo(ImageState baseImageState, double[] optimizerParameters, double[] vector, double epsilon) {
 		double lowerBound = 0;
@@ -302,13 +287,14 @@ public class SolutionSampler {
 		SimulatedFlux sf = solution.produceModeledFlux();
 		double[] modeledFlux = sf.getFluxArray();
 		double w0 = 1, w1 = 0, w2 = 0;
-		LightCurveMatcher matcher = new LightCurveMatcher(fluxArray, w0, w1, w2);
+		PrimaryLossFunction matcher = new PrimaryLossFunction(this, fluxArray, w0, w1, w2);
 		double mse = MathUtil.euclideanDistanceSquared(fluxArray, modeledFlux) / fluxArray.length;
 		double rmse = Math.sqrt(mse);
-		double loss = matcher.loss(modeledFlux);
+		double loss = matcher.baseLoss(modeledFlux);
 		double fluxLoss = matcher.fluxLoss(modeledFlux);
+		double trendLoss = matcher.trendLoss(modeledFlux);
 		double trendChangeLoss = matcher.trendChangeLoss(modeledFlux);
-		return new EvaluationInfo(rmse, loss, fluxLoss, trendChangeLoss);
+		return new EvaluationInfo(rmse, loss, fluxLoss, trendLoss,trendChangeLoss);
 	}
 	
 

@@ -10,9 +10,12 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
 import javax.media.protocol.FileTypeDescriptor;
@@ -23,9 +26,10 @@ import jhs.lc.data.LightCurvePoint;
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.ParametricFluxFunctionSource;
 import jhs.lc.jmf.BufferedImageVideoProducer;
-import jhs.lc.opt.CSLightCurveFitter;
+import jhs.lc.opt.LightCurveFitter;
 import jhs.lc.opt.EvaluationInfo;
-import jhs.lc.opt.LightCurveMatcher;
+import jhs.lc.opt.LightCurveMatchingFeatureSource;
+import jhs.lc.opt.PrimaryLossFunction;
 import jhs.lc.opt.Solution;
 import jhs.lc.opt.SolutionSampler;
 import jhs.lc.sims.AngleUnsupportedException;
@@ -35,7 +39,10 @@ import jhs.lc.sims.SimulatedFluxSource;
 import jhs.lc.tools.inputs.AbstractOptMethod;
 import jhs.lc.tools.inputs.OptResultsSpec;
 import jhs.lc.tools.inputs.OptSpec;
+import jhs.lc.tools.inputs.SolutionSpec;
 import jhs.lc.tools.inputs.SpecMapper;
+import jhs.math.util.ListUtil;
+import jhs.math.util.MathUtil;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
@@ -44,15 +51,18 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.math.MathException;
+import org.apache.commons.math.optimization.RealPointValuePair;
 
 public class SolveLightCurve extends AbstractTool {
 	private static final Logger logger = Logger.getLogger(SolveLightCurve.class.getName());
 	
+	private static final int DEF_MAX_WP_ITERATIONS = 0;
 	private static final int DEF_MAX_ITERATIONS = 100;
 	private static final int DEF_MAX_CONS_ITERATIONS = 200;
 	private static final int DEF_MAX_AGD_ITERATIONS = 100;	
 	private static final int DEF_POP_SIZE = 100;
 	private static final int DEF_OUT_NUM_PIXELS = 100000;
+	private static final int DEF_TEST_DEPICT_NUM_PIXELS = 40000;
 	
 	private static final double DEF_VIDEO_DURATION = 60;
 
@@ -86,14 +96,20 @@ public class SolveLightCurve extends AbstractTool {
 		LimbDarkeningParams ldParams = optSpec.getLimbDarkeningParams() == null ? LimbDarkeningParams.SUN : new LimbDarkeningParams(optSpec.getLimbDarkeningParams());
 		SolutionSampler sampler = this.getSampler(random, timestamps, fluxArray, ldParams, optSpec, cmdLine, specFile);
 		int populationSize = this.getOptionInt(cmdLine, "pop", DEF_POP_SIZE);
+		int numWarmUpIterations = this.getOptionInt(cmdLine, "nwi", DEF_MAX_WP_ITERATIONS);
 		int numClusteringIterations = this.getOptionInt(cmdLine, "noi", DEF_MAX_ITERATIONS);
-		int numGradientDescentIterations = this.getOptionInt(cmdLine, "nagd", DEF_MAX_AGD_ITERATIONS);
 		int numPostClusteringIterations = this.getOptionInt(cmdLine, "npci", DEF_MAX_CONS_ITERATIONS);
+		int numGradientDescentIterations = this.getOptionInt(cmdLine, "nagd", DEF_MAX_AGD_ITERATIONS);
+		
+		String warmUpDepictionsPath = cmdLine.getOptionValue("owpz");
+		String clusteringDepictionsPath = cmdLine.getOptionValue("ocz");
+		
+		logger.info("Number of optimization parameters: " + sampler.getNumParameters() + ".");
 		logger.info("Population size: " + populationSize + ".");
 		logger.info("Max iterations: " + numClusteringIterations + ".");
 		logger.info("Initial orbit radius: " + optSpec.getOrbitRadius());
 		long time1 = System.currentTimeMillis();
-		Solution solution = this.solve(lightCurve, sampler, populationSize, numClusteringIterations, numPostClusteringIterations, numGradientDescentIterations);		
+		Solution solution = this.solve(optSpec, lightCurve, sampler, populationSize, numWarmUpIterations, numClusteringIterations, numPostClusteringIterations, numGradientDescentIterations, warmUpDepictionsPath, clusteringDepictionsPath);		
 		long time2 = System.currentTimeMillis();
 		double elapsedSeconds = (time2 - time1) / 1000.0;
 		
@@ -149,20 +165,35 @@ public class SolveLightCurve extends AbstractTool {
         System.out.println("Wrote " + outFile);		
 	}
 		
-	private Solution solve(LightCurvePoint[] lightCurve, SolutionSampler sampler, int populationSize, int numClusteringIterations, int numPostClusteringIterations, int numGradientDescentIterations) throws MathException {
-		CSLightCurveFitter fitter = new CSLightCurveFitter(sampler, populationSize) {
+	private Solution solve(OptSpec optSpec, LightCurvePoint[] lightCurve, SolutionSampler sampler, int populationSize, int numWarmUpIterations, int numClusteringIterations, int numPostClusteringIterations, int numGradientDescentIterations, String warmUpDepictionsPath, String clusteringDepictionsPath) throws MathException {
+		LightCurveFitter fitter = new LightCurveFitter(sampler, populationSize) {
 			@Override
 			protected void informProgress(String stage, int iteration, double error) {
 				if(logger.isLoggable(Level.INFO)) {
 					logger.info("[" + stage + "] Iteration " + iteration + ": error=" + error);
 				}
 			}
+
+			@Override
+			protected void informEndOfWarmUpPhase(SolutionSampler sampler, List<RealPointValuePair> pointValues) {
+				if(warmUpDepictionsPath != null) {
+					dumpModelDepictionsToZipFile(optSpec, sampler, lightCurve, pointValues, warmUpDepictionsPath);
+				}
+			}
+
+			@Override
+			protected void informEndOfClusteringPhase(SolutionSampler sampler, List<RealPointValuePair> pointValues) {
+				if(clusteringDepictionsPath != null) {
+					dumpModelDepictionsToZipFile(optSpec, sampler, lightCurve, pointValues, clusteringDepictionsPath);					
+				}
+			}
 		};
 		// TODO: configure with options
 		fitter.setInitialPoolSize(populationSize);
-		fitter.setCircuitShuffliness(0.5);
+		fitter.setCircuitShuffliness(0.1);
 		fitter.setDisplacementFactor(0.04);
-		fitter.setExpansionFactor(3.0);
+		fitter.setExpansionFactor(2.0);
+		fitter.setMaxCSWarmUpIterations(numWarmUpIterations);
 		fitter.setMaxCSIterationsWithClustering(numClusteringIterations);
 		fitter.setMaxExtraCSIterations(numPostClusteringIterations);
 		fitter.setMaxEliminationIterations(0);
@@ -172,20 +203,74 @@ public class SolveLightCurve extends AbstractTool {
 		return solution;
 	}
 	
+	private void dumpModelDepictionsToZipFile(OptSpec optSpec, SolutionSampler sampler, LightCurvePoint[] lightCurve, List<RealPointValuePair> pointValues, String zipFilePath) {
+		if(logger.isLoggable(Level.INFO)) {
+			logger.info("Dumping " + pointValues.size() + " transit model depictions to " + zipFilePath);
+		}
+		double[] targetFluxArray = LightCurvePoint.fluxArray(lightCurve);
+		LightCurveMatchingFeatureSource fs = new LightCurveMatchingFeatureSource(targetFluxArray);
+		try {
+			try(OutputStream out = new FileOutputStream(zipFilePath)) {
+				try(ZipOutputStream zout = new ZipOutputStream(new BufferedOutputStream(out, 100000))) {
+					zout.putNextEntry(new ZipEntry("optspec.json"));
+					try {
+						SpecMapper.writeObject(zout, optSpec);						
+					} finally {
+						zout.closeEntry();
+					}
+					int count = 0;
+					for(RealPointValuePair pv : pointValues) {
+						Solution solution = sampler.parametersAsSolution(pv.getPointRef());
+						double[] testFluxArray = solution.produceModeledFlux().getFluxArray();
+						double[] lossFeatures = fs.getFeatureValues(testFluxArray);
+						BufferedImage depiction = solution.produceDepiction(DEF_TEST_DEPICT_NUM_PIXELS, false);
+						String entryName = "transit-" + (count++);
+						ZipEntry folderEntry = new ZipEntry(entryName);
+						zout.putNextEntry(folderEntry);
+						zout.putNextEntry(new ZipEntry(entryName + "/transit.png"));
+						try {
+							ImageIO.write(depiction, "png", zout);
+						} finally {
+							zout.closeEntry();
+						}
+						zout.putNextEntry(new ZipEntry(entryName + "/info.json"));
+						SolutionSpec spec = new SolutionSpec(fs.rmse(testFluxArray), lossFeatures, pv.getPointRef(), solution.getOrbitRadius());
+						try {
+							SpecMapper.writeObject(zout, spec);
+						} finally {
+							zout.closeEntry();
+						}
+						if(logger.isLoggable(Level.INFO)) {
+							logger.info("Wrote " + entryName + " to zip file.");
+						}
+					}
+				}
+			}
+		} catch(IOException ioe) {
+			logger.log(Level.SEVERE, "Unable to dump model depictions.", ioe);
+		}		
+	}
+	
 	private void writeResults(String resultsFilePath, OptSpec optSpec, SolutionSampler sampler, LightCurvePoint[] lightCurve, Solution solution, double[] fluxArray, double elapsedSeconds) throws Exception {
 		EvaluationInfo ei = sampler.getEvaluationInfo(fluxArray, solution);
+		double[] ofParameters = solution.getOpacityFunctionParameters();
+		double paramStdev = MathUtil.standardDev(ofParameters, 0);
 		if(logger.isLoggable(Level.INFO)) {
-			logger.info("writeResults(): orbitRadius=" + solution.getOrbitRadius() + " (from " + optSpec.getOrbitRadius() + ").");
-			logger.info("writeResults(): rmse=" + ei.getRmse() + ", loss=" + ei.getLoss());
+			logger.info("orbitRadius=" + solution.getOrbitRadius() + " (from " + optSpec.getOrbitRadius() + ").");
+			logger.info("rmse=" + ei.getRmse());
+			logger.info("trendLoss=" + ei.getTrendLoss());
+			logger.info("trendChangeLoss=" + ei.getTrendChangeLoss());
+			logger.info("Parameter SD: " + paramStdev);
 		}
 		OptResultsSpec spec = new OptResultsSpec();
 		spec.setOrbitRadius(solution.getOrbitRadius());
 		spec.setOptElapsedSeconds(elapsedSeconds);
 		spec.setRmse(ei.getRmse());
-		spec.setParameters(solution.getOpacityFunctionParameters());
+		spec.setParameters(ofParameters);
+		spec.setParamStandardDev(paramStdev);
 		spec.setMethod(optSpec.getMethod());
 		File resultsFile = new File(resultsFilePath);
-		SpecMapper.writeOptResultsSpec(resultsFile, spec);
+		SpecMapper.writeObject(resultsFile, spec);
 		System.out.println("Wrote solution info to " + resultsFile);
 	}
 	
@@ -204,8 +289,8 @@ public class SolveLightCurve extends AbstractTool {
 	private void writeData(LightCurvePoint[] lightCurve, Solution solution, String outFilePath) throws IOException {
 		double[] obsFluxArray = LightCurvePoint.fluxArray(lightCurve);
 		double[] modeledFlux = solution.produceModeledFlux().getFluxArray();
-		double[] obsTrendChangeProfile = LightCurveMatcher.trendChangeProfile(obsFluxArray);
-		double[] modeledTrendChangeProfile = LightCurveMatcher.trendChangeProfile(modeledFlux);
+		double[] obsTrendChangeProfile = PrimaryLossFunction.trendChangeProfile(obsFluxArray);
+		double[] modeledTrendChangeProfile = PrimaryLossFunction.trendChangeProfile(modeledFlux);
 		File file = new File(outFilePath);
 		PrintWriter out = new PrintWriter(file);
 		try {
@@ -224,14 +309,20 @@ public class SolveLightCurve extends AbstractTool {
 		AbstractOptMethod method = optSpec.getMethod();
 		ParametricFluxFunctionSource ffs = method.createFluxFunctionSource(contextFile);
 		SimulatedFluxSource fluxSource = this.getFluxSource(cmdLine, optSpec, timestamps, ldParams, contextFile);
+		double baseRadius = optSpec.getOrbitRadius();
 		double orf = optSpec.getOrbitRadiusFlexibility();
-		double logRadiusSD = Math.log(1 + orf);
+		if(orf < 0) {
+			throw new IllegalStateException("orbitRadiusFlexibility cannot be negative.");
+		}
+		double minRadius = orf == 0 ? baseRadius : baseRadius / (1 + orf);
+		double maxRadius = orf == 0 ? baseRadius : baseRadius * (1 + orf);
+		logger.info("minOrbitRadius=" + minRadius + ", maxOrbitRadius=" + maxRadius);
 		SolutionSampler ss = new SolutionSampler(
 			random, 
-			optSpec.getOrbitRadius(), 
-			logRadiusSD, 
 			fluxSource, 
-			ffs
+			ffs,
+			minRadius,
+			maxRadius
 		);
 		return ss;
 	}
@@ -314,8 +405,12 @@ public class SolveLightCurve extends AbstractTool {
 				.create("video");
 		Option nsOption = OptionBuilder.withArgName("n")
 				.hasArg()
-				.withDescription("Sets the number of main optimizer iterations/steps. Default is " + DEF_MAX_ITERATIONS + ".")
+				.withDescription("Sets the number of main (clustering) optimizer iterations/steps. Default is " + DEF_MAX_ITERATIONS + ".")
 				.create("noi");
+		Option nwiOption = OptionBuilder.withArgName("n")
+				.hasArg()
+				.withDescription("Sets the number of warmup iterations/steps used for sizing candidates. Default is " + DEF_MAX_WP_ITERATIONS + ".")
+				.create("nwi");
 		Option npcOption = OptionBuilder.withArgName("n")
 				.hasArg()
 				.withDescription("Sets the number of post-clustering (consolidation) iterations/steps. Default is " + DEF_MAX_CONS_ITERATIONS + ".")
@@ -340,6 +435,14 @@ public class SolveLightCurve extends AbstractTool {
 				.hasArg()
 				.withDescription("Sets the video duration in seconds. Default is " + DEF_VIDEO_DURATION + ".")
 				.create("vd");
+		Option owpzOption = OptionBuilder.withArgName("zip-file")
+				.hasArg()
+				.withDescription("Sets the path of the ZIP file where post-warm-up model depictions are written. This is used in troubleshooting and optimizer analysis.")
+				.create("owpz");
+		Option oczOption = OptionBuilder.withArgName("zip-file")
+				.hasArg()
+				.withDescription("Sets the path of the ZIP file where post-clustering model depictions are written. This is used in troubleshooting and optimizer analysis.")
+				.create("ocz");
 		
 		Options options = new Options();
 		options.addOption(helpOption);
@@ -351,12 +454,15 @@ public class SolveLightCurve extends AbstractTool {
 		options.addOption(seedOption);
 		options.addOption(timeUnitOption);
 		options.addOption(logOption);
+		options.addOption(nwiOption);
 		options.addOption(nsOption);
 		options.addOption(npcOption);
 		options.addOption(nagdOption);
 		options.addOption(popOption);
 		options.addOption(angOption);		
 		options.addOption(videoDurationOption);
+		options.addOption(owpzOption);
+		options.addOption(oczOption);
 
 		return options;
 	}

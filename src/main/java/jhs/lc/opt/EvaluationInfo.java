@@ -4,13 +4,15 @@ public class EvaluationInfo {
 	private final double rmse;
 	private final double loss;
 	private final double fluxLoss;
+	private final double trendLoss;
 	private final double trendChangeLoss;
 	
-	public EvaluationInfo(double rmse, double loss, double fluxLoss, double trendChangeLoss) {
+	public EvaluationInfo(double rmse, double loss, double fluxLoss, double trendLoss, double trendChangeLoss) {
 		super();
 		this.rmse = rmse;
 		this.loss = loss;
 		this.fluxLoss = fluxLoss;
+		this.trendLoss = trendLoss;
 		this.trendChangeLoss = trendChangeLoss;
 	}
 
@@ -28,5 +30,9 @@ public class EvaluationInfo {
 
 	public final double getTrendChangeLoss() {
 		return trendChangeLoss;
+	}
+
+	public final double getTrendLoss() {
+		return trendLoss;
 	}
 }

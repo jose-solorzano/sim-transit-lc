@@ -13,25 +13,22 @@ import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.optimization.RealPointValuePair;
 import org.junit.Test;
 
-public class TestCircuitSearchOptimizer {
+public class TestClusteredParticleSwarmOptimizer {
 	@Test
 	public void testMultiMinimaOptimization() throws Exception {
 		int populationSize = 20;
 		int vectorLength = 3;
-		Random random = new Random(29 + 1001);
-		CircuitSearchOptimizer optimizer = new CircuitSearchOptimizer(random, populationSize) {
+		Random random = new Random(2042 + 1001);
+		DiversifiedParticleSwarmOptimizer optimizer = new DiversifiedParticleSwarmOptimizer(random, populationSize) {
 			@Override
 			protected void informProgress(int iteration, RealPointValuePair pointValue) {
 				System.out.println("   -- At iteration " + iteration + ": " + pointValue.getValue());
 			}
 		};
-		optimizer.setExpansionFactor(3.0);
-		optimizer.setMaxIterationsWithClustering(200);
-		optimizer.setDisplacementFactor(0.03);
-		optimizer.setCircuitShuffliness(1.0);
+		optimizer.setMaxIterations(200);
 		CustomErrorFunction errorFunction = new CustomErrorFunction();
 		RealPointValuePair rsr = this.randomSearch(errorFunction, random, vectorLength);
-		RealPointValuePair result = optimizer.optimize(vectorLength, errorFunction, errorFunction);
+		RealPointValuePair result = optimizer.optimize(vectorLength, errorFunction);
 		System.out.println("RandSearch: " + Arrays.toString(rsr.getPoint()) + " | " + rsr.getValue());
 		System.out.println("Result: " + Arrays.toString(result.getPoint()) + " | " + result.getValue());
 		assertTrue(result.getValue() < rsr.getValue());
@@ -42,25 +39,22 @@ public class TestCircuitSearchOptimizer {
 		int populationSize = 11;
 		int vectorLength = 10;
 		Random random = new Random(17 + 1006);
-		CircuitSearchOptimizer optimizer = new CircuitSearchOptimizer(random, populationSize) {
+		DiversifiedParticleSwarmOptimizer optimizer = new DiversifiedParticleSwarmOptimizer(random, populationSize) {
 			@Override
 			protected void informProgress(int iteration, RealPointValuePair pointValue) {
 				System.out.println("   -- At iteration " + iteration + ": " + pointValue.getValue());
 			}
 		};
-		optimizer.setMaxIterationsWithClustering(0);
-		optimizer.setDisplacementFactor(0.3);
-		optimizer.setCircuitShuffliness(0);
-		optimizer.setExpansionFactor(2.0);
-		optimizer.setConvergeDistance(0.003);
+		optimizer.setMaxIterations(200);
+		optimizer.setConvergeDistance(0.001);
 		double[] minimum = MathUtil.sampleGaussian(random, 1.0, vectorLength);
 		ClusteredEvaluator errorFunction = new DistanceSqErrorFunction(minimum);
-		RealPointValuePair result = optimizer.optimize(vectorLength, errorFunction, errorFunction);
+		RealPointValuePair result = optimizer.optimize(vectorLength, errorFunction);
 		double[] resultPoint = result.getPointRef();
 		int numMatches = 0;
 		for(int i = 0; i < minimum.length; i++) {
 			double diff = Math.abs(resultPoint[i] - minimum[i]);
-			if(diff < 0.01) {
+			if(diff < 0.02) {
 				numMatches++;
 			}
 		}

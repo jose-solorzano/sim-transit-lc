@@ -6,7 +6,7 @@ import jhs.math.nn.NeuralNetwork;
 
 public final class NNFluxOrOpacityFunction implements FluxOrOpacityFunction {
 	private static final long serialVersionUID = 1L;
-	private static final double SF = 3.46;
+	static final double SF = 3.46;
 	
 	private final NeuralNetworkMetaInfo[] neuralNetworkSpecs;
 	private final NeuralNetwork[] neuralNetworks;

@@ -9,7 +9,7 @@ public final class PulseActivationFunction extends AbstractSimpleActivationFunct
 
 	@Override
 	protected final double activation(double dotProduct, double[] parameters, int extraParamIndex) {
-		return (dotProduct <= +0.25 && dotProduct >= -0.25 ? + 1.0 : -1.0) / 0.794 + 0.765;
+		return (dotProduct <= +0.4 && dotProduct >= -0.4 ? + 1.0 : -1.0) / 0.945 + 0.345;
 	}
 
 	@Override

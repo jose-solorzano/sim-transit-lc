@@ -4,8 +4,17 @@ public class OptResultsSpec {
 	private double orbitRadius;
 	private double rmse;
 	private double optElapsedSeconds;
+	private double paramStandardDev;
 	private double[] parameters;
 	private AbstractOptMethod method;
+
+	public final double getParamStandardDev() {
+		return paramStandardDev;
+	}
+
+	public final void setParamStandardDev(double paramStandardDev) {
+		this.paramStandardDev = paramStandardDev;
+	}
 
 	public final double getOrbitRadius() {
 		return orbitRadius;

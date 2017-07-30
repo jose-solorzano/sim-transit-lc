@@ -4,7 +4,8 @@ import jhs.lc.data.LightCurve;
 import jhs.math.util.MathUtil;
 import org.apache.commons.math.FunctionEvaluationException;
 
-public class LightCurveMatcher {
+public class PrimaryLossFunction extends AbstractLossFunction {
+	private static final double MSE_FACTOR = 1E7;
 	private static final double WLF = 0.09;
 		
 	private final double w0, w1, w2;
@@ -15,7 +16,8 @@ public class LightCurveMatcher {
 	private final double trendVariance;
 	private final double trendChangeVariance;
 
-	public LightCurveMatcher(double[] targetFluxArray, double w0, double w1, double w2) {
+	public PrimaryLossFunction(SolutionSampler sampler, double[] targetFluxArray, double w0, double w1, double w2) {
+		super(sampler, 1.0);
 		this.w0 = w0;
 		this.w1 = w1;
 		this.w2 = w2;
@@ -48,22 +50,28 @@ public class LightCurveMatcher {
 		return LightCurve.trendProfile(fluxArray, wl);
 	}
 	
-	public final double loss(double[] testFluxArray) {
+	@Override
+	protected final double baseLoss(double[] testFluxArray) {
 		double[] testTrendArray = trendProfile(testFluxArray);
 		double[] testTrendChangeArray = trendProfile(testTrendArray);
 		double sMse = MathUtil.mse(testFluxArray, this.targetFluxArray) / this.fluxVariance;
 		double stMse = MathUtil.mse(testTrendArray, this.targetTrendArray) / this.trendVariance;
 		double stcMse = MathUtil.mse(testTrendChangeArray, this.targetTrendChangeArray) / this.trendChangeVariance;
-		return (sMse * w0 + stMse * w1 + stcMse * w2) / (w0 + w1 + w2);
+		return Math.log1p(MSE_FACTOR * (sMse * w0 + stMse * w1 + stcMse * w2) / (w0 + w1 + w2));
 	}
 	
 	public double fluxLoss(double[] testFluxArray) {
 		return MathUtil.mse(testFluxArray, this.targetFluxArray) / this.fluxVariance;
 	}
 	
-	public double trendChangeLoss(double[] testFluxArray) {
+	public double trendLoss(double[] testFluxArray) {
 		double[] testTrendArray = trendProfile(testFluxArray);
-		double[] testTrendChangeArray = trendProfile(testTrendArray);
+		return MathUtil.mse(testTrendArray, this.targetTrendArray) / this.trendVariance;
+	}
+	
+	public double trendChangeLoss(double[] testFluxArray) {
+		double[] testTrendChangeArray = trendChangeProfile(testFluxArray);
 		return MathUtil.mse(testTrendChangeArray, this.targetTrendChangeArray) / this.trendChangeVariance;
 	}
+
 }

@@ -31,9 +31,11 @@ public class CircuitSearchOptimizer {
 	private final int populationSize;
 	
 	private int initialPoolSize = 1000;
-	
-	private int maxTotalIterations = 400;
+
+	private int maxWarmUpIterations = 50;	
 	private int maxIterationsWithClustering = 200;
+	private int maxConsolidationIterations = 50;
+
 	private int maxClusterAlgoSteps = 3;
 	private int maxEliminationIterations = 0;
 	private int numParticlesPerCluster = 2;
@@ -42,10 +44,10 @@ public class CircuitSearchOptimizer {
 	private double displacementFactor = 0.03;
 	private double convergeDistance = 0.0001;
 	private double circuitShuffliness = 0.5;
-	private double outlierErrorSDFactor = 1E7;
+	private double outlierErrorSDFactor = 0.5;
 	
 	private double agdGradientFactor = 0.3;
-	
+		
 	public CircuitSearchOptimizer(Random random, int populationSize) {
 		this.random = random;
 		this.populationSize = populationSize;
@@ -59,12 +61,37 @@ public class CircuitSearchOptimizer {
 		this.circuitShuffliness = circuitShuffliness;
 	}
 
-	public final int getMaxTotalIterations() {
-		return maxTotalIterations;
+	
+	public final int getMaxWarmUpIterations() {
+		return maxWarmUpIterations;
 	}
 
-	public final void setMaxTotalIterations(int maxTotalIterations) {
-		this.maxTotalIterations = maxTotalIterations;
+	public final void setMaxWarmUpIterations(int maxWarmUpIterations) {
+		this.maxWarmUpIterations = maxWarmUpIterations;
+	}
+
+	public final int getMaxConsolidationIterations() {
+		return maxConsolidationIterations;
+	}
+
+	public final void setMaxConsolidationIterations(int maxConsolidationIterations) {
+		this.maxConsolidationIterations = maxConsolidationIterations;
+	}
+
+	public final int getNumParticlesPerCluster() {
+		return numParticlesPerCluster;
+	}
+
+	public final void setNumParticlesPerCluster(int numParticlesPerCluster) {
+		this.numParticlesPerCluster = numParticlesPerCluster;
+	}
+
+	public final double getOutlierErrorSDFactor() {
+		return outlierErrorSDFactor;
+	}
+
+	public final void setOutlierErrorSDFactor(double outlierErrorSDFactor) {
+		this.outlierErrorSDFactor = outlierErrorSDFactor;
 	}
 
 	public final int getMaxIterationsWithClustering() {
@@ -136,32 +163,66 @@ public class CircuitSearchOptimizer {
 	}
 
 	@SuppressWarnings("unchecked")
-	public RealPointValuePair optimize(CircuitSearchEvaluator prepErrorFunction, CircuitSearchEvaluator resolveErrorFunction, int vectorLength) throws MathException {
+	public RealPointValuePair optimize(int vectorLength, ClusteredEvaluator warmUpErrorFunction, ClusteredEvaluator finalErrorFunction, ClusteredEvaluator ...  alternatingErrorFunctions) throws MathException {
 		int n = this.populationSize;
-		int maxIterations = this.maxTotalIterations;
-		int maxIterationsWithClustering = this.maxIterationsWithClustering;
-		CircuitSearchEvaluator errorFunction = prepErrorFunction;
-		CircuitSearchEvaluator altErrorFunction = resolveErrorFunction;		
-		boolean consolidationHasNotRun = true;
+		Phase phase = Phase.WARMUP;
+		int maxWarmUpIterations = this.maxWarmUpIterations;
+		ClusteredEvaluator errorFunction = maxWarmUpIterations <= 0 && alternatingErrorFunctions.length > 0 ? alternatingErrorFunctions[0] : (maxWarmUpIterations <= 0 ? finalErrorFunction : warmUpErrorFunction);
 		List<Particle> workingSet = this.createInitialWorkingSet(n, vectorLength, errorFunction);
+		int maxIterationsWithClustering = this.maxIterationsWithClustering;
+		int maxConsolidationIterations = this.maxConsolidationIterations;
+		int maxWarmUpPlusClusteringIterations = maxWarmUpIterations + maxIterationsWithClustering;
+		int maxIterations = maxWarmUpIterations + maxIterationsWithClustering + maxConsolidationIterations;
+		int currentAltFunctionIndex = -1;
 		int i;
 		for(i = 0; i < maxIterations; i++) {
-			boolean clusteringPhase = i < maxIterationsWithClustering;
-			if(i != 0 && !clusteringPhase && consolidationHasNotRun) {
-				consolidationHasNotRun = false;
-				if(errorFunction != resolveErrorFunction) {
-					if(logger.isLoggable(Level.INFO)) {
-						logger.info("---- Switching evaluation function ----");
+			switch(phase) {
+			case WARMUP:
+				if(i >= maxWarmUpIterations) {
+					this.informEndOfWarmUpPhase(ListUtil.map(workingSet, p -> p.getPointValuePair()));
+					phase = Phase.CLUSTERING;
+					ClusteredEvaluator newErrorFunction;
+					if(alternatingErrorFunctions.length != 0) {
+						currentAltFunctionIndex = 0;
+						newErrorFunction = alternatingErrorFunctions[currentAltFunctionIndex];
 					}
-					errorFunction = resolveErrorFunction;
-					workingSet = this.revalidateWorkingSet(workingSet, errorFunction);
+					else {
+						newErrorFunction = finalErrorFunction;
+					}
+					if(newErrorFunction != errorFunction) {
+						if(logger.isLoggable(Level.INFO)) {
+							logger.info("---- Switching evaluation function ----");
+						}
+						errorFunction = newErrorFunction;
+						workingSet = this.revalidateWorkingSet(workingSet, errorFunction);							
+					}
 				}
+				break;
+			case CLUSTERING: 
+				if(i >= maxWarmUpPlusClusteringIterations) {
+					this.informEndOfClusteringPhase(ListUtil.map(ListUtil.sorted(workingSet), p -> p.getPointValuePair()));
+					phase = Phase.CONSOLIDATION;
+					if(errorFunction != finalErrorFunction) {
+						if(logger.isLoggable(Level.INFO)) {
+							logger.info("---- Switching evaluation function ----");
+						}
+						errorFunction = finalErrorFunction;
+						workingSet = this.revalidateWorkingSet(workingSet, errorFunction);													
+					}
+				}
+				break;
+			case CONSOLIDATION:
+				break;
 			}
-			List<Particle> newParticles = this.circuitSearch(workingSet, errorFunction, clusteringPhase);
+			boolean consolidationPhase = phase == Phase.CONSOLIDATION;
+			List<Particle> newParticles = this.circuitSearch(workingSet, errorFunction, !consolidationPhase);
 			if(i == 0) {
 				workingSet = newParticles;
-			} else if(clusteringPhase) {
-				workingSet = this.extractBestWithClustering(n, ListUtil.concat(workingSet, newParticles), true);
+			} else if(!consolidationPhase) {
+				//List<Particle> wsWithoutOutliers = this.extractBestWithClustering(n * 2 / 3, workingSet, 1);
+				List<Particle> wsWithoutOutliers = this.removeErrorOutliers(workingSet);
+				List<Particle> clusteringSet = ListUtil.concat(wsWithoutOutliers, newParticles);
+				workingSet = this.extractBestWithClustering(n, clusteringSet, this.numParticlesPerCluster);
 			}
 			else {
 				workingSet = this.extractBest(n, ListUtil.concat(workingSet, newParticles));
@@ -174,43 +235,55 @@ public class CircuitSearchOptimizer {
 			if(this.converged(workingSet)) {
 				break;
 			}
-			if(i != 0 && consolidationHasNotRun && (i % 15 == 0)) {
-				if(logger.isLoggable(Level.INFO)) {
-					logger.info("---- Switching evaluation function ----");
-				}
-				CircuitSearchEvaluator helper = errorFunction;
-				errorFunction = altErrorFunction;
-				altErrorFunction = helper;
-				workingSet = this.revalidateWorkingSet(workingSet, errorFunction);
-				
+			if(i != 0 && i != maxWarmUpIterations && (i % 20 == 0) && phase == Phase.CLUSTERING) {
+				if(currentAltFunctionIndex != -1) {
+					currentAltFunctionIndex++;
+					if(currentAltFunctionIndex >= alternatingErrorFunctions.length) {
+						currentAltFunctionIndex = 0;
+					}
+					ClusteredEvaluator newErrorFunction = alternatingErrorFunctions[currentAltFunctionIndex];
+					if(newErrorFunction != errorFunction) {
+						if(logger.isLoggable(Level.INFO)) {
+							logger.info("---- Switching evaluation function ----");
+						}
+						errorFunction = newErrorFunction;
+						workingSet = this.revalidateWorkingSet(workingSet, errorFunction);							
+					}
+				}				
 			}
 		}
-		if(errorFunction != resolveErrorFunction) {
+		if(errorFunction != finalErrorFunction) {
 			if(logger.isLoggable(Level.INFO)) {
 				logger.info("---- Switching evaluation function ----");
 			}
-			errorFunction = resolveErrorFunction;
-			workingSet = this.revalidateWorkingSet(workingSet, errorFunction);			
+			errorFunction = finalErrorFunction;
+			workingSet = this.revalidateWorkingSet(workingSet, errorFunction);													
 		}
 		List<RealPointValuePair> pointValues = ListUtil.map(workingSet, p -> p.getPointValuePair());		
 		return this.eliminationViaAGD(pointValues, errorFunction, i);
 	}	
 	
-	private List<Particle> revalidateWorkingSet(List<Particle> particles, CircuitSearchEvaluator errorFunction) throws FunctionEvaluationException {
+	protected void informEndOfWarmUpPhase(List<RealPointValuePair> pointValues) {		
+	}
+
+	protected void informEndOfClusteringPhase(List<RealPointValuePair> pointValues) {
+	}
+
+	private List<Particle> revalidateWorkingSet(List<Particle> particles, ClusteredEvaluator errorFunction) throws FunctionEvaluationException {
 		List<Particle> result = new ArrayList<>();
 		for(Particle p : particles) {
 			double[] parameters = p.parameters;
-			CircuitSearchParamEvaluation eval = errorFunction.evaluate(parameters);
+			ClusteredParamEvaluation eval = errorFunction.evaluate(parameters);
 			result.add(new Particle(parameters, eval.getClusteringPosition(), eval.getError()));
 		}
 		return result;
 	}
 	
-	private RealPointValuePair eliminationViaAGD(List<RealPointValuePair> pointValues, final CircuitSearchEvaluator errorFunction, int baseIteration) throws MathException {
+	private RealPointValuePair eliminationViaAGD(List<RealPointValuePair> pointValues, final ClusteredEvaluator errorFunction, int baseIteration) throws MathException {
 		MultivariateRealFunction gdErrorFunction = new MultivariateRealFunction() {			
 			@Override
 			public final double value(double[] params) throws FunctionEvaluationException, IllegalArgumentException {
-				CircuitSearchParamEvaluation pe = errorFunction.evaluate(params);
+				ClusteredParamEvaluation pe = errorFunction.evaluate(params);
 				return pe.getError();
 			}
 		};
@@ -269,8 +342,8 @@ public class CircuitSearchOptimizer {
 		return sortedParticles.subList(0, top);
 	}
 	
-	private List<Particle> extractBestWithClustering(int n, List<Particle> particles, boolean withOutlierRemoval) {
-		int nppc = this.numParticlesPerCluster;
+	private List<Particle> extractBestWithClustering(int n, List<Particle> particles, int numParticlesPerCluster) {
+		int nppc = numParticlesPerCluster;
 		if(nppc < 1) {
 			nppc = 1;
 		}
@@ -286,9 +359,6 @@ public class CircuitSearchOptimizer {
 			result.addAll(cp);
 		}
 		Set<Particle> origResultSet = new HashSet<>(result);
-		if(withOutlierRemoval) {
-			result = this.removeErrorOutliers(result);
-		}
 		if(result.size() < n) {
 			for(Particle particle : ListUtil.sorted(particles)) {
 				if(!origResultSet.contains(particle)) {
@@ -315,7 +385,7 @@ public class CircuitSearchOptimizer {
 		return result;
 	}
 	 
-	private List<Particle> circuitSearch(List<Particle> workingSet, CircuitSearchEvaluator errorFunction, boolean clusteringPhase) throws MathException {
+	private List<Particle> circuitSearch(List<Particle> workingSet, ClusteredEvaluator errorFunction, boolean clusteringPhase) throws MathException {
 		List<Particle> circuit = this.produceCircuit(workingSet, clusteringPhase);
 		int size = circuit.size();
 		List<Particle> result = new ArrayList<>();
@@ -329,7 +399,7 @@ public class CircuitSearchOptimizer {
 		return result;
 	}
 
-	private Particle lineSearch(Particle particle1, Particle particle2, CircuitSearchEvaluator errorFunction) throws MathException {
+	private Particle lineSearch(Particle particle1, Particle particle2, ClusteredEvaluator errorFunction) throws MathException {
 		double error1 = particle1.evaluation;
 		double error2 = particle2.evaluation;
 		double[] params1 = particle1.getParameters();
@@ -361,15 +431,16 @@ public class CircuitSearchOptimizer {
 		}
 	}
 
-	private Particle newParticleInHyperrectangle(CircuitSearchEvaluator errorFunction, double[] point1, double[] point2, double fromFraction, double toFraction) throws MathException {
+	private Particle newParticleInHyperrectangle(ClusteredEvaluator errorFunction, double[] point1, double[] point2, double fromFraction, double toFraction) throws MathException {
 		Random r = this.random;
 		int length = point1.length;
 		double[] newParams = new double[length];
 		for(int i = 0; i < length; i++) {
-			double p = fromFraction + r.nextDouble() * (toFraction - fromFraction);
+			double f = r.nextDouble();
+			double p = fromFraction + f * (toFraction - fromFraction);
 			newParams[i] = point1[i] * (1 - p) + point2[i] * p;
 		}
-		CircuitSearchParamEvaluation eval = errorFunction.evaluate(newParams);
+		ClusteredParamEvaluation eval = errorFunction.evaluate(newParams);
 		return new Particle(newParams, eval.getClusteringPosition(), eval.getError());
 	}
 
@@ -516,7 +587,7 @@ public class CircuitSearchOptimizer {
 		}
 	}
 
-	private List<Particle> createInitialWorkingSet(int n, int vectorLength, CircuitSearchEvaluator errorFunction) throws MathException {
+	private List<Particle> createInitialWorkingSet(int n, int vectorLength, ClusteredEvaluator errorFunction) throws MathException {
 		Random r = this.random;
 		int poolSize = this.initialPoolSize;
 		if(poolSize < n) {
@@ -528,10 +599,10 @@ public class CircuitSearchOptimizer {
 		List<Particle> pool = new ArrayList<>();		
 		for(int i = 0; i < poolSize; i++) {
 			double[] params = MathUtil.sampleUniformSymmetric(r, 1.0, vectorLength);
-			CircuitSearchParamEvaluation eval = errorFunction.evaluate(params);
+			ClusteredParamEvaluation eval = errorFunction.evaluate(params);
 			pool.add(new Particle(params, eval.getClusteringPosition(), eval.getError()));
 		}
-		return this.extractBestWithClustering(n, pool, false);
+		return this.extractBestWithClustering(n, pool, 1);
 	}
 	
 	protected void informProgress(int iteration, RealPointValuePair pointValue) {		
@@ -576,5 +647,9 @@ public class CircuitSearchOptimizer {
 			this.particle = particle;
 			this.next = next;
 		}
+	}
+	
+	private enum Phase {
+		WARMUP, CLUSTERING, CONSOLIDATION;
 	}
 }
