@@ -47,6 +47,7 @@ public class TestClusteredParticleSwarmOptimizer {
 		};
 		optimizer.setMaxIterations(200);
 		optimizer.setConvergeDistance(0.001);
+		optimizer.setPhi(2.3);
 		double[] minimum = MathUtil.sampleGaussian(random, 1.0, vectorLength);
 		ClusteredEvaluator errorFunction = new DistanceSqErrorFunction(minimum);
 		RealPointValuePair result = optimizer.optimize(vectorLength, errorFunction);

@@ -23,7 +23,6 @@ dependencies {
 }
 
 task dumpDependencies {
-  new File('build').mkdirs();
   def cp = new File('build/libs/sim-transit-lc-' + version + '.jar').absolutePath;
   configurations.compile.each {  
   	cp += File.pathSeparator

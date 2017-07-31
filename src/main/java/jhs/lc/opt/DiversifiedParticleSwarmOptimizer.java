@@ -73,6 +73,30 @@ public class DiversifiedParticleSwarmOptimizer {
 		this.omega = omega;
 	}
 
+	public final double getPhi() {
+		return phi;
+	}
+
+	public final void setPhi(double phi) {
+		this.phi = phi;
+	}
+
+	public final double getWeightDecayHalfFraction() {
+		return weightDecayHalfFraction;
+	}
+
+	public final void setWeightDecayHalfFraction(double weightDecayHalfFraction) {
+		this.weightDecayHalfFraction = weightDecayHalfFraction;
+	}
+
+	public final double getInitialVelocitySd() {
+		return initialVelocitySd;
+	}
+
+	public final void setInitialVelocitySd(double initialVelocitySd) {
+		this.initialVelocitySd = initialVelocitySd;
+	}
+
 	public RealPointValuePair optimize(int vectorLength, ClusteredEvaluator errorFunction) throws MathException {
 		int n = this.populationSize;
 		double[] weights = this.createGlobalWeights(n);

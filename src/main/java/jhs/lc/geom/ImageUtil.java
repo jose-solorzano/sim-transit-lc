@@ -17,7 +17,7 @@ public class ImageUtil {
 			for(int y = 0; y < numRows; y++) {
 				pixel = data.getPixel(x, y, pixel);
 				double color = MathUtil.mean(pixel);
-				brightnessMatrix[x][y] = (float) -(color / 255.0);
+				brightnessMatrix[x][numRows - y - 1] = (float) -(color / 255.0);
 			}
 		}
 		return brightnessMatrix;
