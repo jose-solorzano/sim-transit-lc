@@ -23,13 +23,13 @@ dependencies {
 }
 
 task dumpDependencies {
-  def cp = new File('build/libs/sim-transit-lc-' + version + '.jar').absolutePath;
-  configurations.compile.each {  
-  	cp += File.pathSeparator
-    cp += String.valueOf(it);
-  }
-  def depsFile = new File('.dependencies.txt')
-  depsFile.write(cp);
+	def cp = new File('build/libs/sim-transit-lc-' + version + '.jar').absolutePath;
+	configurations.compile.each {  
+		cp += File.pathSeparator
+		cp += String.valueOf(it);
+	}
+	def depsFile = new File('.dependencies.txt')
+ 	depsFile.write(cp);
 }
 
 build.dependsOn dumpDependencies
