@@ -5,12 +5,12 @@ import java.io.File;
 
 import javax.imageio.ImageIO;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
 import jhs.lc.geom.FluxOrOpacityFunction;
 import jhs.lc.geom.RotationAngleSphereFactory;
 import jhs.lc.opt.img.ImageOpacityFunction;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ImageTransitShape extends AbstractTransitShape {
 	private String imageFilePath;

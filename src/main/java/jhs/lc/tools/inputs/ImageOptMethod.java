@@ -4,12 +4,11 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 
 import javax.imageio.ImageIO;
-import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jhs.lc.geom.ParametricFluxFunctionSource;
 import jhs.lc.opt.img.ImageOpacityFunctionSource;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ImageOptMethod extends AbstractOptMethod {
 	private String imageFilePath;

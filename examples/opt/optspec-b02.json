@@ -10,6 +10,10 @@
 		"imageHeight": 2.0,
 		"comment": "The shift_rotate input filter will move the origin and rotate the image.",
 		"inputFilter": "shift_rotate",
+		"inputFilterProperties": {
+			"scaleX": 0.05,
+			"scaleY": 0.7
+		},
 		"networks": {
 			"outputType": "binary",
 			"outputActivationFunction": "simple_max",

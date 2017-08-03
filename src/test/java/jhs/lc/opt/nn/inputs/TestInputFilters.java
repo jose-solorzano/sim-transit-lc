@@ -11,16 +11,42 @@ import jhs.lc.opt.nn.InputFilterFactory;
 import jhs.math.util.MathUtil;
 
 public class TestInputFilters {
-
+	@Test
+	public void temp() {
+		double[] x = new double[20000];
+		Random r = new Random(11);
+		for(int i = 0; i < x.length; i++) {
+			x[i] = r.nextGaussian() + r.nextGaussian() * 0.5;
+		}
+	}
+	
 	@Test
 	public void testOutputDistribution() {
-		this.confirmInputFilterDistribution(new ShiftInputFilterFactory());
-		this.confirmInputFilterDistribution(new ShiftRotateInputFilterFactory());
+		this.confirmInputFilterDistribution(this.createShiftInputFilterFactory());
+		this.confirmInputFilterDistribution(this.createShiftRotateInputFilterFactory());
 		//TODO:
 		//this.confirmInputFilterDistribution(new QuadraticInputFilterFactory());
 		//this.confirmInputFilterDistribution(new QuadraticXyInputFilterFactory());
 	}
 	
+	private ShiftInputFilterFactory createShiftInputFilterFactory() {
+		ShiftInputFilterFactory factory = new ShiftInputFilterFactory();
+		ShiftInputFilterFactory.Props props = new ShiftInputFilterFactory.Props();
+		props.setScaleX(2.33);
+		props.setScaleY(0.66);
+		factory.init(props);
+		return factory;
+	}
+
+	private ShiftRotateInputFilterFactory createShiftRotateInputFilterFactory() {
+		ShiftRotateInputFilterFactory factory = new ShiftRotateInputFilterFactory();
+		ShiftRotateInputFilterFactory.Props props = new ShiftRotateInputFilterFactory.Props();
+		props.setScaleX(0.77);
+		props.setScaleY(1.55);
+		factory.init(props);
+		return factory;
+	}
+
 	private void confirmInputFilterDistribution(InputFilterFactory factory) {
 		Random random = new Random(11);
 		int numParams = factory.getNumParameters();
@@ -35,8 +61,8 @@ public class TestInputFilters {
 		}
 		double mean = MathUtil.mean(values);
 		double sd = MathUtil.standardDev(values, mean);
-		assertEquals(0, mean, 0.05);
-		assertEquals(1.0, sd, 0.05);
+		assertEquals(0, mean, 0.1);
+		assertEquals(1.0, sd, 0.1);
 	}
 
 }
