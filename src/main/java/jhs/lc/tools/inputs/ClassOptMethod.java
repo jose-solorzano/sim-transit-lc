@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jhs.lc.geom.ParametricFluxFunctionSource;
-import jhs.lc.opt.pof.PolygonalFluxFunctionSource;
+import jhs.lc.opt.pofs.PolygonalFluxFunctionSource;
 
 public class ClassOptMethod extends AbstractOptMethod {
 	private static final Logger logger = Logger.getLogger(ClassOptMethod.class.getName());
@@ -41,7 +41,11 @@ public class ClassOptMethod extends AbstractOptMethod {
 		try {
 			c = Class.forName(this.className);
 		} catch(ClassNotFoundException cnf) {
-			c = Class.forName(PolygonalFluxFunctionSource.class.getPackage().getName() + "." + this.className);			
+			try {
+				c = Class.forName(PolygonalFluxFunctionSource.class.getPackage().getName() + "." + this.className);			
+			} catch(ClassNotFoundException cnf2) {
+				throw cnf;
+			}
 		}
 		if(!ParametricFluxFunctionSource.class.isAssignableFrom(c)) {
 			throw new IllegalStateException("Class " + this.className + " is not assignable to " + ParametricFluxFunctionSource.class.getName() + ".");
