@@ -7,7 +7,7 @@ import java.util.Map;
 import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
 import jhs.lc.geom.FluxOrOpacityFunction;
 import jhs.lc.geom.RotationAngleSphereFactory;
-import jhs.lc.opt.of.RingedPlanet;
+import jhs.lc.opt.bfunctions.RingedPlanet;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.jsontype.impl.ClassNameIdResolver;

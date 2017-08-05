@@ -8,7 +8,7 @@
 	"startTime": -0.25,
 	"endTime": 0.25,
 	"numSteps": 150,
-	"limbDarkeningParams": [ 0.95, -0.25 ],
+	"limbDarkeningParams": [ 0.48, 0.22 ],
 	"transitShape": {
 		"type": "image",
 		"imageFilePath": "../img/single-ring-planet.png",

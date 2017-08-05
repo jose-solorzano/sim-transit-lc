@@ -6,6 +6,8 @@ import java.util.logging.Logger;
 import org.apache.commons.cli.CommandLine;
 
 public abstract class AbstractTool {
+	protected static final int DEF_OUT_NUM_PIXELS = 100000;
+
 	protected int getOptionInt(CommandLine cmdLine, String option, int defaultValue) {
 		String textValue = cmdLine.getOptionValue(option);
 		if(textValue == null) {

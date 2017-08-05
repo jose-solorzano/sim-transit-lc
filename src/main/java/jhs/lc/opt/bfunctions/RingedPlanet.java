@@ -1,6 +1,7 @@
-package jhs.lc.opt.of;
+package jhs.lc.opt.bfunctions;
 
 import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,7 +22,6 @@ public final class RingedPlanet implements FluxOrOpacityFunction {
 	public RingedPlanet(double originX, double originY, double sinTilt, double cosTilt, double sinObliquity,
 			double planetRadiusSquared, double[] ringInnerRadiiSquared, double[] ringOuterRadiiSquared,
 			double[] ringOpacities, double extraOptimizationError) {
-		super();
 		this.originX = originX;
 		this.originY = originY;
 		this.cosTilt = cosTilt;
@@ -81,7 +81,7 @@ public final class RingedPlanet implements FluxOrOpacityFunction {
 	}
 
 	/**
-	 * Returns the negative transparency at the given point, or -(1 - opacity).
+	 * Returns the negative transmittance at the given point, or -(1 - opacity).
 	 */
 	@Override
 	public final double fluxOrOpacity(double x, double y, double z) {
@@ -91,10 +91,15 @@ public final class RingedPlanet implements FluxOrOpacityFunction {
 		if(rs <= this.planetRadiusSquared) {
 			return 0;
 		}
+		double[] rop = this.ringOpacities;
+		int nr = rop.length;
+		if(nr == 0) {
+			return Double.NaN;
+		}		
 		double rotA = this.cosTilt;
 		double rotB = this.sinTilt;
-		double xr = xdiff * rotA + ydiff * (-rotB);
-		double yr = xdiff * rotB + ydiff * rotA;
+		double xr = xdiff * rotA + ydiff * rotB;
+		double yr = xdiff * (-rotB) + ydiff * rotA;
 		double sinOb = this.sinObliquity;
 		if(sinOb == 0) {
 			return Double.NaN;
@@ -103,11 +108,13 @@ public final class RingedPlanet implements FluxOrOpacityFunction {
 		double rrs = xr * xr + yr * yr;
 		double[] rir = this.ringInnerRadiiSquared;
 		double[] ror = this.ringOuterRadiiSquared;
-		double[] rop = this.ringOpacities;
-		int nr = rop.length;
 		for(int i = 0; i < nr; i++) {
 			if(rrs >= rir[i] && rrs <= ror[i]) {
-				return -(1 - rop[i]);
+				double b = -(1 - rop[i]);
+				if(b > 0) {
+					b = 0;
+				}
+				return b;
 			}
 		}
 		return Double.NaN;
@@ -136,5 +143,13 @@ public final class RingedPlanet implements FluxOrOpacityFunction {
 	@Override
 	public final double getExtraOptimizerError() {
 		return this.extraOptimizationError;
+	}
+
+	@Override
+	public String toString() {
+		return "RingedPlanet [originX=" + originX + ", originY=" + originY + ", sinTilt=" + sinTilt + ", cosTilt="
+				+ cosTilt + ", sinObliquity=" + sinObliquity + ", planetRadiusSquared=" + planetRadiusSquared
+				+ ", ringInnerRadiiSquared=" + Arrays.toString(ringInnerRadiiSquared) + ", ringOuterRadiiSquared="
+				+ Arrays.toString(ringOuterRadiiSquared) + ", ringOpacities=" + Arrays.toString(ringOpacities) + "]";
 	}
 }
