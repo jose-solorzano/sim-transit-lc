@@ -13,7 +13,7 @@ import java.util.Iterator;
 import javax.imageio.ImageIO;
 
 import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
-import jhs.lc.geom.FluxOrOpacityFunction;
+import jhs.lc.geom.TransitFunction;
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.Point3D;
 import jhs.lc.geom.RotationAngleSphereFactory;
@@ -32,7 +32,7 @@ public class TestSimulation {
 		double orbitRadius = 100.0;
 		double orbitalPeriod = 200.0;
 		double discRadius = 0.5;
-		FluxOrOpacityFunction brightnessSource = new FluxOrOpacityFunction() {			
+		TransitFunction brightnessSource = new TransitFunction() {			
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -41,7 +41,7 @@ public class TestSimulation {
 			}
 			
 			@Override
-			public double fluxOrOpacity(double x, double y, double z) {
+			public double fluxOrTransmittance(double x, double y, double z) {
 				double d = Math.sqrt(x * x + y * y);
 				return d < discRadius ? 0 : Double.NaN;
 			}
@@ -117,11 +117,11 @@ public class TestSimulation {
 		} finally {
 			in.close();
 		}
-		FluxOrOpacityFunction brightnessFunction = ImageOpacityFunction.createOpacitySource(image, imageWidth, imageHeight);
-		assertEquals(0, brightnessFunction.fluxOrOpacity(0, 0, 1.0), 0.001);
+		TransitFunction brightnessFunction = ImageOpacityFunction.createOpacitySource(image, imageWidth, imageHeight);
+		assertEquals(0, brightnessFunction.fluxOrTransmittance(0, 0, 1.0), 0.001);
 		//assertEquals(0, brightnessFunction.fluxOrOpacity(0, -0.4, 1.0), 0.001);
-		assertEquals(-1, brightnessFunction.fluxOrOpacity(+0.7, +0.7, 1.0), 0.001);
-		assertEquals(-1, brightnessFunction.fluxOrOpacity(+0.7, -0.7, 1.0), 0.001);
+		assertEquals(-1, brightnessFunction.fluxOrTransmittance(+0.7, +0.7, 1.0), 0.001);
+		assertEquals(-1, brightnessFunction.fluxOrTransmittance(+0.7, -0.7, 1.0), 0.001);
 		
 		RotationAngleSphereFactory sphereFactory = new EvaluatableSurfaceSphereFactory(brightnessFunction);
 		

@@ -6,7 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 
-import jhs.lc.geom.FluxOrOpacityFunction;
+import jhs.lc.geom.TransitFunction;
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.math.util.ArrayUtil;
 import jhs.math.util.MathUtil;
@@ -19,7 +19,7 @@ public class TestFastApproximateFluxSource {
 		// Note: It doesn't work with positive flux values, because the viewport is only 2x2 in the angular flux source.
 		
 		double discRadius = 0.5;
-		FluxOrOpacityFunction brightnessSource = new FluxOrOpacityFunction() {			
+		TransitFunction brightnessSource = new TransitFunction() {			
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -31,7 +31,7 @@ public class TestFastApproximateFluxSource {
 			}
 			
 			@Override
-			public double fluxOrOpacity(double x, double y, double z) {
+			public double fluxOrTransmittance(double x, double y, double z) {
 				double d = Math.sqrt(x * x + y * y);
 				if(d >= discRadius) {
 					return Double.NaN;
@@ -89,7 +89,7 @@ public class TestFastApproximateFluxSource {
 	@Test
 	public void testOutOfBoundsShape() {
 		double discRadius = 0.5;
-		FluxOrOpacityFunction brightnessSource = new FluxOrOpacityFunction() {			
+		TransitFunction brightnessSource = new TransitFunction() {			
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -98,7 +98,7 @@ public class TestFastApproximateFluxSource {
 			}
 			
 			@Override
-			public double fluxOrOpacity(double x, double y, double z) {
+			public double fluxOrTransmittance(double x, double y, double z) {
 				double d = Math.sqrt(x * x + y * y);
 				if(d >= discRadius) {
 					return Double.NaN;

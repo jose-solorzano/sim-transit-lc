@@ -10,7 +10,7 @@ import org.junit.Test;
 public class TestEvaluatableSurfaceSphere {
 	@Test
 	public void testZeroRotation() {
-		FluxOrOpacityFunction brightnessSource = new LocalFluxOrOpacityFunction();
+		TransitFunction brightnessSource = new LocalFluxOrOpacityFunction();
 		EvaluatableSurfaceSphere sphere = EvaluatableSurfaceSphere.create(3.0, 0, brightnessSource);
 		sphere.setRotationAngle(0);
 		Point3D up = sphere.unrotatedPoint(3, 4, 5);
@@ -27,7 +27,7 @@ public class TestEvaluatableSurfaceSphere {
 
 	@Test
 	public void testPointRotation() {
-		FluxOrOpacityFunction brightnessSource = new LocalFluxOrOpacityFunction();
+		TransitFunction brightnessSource = new LocalFluxOrOpacityFunction();
 		double radius = 7.0;
 		EvaluatableSurfaceSphere sphere = EvaluatableSurfaceSphere.create(radius, 0.1, brightnessSource);
 		sphere.setRotationAngle(Math.PI / 4.0);
@@ -45,11 +45,11 @@ public class TestEvaluatableSurfaceSphere {
 		assertEquals(origZ, rp.z, 0.001);
 	}
 
-	private static class LocalFluxOrOpacityFunction implements FluxOrOpacityFunction {
+	private static class LocalFluxOrOpacityFunction implements TransitFunction {
 		private static final long serialVersionUID = 1L;
 
 		@Override
-		public double fluxOrOpacity(double x, double y, double z) {
+		public double fluxOrTransmittance(double x, double y, double z) {
 			return (x + y);
 		}
 

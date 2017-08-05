@@ -7,7 +7,7 @@ import javax.imageio.ImageIO;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import jhs.lc.geom.ParametricFluxFunctionSource;
+import jhs.lc.geom.ParametricTransitFunctionSource;
 import jhs.lc.opt.img.ImageOpacityFunctionSource;
 
 public class ImageOptMethod extends AbstractOptMethod {
@@ -46,7 +46,7 @@ public class ImageOptMethod extends AbstractOptMethod {
 	}
 
 	@Override
-	public ParametricFluxFunctionSource createFluxFunctionSource(File context) throws Exception {
+	public ParametricTransitFunctionSource createFluxFunctionSource(File context) throws Exception {
 		if(this.imageFilePath == null) {
 			throw new IllegalStateException("imageFilePath must be provided in image method specification.");
 		}

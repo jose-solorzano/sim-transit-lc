@@ -2,14 +2,14 @@ package jhs.lc.opt.nn;
 
 import java.util.Arrays;
 
-import jhs.lc.geom.FluxOrOpacityFunction;
-import jhs.lc.geom.ParametricFluxFunctionSource;
+import jhs.lc.geom.TransitFunction;
+import jhs.lc.geom.ParametricTransitFunctionSource;
 import jhs.math.nn.NeuralNetwork;
 import jhs.math.nn.NeuralNetworkStructure;
 import jhs.math.nn.PlainNeuralNetwork;
 import jhs.math.util.MathUtil;
 
-public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
+public class NNFluxFunctionSource implements ParametricTransitFunctionSource {
 	private static final double LAMBDA_FACTOR = 0.3;
 	private final NeuralNetworkMetaInfo[] metaInfos;
 	private final InputFilterFactory inputFilterType;
@@ -29,7 +29,7 @@ public class NNFluxFunctionSource implements ParametricFluxFunctionSource {
 	}
 
 	@Override
-	public final FluxOrOpacityFunction getFluxOrOpacityFunction(double[] parameters) {
+	public final TransitFunction getTransitFunction(double[] parameters) {
 		NeuralNetworkMetaInfo[] metaInfos = this.metaInfos;
 		final NeuralNetwork nn[] = new NeuralNetwork[metaInfos.length];
 		int numInputFilterParams = this.inputFilterType.getNumParameters();

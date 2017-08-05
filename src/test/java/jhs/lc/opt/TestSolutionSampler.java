@@ -7,8 +7,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import jhs.lc.geom.FluxOrOpacityFunction;
-import jhs.lc.geom.ParametricFluxFunctionSource;
+import jhs.lc.geom.TransitFunction;
+import jhs.lc.geom.ParametricTransitFunctionSource;
 import jhs.lc.sims.ImageElementInfo;
 import jhs.lc.sims.SimulatedFlux;
 import jhs.lc.sims.SimulatedFluxSource;
@@ -26,23 +26,23 @@ public class TestSolutionSampler {
 	
 	private void testParametersVsSolutionImpl(int seed, double minRadius, double maxRadius) {		
 		Random random = new Random(seed);
-		ParametricFluxFunctionSource opacitySource = this.getOpacitySource();	
+		ParametricTransitFunctionSource opacitySource = this.getOpacitySource();	
 		SimulatedFluxSource fluxSource = new SimulatedFluxSource() {			
 			@Override
 			public SimulatedFlux produceModeledFlux(double peakFraction,
-					FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
+					TransitFunction brightnessFunction, double orbitRadius) {
 				return null;
 			}
 			
 			@Override
 			public double numPixelsInTimeSpanArc(
-					FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
+					TransitFunction brightnessFunction, double orbitRadius) {
 				return 0;
 			}
 			
 			@Override
 			public ImageElementInfo createImageElementInfo(
-					FluxOrOpacityFunction brightnessFunction) {
+					TransitFunction brightnessFunction) {
 				return null;
 			}
 		};
@@ -73,8 +73,8 @@ public class TestSolutionSampler {
 		}
 	}
 	
-	private ParametricFluxFunctionSource getOpacitySource() {
-		return new ParametricFluxFunctionSource() {			
+	private ParametricTransitFunctionSource getOpacitySource() {
+		return new ParametricTransitFunctionSource() {			
 			@Override
 			public double getParameterScale(int paramIndex) {
 				return 3.0 + paramIndex;
@@ -86,7 +86,7 @@ public class TestSolutionSampler {
 			}
 			
 			@Override
-			public FluxOrOpacityFunction getFluxOrOpacityFunction(double[] parameters) {
+			public TransitFunction getTransitFunction(double[] parameters) {
 				return null;
 			}
 		};

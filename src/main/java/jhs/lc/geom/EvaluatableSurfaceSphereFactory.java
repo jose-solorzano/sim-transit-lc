@@ -1,9 +1,9 @@
 package jhs.lc.geom;
 
 public class EvaluatableSurfaceSphereFactory implements RotationAngleSphereFactory {
-	private final FluxOrOpacityFunction brightnessFunction;
+	private final TransitFunction brightnessFunction;
 	
-	public EvaluatableSurfaceSphereFactory(FluxOrOpacityFunction brightnessFunction) {
+	public EvaluatableSurfaceSphereFactory(TransitFunction brightnessFunction) {
 		super();
 		this.brightnessFunction = brightnessFunction;
 	}

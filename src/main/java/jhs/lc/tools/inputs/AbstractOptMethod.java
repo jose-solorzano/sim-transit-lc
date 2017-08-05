@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import jhs.lc.geom.ParametricFluxFunctionSource;
+import jhs.lc.geom.ParametricTransitFunctionSource;
 
 @JsonTypeInfo(
 		use = JsonTypeInfo.Id.NAME,
@@ -19,7 +19,7 @@ import jhs.lc.geom.ParametricFluxFunctionSource;
 	    @Type(value = NeuralOptMethod.class, name = "neural")
 })
 public abstract class AbstractOptMethod {
-	public abstract ParametricFluxFunctionSource createFluxFunctionSource(File context) throws Exception;	
+	public abstract ParametricTransitFunctionSource createFluxFunctionSource(File context) throws Exception;	
 	
 	private String comment;
 	

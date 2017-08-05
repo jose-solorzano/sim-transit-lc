@@ -8,7 +8,7 @@ import javax.imageio.ImageIO;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
-import jhs.lc.geom.FluxOrOpacityFunction;
+import jhs.lc.geom.TransitFunction;
 import jhs.lc.geom.RotationAngleSphereFactory;
 import jhs.lc.opt.img.ImageOpacityFunction;
 
@@ -58,7 +58,7 @@ public class ImageTransitShape extends AbstractTransitShape {
 			throw new IllegalStateException("Image file not found: " + imageFile);
 		}
 		BufferedImage image = ImageIO.read(imageFile);
-		FluxOrOpacityFunction bf = ImageOpacityFunction.createOpacitySource(image, this.imageWidth, this.imageHeight);
+		TransitFunction bf = ImageOpacityFunction.createOpacitySource(image, this.imageWidth, this.imageHeight);
 		return new EvaluatableSurfaceSphereFactory(bf);
 	}
 }

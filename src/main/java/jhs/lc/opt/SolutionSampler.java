@@ -8,8 +8,8 @@ import java.util.logging.Logger;
 import org.apache.commons.math.FunctionEvaluationException;
 
 import jhs.lc.data.LightCurve;
-import jhs.lc.geom.FluxOrOpacityFunction;
-import jhs.lc.geom.ParametricFluxFunctionSource;
+import jhs.lc.geom.TransitFunction;
+import jhs.lc.geom.ParametricTransitFunctionSource;
 import jhs.lc.sims.ImageElementInfo;
 import jhs.lc.sims.SimulatedFlux;
 import jhs.lc.sims.SimulatedFluxSource;
@@ -30,14 +30,14 @@ public class SolutionSampler {
 	
 	private final Random random;
 	private final SimulatedFluxSource fluxSource;
-	private final ParametricFluxFunctionSource opacitySource;
+	private final ParametricTransitFunctionSource opacitySource;
 
 	private final double minOrbitRadius;
 	private final double maxOrbitRadius;
 	
 	private double peakFraction = 0.5;
 
-	public SolutionSampler(Random random, SimulatedFluxSource fluxSource, ParametricFluxFunctionSource opacitySource, double minOrbitRadius, double maxOrbitRadius) {
+	public SolutionSampler(Random random, SimulatedFluxSource fluxSource, ParametricTransitFunctionSource opacitySource, double minOrbitRadius, double maxOrbitRadius) {
 		if(minOrbitRadius <= 1.0) {
 			throw new IllegalArgumentException("Invalid minOrbitRadius: " + minOrbitRadius);
 		}
@@ -76,7 +76,7 @@ public class SolutionSampler {
 	}
 	
 	public final double[] solutionAsParameters(Solution solution) {
-		ParametricFluxFunctionSource source = this.opacitySource;
+		ParametricTransitFunctionSource source = this.opacitySource;
 		int np = this.getNumParameters();
 		int snp = source.getNumParameters();
 		double[] solParameters = solution.getOpacityFunctionParameters();
@@ -128,7 +128,7 @@ public class SolutionSampler {
 			throw new IllegalStateException();
 		}
 		double[] osParameters = this.opacitySourceParameters(optimizerParameters);
-		FluxOrOpacityFunction of = this.opacitySource.getFluxOrOpacityFunction(osParameters);
+		TransitFunction of = this.opacitySource.getTransitFunction(osParameters);
 		double orbitRadius = this.getOrbitRadius(optimizerParameters);
 		SimulatedFlux modeledFlux = this.fluxSource.produceModeledFlux(this.peakFraction, of, orbitRadius);
 		return new Solution(this.fluxSource, of, orbitRadius, peakFraction, osParameters, modeledFlux);
@@ -150,7 +150,7 @@ public class SolutionSampler {
 	}
 
 	private double[] opacitySourceParameters(double[] optimizerParameters) {
-		ParametricFluxFunctionSource source = this.opacitySource;
+		ParametricTransitFunctionSource source = this.opacitySource;
 		int np = source.getNumParameters();
 		double[] osParameters = new double[np];
 		for(int i = 0; i < np; i++) {
@@ -276,7 +276,7 @@ public class SolutionSampler {
 
 	private ImageState imageState(double[] optimizerParameters) {
 		Solution solution = this.parametersAsSolution(optimizerParameters);
-		FluxOrOpacityFunction bf = solution.getBrightnessFunction();
+		TransitFunction bf = solution.getBrightnessFunction();
 		ImageElementInfo imageElementInfo = this.fluxSource.createImageElementInfo(bf);
 		double orbitRadius = this.getOrbitRadius(optimizerParameters);
 		int problemArcPixels = (int) Math.round(this.fluxSource.numPixelsInTimeSpanArc(bf, orbitRadius) * NPF);

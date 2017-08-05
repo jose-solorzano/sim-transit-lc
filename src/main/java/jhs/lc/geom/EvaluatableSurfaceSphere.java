@@ -3,14 +3,14 @@ package jhs.lc.geom;
 import java.awt.geom.Rectangle2D;
 
 public class EvaluatableSurfaceSphere extends AbstractRotatableSphere {
-	private final FluxOrOpacityFunction opacityFunction;
+	private final TransitFunction opacityFunction;
 	
-	public EvaluatableSurfaceSphere(double radius, PointTransformer transformer, FluxOrOpacityFunction opacityFunction) {
+	public EvaluatableSurfaceSphere(double radius, PointTransformer transformer, TransitFunction opacityFunction) {
 		super(radius, transformer);
 		this.opacityFunction = opacityFunction;
 	}
 
-	public static EvaluatableSurfaceSphere create(double radius, double inclineAngle, FluxOrOpacityFunction opacityFunction) {
+	public static EvaluatableSurfaceSphere create(double radius, double inclineAngle, TransitFunction opacityFunction) {
 		Plane3D rotationPlane = Planes.inclinedPlane(inclineAngle);
 		PointTransformer transformer = PointTransformer.getPointTransformer(rotationPlane, Planes.yzPlane());
 		return new EvaluatableSurfaceSphere(radius, transformer, opacityFunction);
@@ -23,7 +23,7 @@ public class EvaluatableSurfaceSphere extends AbstractRotatableSphere {
 
 	@Override
 	public final double getUnrotatedBrightness(double x, double y, double z) {
-		double a = this.opacityFunction.fluxOrOpacity(x, y, z);
+		double a = this.opacityFunction.fluxOrTransmittance(x, y, z);
 		if(a < -1.0) {
 			a = -1.0;
 		} else if(a > +1.0) {

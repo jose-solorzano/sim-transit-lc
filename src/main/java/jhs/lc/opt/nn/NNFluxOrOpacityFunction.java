@@ -1,10 +1,10 @@
 package jhs.lc.opt.nn;
 
 import java.awt.geom.Rectangle2D;
-import jhs.lc.geom.FluxOrOpacityFunction;
+import jhs.lc.geom.TransitFunction;
 import jhs.math.nn.NeuralNetwork;
 
-public final class NNFluxOrOpacityFunction implements FluxOrOpacityFunction {
+public final class NNFluxOrOpacityFunction implements TransitFunction {
 	private static final long serialVersionUID = 1L;
 	static final double SF = 3.46;
 	
@@ -34,7 +34,7 @@ public final class NNFluxOrOpacityFunction implements FluxOrOpacityFunction {
 	}
 
 	@Override
-	public final double fluxOrOpacity(double x, double y, double z) {
+	public final double fluxOrTransmittance(double x, double y, double z) {
 		double scale = this.scale;
 		double scaledX = x * scale;
 		double scaledY = y * scale;

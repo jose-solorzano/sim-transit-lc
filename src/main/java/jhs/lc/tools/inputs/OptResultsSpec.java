@@ -7,6 +7,15 @@ public class OptResultsSpec {
 	private double paramStandardDev;
 	private double[] parameters;
 	private AbstractOptMethod method;
+	private String transitFunctionAsText;
+
+	public final String getTransitFunctionAsText() {
+		return transitFunctionAsText;
+	}
+
+	public final void setTransitFunctionAsText(String transitFunctionAsText) {
+		this.transitFunctionAsText = transitFunctionAsText;
+	}
 
 	public final double getParamStandardDev() {
 		return paramStandardDev;

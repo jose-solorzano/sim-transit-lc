@@ -2,12 +2,12 @@ package jhs.lc.opt.img;
 
 import java.awt.image.BufferedImage;
 
-import jhs.lc.geom.FluxOrOpacityFunction;
+import jhs.lc.geom.TransitFunction;
 import jhs.lc.geom.ImageUtil;
-import jhs.lc.geom.ParametricFluxFunctionSource;
+import jhs.lc.geom.ParametricTransitFunctionSource;
 import jhs.math.classification.ClassificationUtil;
 
-public class ImageOpacityFunctionSource implements ParametricFluxFunctionSource {
+public class ImageOpacityFunctionSource implements ParametricTransitFunctionSource {
 	private final float[][] brightnessMatrix;
 	private final boolean aspectRatioPreserved;
 	private final int numColumns, numRows;
@@ -38,7 +38,7 @@ public class ImageOpacityFunctionSource implements ParametricFluxFunctionSource 
 	}
 	
 	@Override
-	public FluxOrOpacityFunction getFluxOrOpacityFunction(double[] parameters) {
+	public TransitFunction getTransitFunction(double[] parameters) {
 		double xoffset = parameters[0];
 		double yoffset = parameters[1];
 		double imageWidthLogit = parameters[2];

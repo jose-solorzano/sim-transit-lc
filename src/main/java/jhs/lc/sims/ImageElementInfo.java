@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import jhs.lc.geom.FluxOrOpacityFunction;
+import jhs.lc.geom.TransitFunction;
 
 public final class ImageElementInfo {
 	private static final int CP_BOX_LENGTH = 12;
@@ -22,11 +22,11 @@ public final class ImageElementInfo {
 		this.clusteringPosition = clusteringPosition;
 	}
 
-	public static ImageElementInfo createImageFrameElements(FluxOrOpacityFunction brightnessFunction, int withInPixels, int heightInPixels) {
+	public static ImageElementInfo createImageFrameElements(TransitFunction brightnessFunction, int withInPixels, int heightInPixels) {
 		return createImageFrameElements(brightnessFunction, withInPixels, heightInPixels, brightnessFunction.getBoundingBox());
 	}
 
-	public static ImageElementInfo createImageFrameElements(FluxOrOpacityFunction brightnessFunction, int withInPixels, int heightInPixels, Rectangle2D boundingBox) {
+	public static ImageElementInfo createImageFrameElements(TransitFunction brightnessFunction, int withInPixels, int heightInPixels, Rectangle2D boundingBox) {
 		double imageWidth = boundingBox.getWidth();
 		double imageHeight = boundingBox.getHeight();
 		double fromX = boundingBox.getX();
@@ -48,7 +48,7 @@ public final class ImageElementInfo {
 			for(int r = 0; r < heightInPixels; r++) {
 				double y = fromY + (r + 0.5)  * ycw;
 				//int cpr = (int) ((y - fromY) * ycpf);
-				double b = brightnessFunction.fluxOrOpacity(x, y, 1.0);
+				double b = brightnessFunction.fluxOrTransmittance(x, y, 1.0);
 				if(b > -1.0) { // also, not NaN
 					//clusteringPosition[cpr * CP_BOX_LENGTH + cpc] += (b + 1.0);
 					elementList.add(new ImageElement(x, y, c, r, b));

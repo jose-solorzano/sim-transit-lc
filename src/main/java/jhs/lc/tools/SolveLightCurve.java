@@ -24,7 +24,7 @@ import jhs.lc.data.DataSet;
 import jhs.lc.data.LightCurve;
 import jhs.lc.data.LightCurvePoint;
 import jhs.lc.geom.LimbDarkeningParams;
-import jhs.lc.geom.ParametricFluxFunctionSource;
+import jhs.lc.geom.ParametricTransitFunctionSource;
 import jhs.lc.jmf.BufferedImageVideoProducer;
 import jhs.lc.opt.LightCurveFitter;
 import jhs.lc.opt.EvaluationInfo;
@@ -61,7 +61,6 @@ public class SolveLightCurve extends AbstractTool {
 	private static final int DEF_MAX_CONS_ITERATIONS = 200;
 	private static final int DEF_MAX_AGD_ITERATIONS = 100;	
 	private static final int DEF_POP_SIZE = 100;
-	private static final int DEF_OUT_NUM_PIXELS = 100000;
 	private static final int DEF_TEST_DEPICT_NUM_PIXELS = 40000;
 	
 	private static final double DEF_VIDEO_DURATION = 60;
@@ -269,6 +268,7 @@ public class SolveLightCurve extends AbstractTool {
 		spec.setParameters(ofParameters);
 		spec.setParamStandardDev(paramStdev);
 		spec.setMethod(optSpec.getMethod());
+		spec.setTransitFunctionAsText(solution.getBrightnessFunction().toString());
 		File resultsFile = new File(resultsFilePath);
 		SpecMapper.writeObject(resultsFile, spec);
 		System.out.println("Wrote solution info to " + resultsFile);
@@ -307,7 +307,7 @@ public class SolveLightCurve extends AbstractTool {
 
 	private SolutionSampler getSampler(Random random, double[] timestamps, double[] fluxArray, LimbDarkeningParams ldParams, OptSpec optSpec, CommandLine cmdLine, File contextFile) throws Exception {
 		AbstractOptMethod method = optSpec.getMethod();
-		ParametricFluxFunctionSource ffs = method.createFluxFunctionSource(contextFile);
+		ParametricTransitFunctionSource ffs = method.createFluxFunctionSource(contextFile);
 		SimulatedFluxSource fluxSource = this.getFluxSource(cmdLine, optSpec, timestamps, ldParams, contextFile);
 		double baseRadius = optSpec.getOrbitRadius();
 		double orf = optSpec.getOrbitRadiusFlexibility();

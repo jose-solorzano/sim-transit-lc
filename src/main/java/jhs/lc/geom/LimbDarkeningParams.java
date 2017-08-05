@@ -3,36 +3,36 @@ package jhs.lc.geom;
 import jhs.math.smoothing.GaussianSmoother;
 import jhs.math.util.MathUtil;
 
+/**
+ * Implements polynomial limb darkening law as used by Aizawa et al. (2017).
+ */
 public final class LimbDarkeningParams implements java.io.Serializable {
 	private static final long serialVersionUID = 1L;
 	private final double[] a;
-	private final double sumA;
 	
 	public static final LimbDarkeningParams NONE = new LimbDarkeningParams();	
-	public static final LimbDarkeningParams SUN = new LimbDarkeningParams(0.93, -0.23);	
-	public static final LimbDarkeningParams EXP1 = new LimbDarkeningParams(0.96, -0.10);	
-	public static final LimbDarkeningParams EXP2 = new LimbDarkeningParams(0.80, -0.40);	
-	public static final LimbDarkeningParams EXP3 = new LimbDarkeningParams(0.96, -0.40);	
-	public static final LimbDarkeningParams EXP4 = new LimbDarkeningParams(0.80, -0.10);	
+	public static final LimbDarkeningParams SUN = new LimbDarkeningParams(0.47, 0.23);	
 
 	public LimbDarkeningParams(double ... a1etc) {
 		this.a = a1etc;
-		this.sumA = MathUtil.sum(a1etc);
 	}
 
 	public final double getLimbDarkeningFactor(double z, double radius) {
 		// Assuming observer at an infinite distance.
-		double cosPhi = z / radius;
+		double cosPhi1M = 1 - z / radius;
 		double[] a = this.a;
 		int length = a.length;
 		if(length == 0) {
 			return 1.0;
 		}
-		double sum = 1.0 - this.sumA;
-		double currentFactor = cosPhi;
+		double sum = 1.0;
+		double currentFactor = cosPhi1M;
 		for(int i = 0; i < length; i++) {
-			sum += a[i] * currentFactor;
+			sum -= a[i] * currentFactor;
 			currentFactor *= currentFactor;
+		}
+		if(sum < 0) {
+			sum = 0;
 		}
 		return sum;
 	}	

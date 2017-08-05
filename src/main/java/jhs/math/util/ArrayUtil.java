@@ -17,6 +17,15 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class ArrayUtil {
+	public static <T> double[] map(double[] values, Function<Double,Double> mapping) {
+		int length = values.length;
+		double[] result = new double[length];
+		for(int i = 0; i < length; i++) {
+			result[i] = mapping.apply(values[i]);
+		}
+		return result;
+	}
+	
 	public static <T> double[] doubleValueVector(List<T> list, Function<T,Double> mapping) {
 		int length = list.size();
 		double[] result = new double[length];

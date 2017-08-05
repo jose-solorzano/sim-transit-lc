@@ -1,9 +1,9 @@
 package jhs.lc.sims;
 
-import jhs.lc.geom.FluxOrOpacityFunction;
+import jhs.lc.geom.TransitFunction;
 
 public interface SimulatedFluxSource {
-	public SimulatedFlux produceModeledFlux(double peakFraction, FluxOrOpacityFunction brightnessFunction, double orbitRadius);
-	public ImageElementInfo createImageElementInfo(FluxOrOpacityFunction brightnessFunction);
-	public double numPixelsInTimeSpanArc(FluxOrOpacityFunction brightnessFunction, double orbitRadius);
+	public SimulatedFlux produceModeledFlux(double peakFraction, TransitFunction brightnessFunction, double orbitRadius);
+	public ImageElementInfo createImageElementInfo(TransitFunction brightnessFunction);
+	public double numPixelsInTimeSpanArc(TransitFunction brightnessFunction, double orbitRadius);
 }

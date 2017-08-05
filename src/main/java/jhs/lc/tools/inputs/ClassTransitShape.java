@@ -7,9 +7,9 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
-import jhs.lc.geom.FluxOrOpacityFunction;
+import jhs.lc.geom.TransitFunction;
 import jhs.lc.geom.RotationAngleSphereFactory;
-import jhs.lc.opt.of.RingedPlanet;
+import jhs.lc.opt.bfunctions.RingedPlanet;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.jsontype.impl.ClassNameIdResolver;
@@ -49,15 +49,15 @@ public class ClassTransitShape extends AbstractTransitShape {
 					throw cnf;
 				}
 			}
-			if(!FluxOrOpacityFunction.class.isAssignableFrom(c)) {
-				throw new IllegalStateException("Class " + this.className + " is not assignable to " + FluxOrOpacityFunction.class.getName() + ".");
+			if(!TransitFunction.class.isAssignableFrom(c)) {
+				throw new IllegalStateException("Class " + this.className + " is not assignable to " + TransitFunction.class.getName() + ".");
 			}			
 			Map<String, Object> params = this.getParams();
 			if(params == null) {
 				params = new HashMap<>();
 			}
 			@SuppressWarnings("unchecked")
-			FluxOrOpacityFunction bf = SpecMapper.mapToPojo(params, (Class<FluxOrOpacityFunction>) c);
+			TransitFunction bf = SpecMapper.mapToPojo(params, (Class<TransitFunction>) c);
 			return new EvaluatableSurfaceSphereFactory(bf);
 		} catch(ClassNotFoundException cnf) {
 			throw new IllegalStateException("Class not found: " + this.className + ".");

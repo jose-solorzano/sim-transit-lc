@@ -1,18 +1,26 @@
 package jhs.lc.tools;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.imageio.ImageIO;
 import javax.media.protocol.FileTypeDescriptor;
 
+import jhs.lc.geom.TransitFunction;
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.RotationAngleSphereFactory;
+import jhs.lc.geom.TransitDepictionProducer;
 import jhs.lc.jmf.BufferedImageVideoProducer;
+import jhs.lc.opt.Solution;
 import jhs.lc.sims.AngularSimulation;
 import jhs.lc.tools.inputs.AbstractTransitShape;
 import jhs.lc.tools.inputs.SimSpec;
@@ -69,6 +77,12 @@ public class GenerateSimulatedData extends AbstractTool {
 			out.close();
 			System.out.println("Wrote " + outFile);		
 		}
+		/*
+		String transitImageFileName = cmdLine.getOptionValue("oi");
+		if(transitImageFileName != null) {
+			this.writeTransitImageFile(transitImageFileName, timestamps);
+		}		
+		*/
 		String videoFileName = cmdLine.getOptionValue("video");
 		if(videoFileName != null) {
 			String timeCaption = cmdLine.getOptionValue("tcaption");
@@ -90,6 +104,19 @@ public class GenerateSimulatedData extends AbstractTool {
 		}
 	}
 	
+	/*
+	private void writeTransitImageFile(String imageFileName, double[] timestamps, FluxOrOpacityFunction brightnessFunction) throws IOException {
+		int numPixels = DEF_OUT_NUM_PIXELS;
+		TransitDepictionProducer tdp = new TransitDepictionProducer(brightnessFunction);
+		BufferedImage image = tdp.produceDepiction(numPixels, true);
+		File outFile = new File(imageFileName);
+		try(OutputStream out = new BufferedOutputStream(new FileOutputStream(outFile), 100000)) {
+			ImageIO.write(image, "png", out);
+		}
+		System.out.println("Wrote " + outFile);
+	}		
+	*/
+
 	private AngularSimulation getSimulation(SimSpec simSpec, File contextFile) throws Exception {		
 		AbstractTransitShape transitShape = simSpec.getTransitShape();
 		if(transitShape == null) {
@@ -185,6 +212,12 @@ public class GenerateSimulatedData extends AbstractTool {
 				.hasArg()
 				.withDescription("Sets name of CSV file where light curve data will be written.")
 				.create("o");
+		/*
+		Option outImageOption = OptionBuilder.withArgName("png-file")
+				.hasArg()
+				.withDescription("Sets path of PNG file where depiction of simulated transit image will be written.")
+				.create("oi");
+		*/
 		Option outVideoOption = OptionBuilder.withArgName("mov-file")
 				.hasArg()
 				.withDescription("Sets name of MOV file where the simulation video will be written.")
@@ -201,6 +234,7 @@ public class GenerateSimulatedData extends AbstractTool {
 		options.addOption(helpOption);
 		options.addOption(outCsvOption);
 		options.addOption(outVideoOption);
+		//options.addOption(outImageOption);
 		options.addOption(seedOption);
 		options.addOption(timeUnitOption);
 		options.addOption(noiseSdOption);

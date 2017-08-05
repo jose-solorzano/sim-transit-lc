@@ -2,7 +2,7 @@ package jhs.lc.sims;
 
 import java.awt.geom.Rectangle2D;
 
-import jhs.lc.geom.FluxOrOpacityFunction;
+import jhs.lc.geom.TransitFunction;
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.SolidSphere;
 import jhs.lc.geom.Sphere;
@@ -39,7 +39,7 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 	}
 
 	@Override
-	public final SimulatedFlux produceModeledFlux(double peakFraction, FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
+	public final SimulatedFlux produceModeledFlux(double peakFraction, TransitFunction brightnessFunction, double orbitRadius) {
 		double[] timestamps = this.timestamps;
 		int length = timestamps.length;
 		Rectangle2D boundingBox = brightnessFunction.getBoundingBox();
@@ -162,12 +162,12 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 	}
 
 	@Override
-	public ImageElementInfo createImageElementInfo(FluxOrOpacityFunction brightnessFunction) {
+	public ImageElementInfo createImageElementInfo(TransitFunction brightnessFunction) {
 		return ImageElementInfo.createImageFrameElements(brightnessFunction, this.frameWidthPixels, this.frameHeightPixels);
 	}
 
 	@Override
-	public double numPixelsInTimeSpanArc(FluxOrOpacityFunction brightnessFunction, double orbitRadius) {
+	public double numPixelsInTimeSpanArc(TransitFunction brightnessFunction, double orbitRadius) {
 		double[] timestamps = this.timestamps;
 		int length = timestamps.length;
 		Rectangle2D boundingBox = brightnessFunction.getBoundingBox();

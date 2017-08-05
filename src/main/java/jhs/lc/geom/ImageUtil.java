@@ -34,9 +34,9 @@ public class ImageUtil {
 			double[] column = brightnessMatrix[x];
 			for(int y = 0; y < height; y++) {
 				double b = column[height - y - 1];
-				if(!Double.isNaN(b)) {
+				if(b >= 0) {
 					int color = (int) Math.round(255 * b);
-					int rgb = (color << 16) | (color << 8); // | color;
+					int rgb = (color << 16) | (color << 8) | (color / 2);
 					image.setRGB(x, y, rgb);
 				}
 			}

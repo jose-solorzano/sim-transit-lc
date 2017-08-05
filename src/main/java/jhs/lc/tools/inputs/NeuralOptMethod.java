@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import jhs.lc.geom.ParametricFluxFunctionSource;
+import jhs.lc.geom.ParametricTransitFunctionSource;
 import jhs.lc.opt.nn.InputFilterFactory;
 import jhs.lc.opt.nn.InputFilterType;
 import jhs.lc.opt.nn.NNFluxFunctionSource;
@@ -97,7 +97,7 @@ public class NeuralOptMethod extends AbstractOptMethod {
 	}
 
 	@Override
-	public ParametricFluxFunctionSource createFluxFunctionSource(File context) throws Exception {
+	public ParametricTransitFunctionSource createFluxFunctionSource(File context) throws Exception {
 		InputFilterType inputType = this.inputFilter;
 		InputFilterFactory inputFilterFactory = inputType.getFactory();
 		this.initInputFilterFactory(inputFilterFactory);

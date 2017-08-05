@@ -3,10 +3,10 @@ package jhs.lc.opt.img;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
-import jhs.lc.geom.FluxOrOpacityFunction;
+import jhs.lc.geom.TransitFunction;
 import jhs.lc.geom.ImageUtil;
 
-public class ImageOpacityFunction implements FluxOrOpacityFunction {
+public class ImageOpacityFunction implements TransitFunction {
 	private static final long serialVersionUID = 1L;
 	private final float[][] brightnessMatrix;
 	private final float topLeftX, topLeftY;
@@ -33,7 +33,7 @@ public class ImageOpacityFunction implements FluxOrOpacityFunction {
 	}
 
 	@Override
-	public double fluxOrOpacity(double x, double y, double z) {
+	public double fluxOrTransmittance(double x, double y, double z) {
 		int nc = this.numColumns;
 		int nr = this.numRows;
 		double column = nc * (x - this.topLeftX) / this.imageWidth;
