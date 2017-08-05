@@ -8,18 +8,18 @@ public class ParameterSet<T extends Enum<T>> {
 		this.paramMap = new MultiParameterDef[allIds.length];
 	}
 
-	public final void addParameterDef(T id, double ... range) {
-		if(range == null || range.length != 2) {
-			throw new IllegalArgumentException("Parameter range must be an array of length 2.");
+	public final void addParameterDef(T id, double ... bounds) {
+		if(bounds == null || bounds.length != 2) {
+			throw new IllegalArgumentException("Parameter bounds must be an array of length 2.");
 		}
-		this.addMultiParameterDefImpl(id, 1, range[0], range[1]);
+		this.addMultiParameterDefImpl(id, 1, bounds[0], bounds[1]);
 	}
 
-	public final void addMultiParameterDef(T id, int numParameters, double ... range) {
-		if(range == null || range.length != 2) {
-			throw new IllegalArgumentException("Parameter range must be an array of length 2.");
+	public final void addMultiParameterDef(T id, int numParameters, double ... bounds) {
+		if(bounds == null || bounds.length != 2) {
+			throw new IllegalArgumentException("Parameter bounds must be an array of length 2.");
 		}
-		this.addMultiParameterDefImpl(id, numParameters, range[0], range[1]);
+		this.addMultiParameterDefImpl(id, numParameters, bounds[0], bounds[1]);
 	}
 
 	private void addMultiParameterDefImpl(T id, int numParameters, double min, double max) {

@@ -23,29 +23,29 @@ public class RingedPlanetBuilder implements ParametricFluxFunctionSource {
 	@JsonCreator
 	public static RingedPlanetBuilder create(
 			@JsonProperty(value="numRings", required=true) int numRings,
-			@JsonProperty(value="originXRange", required=true) double[] originXRange,
-			@JsonProperty(value="impactParameterRange", required=true) double[] impactParameterRange,
-			@JsonProperty(value="tiltRange", required=true) double[] tiltRange,
-			@JsonProperty(value="obliquityRange", required=true) double[] obliquityRange,
-			@JsonProperty(value="planetRadiusRange", required=true) double[] planetRadiusRange,
-			@JsonProperty(value="planetRingGapRange", required=true) double[] planetRingGapRange,
-			@JsonProperty(value="ringWidthRange", required=true) double[] ringWidthRange,
-			@JsonProperty(value="ringGapRange", required=true) double[] ringGapRange,
-			@JsonProperty(value="ringOpticalDepthRange", required=true) double[] ringOpticalDepthRange
+			@JsonProperty(value="originXBounds", required=true) double[] originXBounds,
+			@JsonProperty(value="impactParameterBounds", required=true) double[] impactParameterBounds,
+			@JsonProperty(value="tiltBounds", required=true) double[] tiltBounds,
+			@JsonProperty(value="obliquityBounds", required=true) double[] obliquityBounds,
+			@JsonProperty(value="planetRadiusBounds", required=true) double[] planetRadiusBounds,
+			@JsonProperty(value="planetRingGapBounds", required=true) double[] planetRingGapBounds,
+			@JsonProperty(value="ringWidthBounds", required=true) double[] ringWidthBounds,
+			@JsonProperty(value="ringGapBounds", required=true) double[] ringGapBounds,
+			@JsonProperty(value="ringOpticalDepthBounds", required=true) double[] ringOpticalDepthBounds
 		) {
 		
 		ParameterSet<ParamId> ps = new ParameterSet<>(ParamId.values());
 		
-		ps.addParameterDef(ParamId.ORIGIN_X, originXRange);
-		ps.addParameterDef(ParamId.IMPACT_PARAMETER, impactParameterRange);
-		ps.addParameterDef(ParamId.TILT, tiltRange);
-		ps.addParameterDef(ParamId.OBLIQUITY, obliquityRange);
-		ps.addParameterDef(ParamId.PLANET_RADIUS, planetRadiusRange);
-		ps.addParameterDef(ParamId.PLANET_RING_GAP, planetRingGapRange);
-		ps.addParameterDef(ParamId.RING_WIDTH, ringWidthRange);
-		ps.addParameterDef(ParamId.RING_GAP, ringGapRange);
+		ps.addParameterDef(ParamId.ORIGIN_X, originXBounds);
+		ps.addParameterDef(ParamId.IMPACT_PARAMETER, impactParameterBounds);
+		ps.addParameterDef(ParamId.TILT, tiltBounds);
+		ps.addParameterDef(ParamId.OBLIQUITY, obliquityBounds);
+		ps.addParameterDef(ParamId.PLANET_RADIUS, planetRadiusBounds);
+		ps.addParameterDef(ParamId.PLANET_RING_GAP, planetRingGapBounds);
+		ps.addParameterDef(ParamId.RING_WIDTH, ringWidthBounds);
+		ps.addParameterDef(ParamId.RING_GAP, ringGapBounds);
 		
-		ps.addMultiParameterDef(ParamId.RING_OPTICAL_DEPTHS, numRings, ringGapRange);
+		ps.addMultiParameterDef(ParamId.RING_OPTICAL_DEPTHS, numRings, ringGapBounds);
 		
 		if(ps.getNumParameters() != ParamId.values().length) {
 			throw new IllegalStateException();
@@ -81,7 +81,7 @@ public class RingedPlanetBuilder implements ParametricFluxFunctionSource {
 
 	@Override
 	public final double getParameterScale(int paramIndex) {
-		// Range scaling taken care of by ParameterSet.
+		// Bounds scaling taken care of by ParameterSet.
 		return 1.0;
 	}
 	
