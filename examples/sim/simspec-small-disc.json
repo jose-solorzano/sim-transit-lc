@@ -4,7 +4,7 @@
 	"inclineAngle": 0.005,
 	"startTime": -0.6,
 	"endTime": 0.6,
-	"numSteps": 100,
+	"numSteps": 150,
 	"widthPixels": 600,
 	"heightPixels": 600,
 	"noiseFraction": 0.0003,

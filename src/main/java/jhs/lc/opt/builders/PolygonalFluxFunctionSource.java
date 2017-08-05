@@ -1,4 +1,4 @@
-package jhs.lc.opt.pof;
+package jhs.lc.opt.builders;
 
 import java.awt.geom.Rectangle2D;
 import java.util.Map;

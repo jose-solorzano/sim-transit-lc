@@ -61,7 +61,6 @@ public class SolveLightCurve extends AbstractTool {
 	private static final int DEF_MAX_CONS_ITERATIONS = 200;
 	private static final int DEF_MAX_AGD_ITERATIONS = 100;	
 	private static final int DEF_POP_SIZE = 100;
-	private static final int DEF_OUT_NUM_PIXELS = 100000;
 	private static final int DEF_TEST_DEPICT_NUM_PIXELS = 40000;
 	
 	private static final double DEF_VIDEO_DURATION = 60;
@@ -269,6 +268,7 @@ public class SolveLightCurve extends AbstractTool {
 		spec.setParameters(ofParameters);
 		spec.setParamStandardDev(paramStdev);
 		spec.setMethod(optSpec.getMethod());
+		spec.setTransitFunctionAsText(solution.getBrightnessFunction().toString());
 		File resultsFile = new File(resultsFilePath);
 		SpecMapper.writeObject(resultsFile, spec);
 		System.out.println("Wrote solution info to " + resultsFile);

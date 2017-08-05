@@ -1,0 +1,9 @@
+#!/bin/bash
+
+projectDir=`dirname $0`/../..
+workDir=${projectDir}/work
+mkdir -p ${workDir}
+
+echo "Simulation of ringed planet transit, specified using the RingedPlanet opacity function."
+
+${projectDir}/bin/lc-sim -o ${workDir}/sim-ringed-with-code.csv -video ${workDir}/sim-ringed-with-code.mov ${projectDir}/examples/sim/simspec-ringed-with-code.json

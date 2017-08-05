@@ -4,8 +4,9 @@ import java.awt.geom.Rectangle2D;
 
 public interface FluxOrOpacityFunction extends java.io.Serializable {
 	/**
-	 * A positive number between 0 and 1 (an opaque brightness.) A value of zero is opaque with no brightness.
-	 * A negative number between -1.0 and 0 represents opacity (with -1 or NaN meaning transparent.)
+	 * Objects that emit light return a positive value up to 1, representing flux.
+	 * Occulters return a number between -1 and 0 representing the negative transmittance of the occulter. 
+	 * Transmittance is 1 minus opacity, or exp(-opticalDepth).
 	 */
 	public double fluxOrOpacity(double x, double y, double z);
 	

@@ -8,7 +8,7 @@
 	"startTime": -0.18,
 	"endTime": 0.18,
 	"numSteps": 150,
-	"limbDarkeningParams": [ 0.95, -0.25 ],
+	"limbDarkeningParams": [ 0.48, 0.22 ],
 	"transitShape": {
 		"type": "image",
 		"imageFilePath": "../img/opaque-triangle.png",

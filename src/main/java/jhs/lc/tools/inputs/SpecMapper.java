@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -12,10 +13,16 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class SpecMapper {
+	private static final ObjectMapper DEFAULT_MAPPER = new ObjectMapper()
+			.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+			.enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
+
+	private static final ObjectMapper PARAMS_MAPPER = new ObjectMapper()
+			.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+			.disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
+
 	private static ObjectMapper getObjectMapper() {
-		return new ObjectMapper()
-				.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
-				.enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
+		return DEFAULT_MAPPER;
 	}
 	
 	public static SimSpec parseSimSpec(File inFile) throws JsonMappingException, JsonParseException, IOException {
@@ -38,5 +45,9 @@ public class SpecMapper {
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		mapper.writerWithDefaultPrettyPrinter().writeValue(bout, spec);		
 		out.write(bout.toByteArray());
+	}
+	
+	public static <T> T mapToPojo(Map<String, Object> map, Class<T> clazz) {
+		return PARAMS_MAPPER.convertValue(map, clazz);
 	}
 }
