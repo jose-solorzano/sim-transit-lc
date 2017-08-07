@@ -8,15 +8,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
 import jhs.lc.geom.TransitFunction;
+import jhs.lc.opt.transits.RingedPlanet;
 import jhs.lc.geom.RotationAngleSphereFactory;
-import jhs.lc.opt.bfunctions.RingedPlanet;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.jsontype.impl.ClassNameIdResolver;
 
 public class ClassTransitShape extends AbstractTransitShape {
 	private String className;
-	private Map<String, Object> params;
+	private Map<String, Object> properties;
 
 	@JsonProperty(required = true)
 	public final String getClassName() {
@@ -27,12 +27,12 @@ public class ClassTransitShape extends AbstractTransitShape {
 		this.className = className;
 	}
 
-	public final Map<String, Object> getParams() {
-		return params;
+	public final Map<String, Object> getProperties() {
+		return properties;
 	}
 
-	public final void setParams(Map<String, Object> params) {
-		this.params = params;
+	public final void setProperties(Map<String, Object> params) {
+		this.properties = params;
 	}
 
 	@Override
@@ -52,7 +52,7 @@ public class ClassTransitShape extends AbstractTransitShape {
 			if(!TransitFunction.class.isAssignableFrom(c)) {
 				throw new IllegalStateException("Class " + this.className + " is not assignable to " + TransitFunction.class.getName() + ".");
 			}			
-			Map<String, Object> params = this.getParams();
+			Map<String, Object> params = this.getProperties();
 			if(params == null) {
 				params = new HashMap<>();
 			}

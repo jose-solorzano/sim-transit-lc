@@ -1,6 +1,7 @@
 package jhs.lc.sims;
 
 import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
 
 import jhs.lc.geom.TransitFunction;
 import jhs.lc.geom.LimbDarkeningParams;
@@ -40,14 +41,22 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 
 	@Override
 	public final SimulatedFlux produceModeledFlux(double peakFraction, TransitFunction brightnessFunction, double orbitRadius) {
-		double[] timestamps = this.timestamps;
 		int length = timestamps.length;
+		double[] fluxArray = new double[length];
 		Rectangle2D boundingBox = brightnessFunction.getBoundingBox();
+		if(boundingBox.isEmpty()) {
+			Arrays.fill(fluxArray, 1.0);
+			return new SimulatedFlux(fluxArray, ImageElementInfo.blankClusteringPosition());
+		}
+		
+		double[] timestamps = this.timestamps;
 		Sphere star = new SolidSphere(1.0, this.ldParams);
-		double baseFlux = this.estimateBaseFlux(star, boundingBox);
 		
 		ImageElementInfo imageElementInfo = ImageElementInfo.createImageFrameElements(brightnessFunction, this.frameWidthPixels, this.frameHeightPixels, boundingBox);
-		
+
+
+		double baseFlux = this.estimateBaseFlux(star, boundingBox);
+
 		double startTimestamp = timestamps[0];
 		double endTimestamp = timestamps[length - 1];
 		double timeSpan = endTimestamp - startTimestamp;
@@ -59,7 +68,6 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		
 		double yoffset = -orbitRadius * Math.sin(this.inclineAngle);
 		
-		double[] fluxArray = new double[length];
 		for(int i = 0; i < length; i++) {
 			double timestamp = timestamps[i];
 			double rotationAngle = startAngle + (timestamp - startTimestamp) * timeToAngleFactor;

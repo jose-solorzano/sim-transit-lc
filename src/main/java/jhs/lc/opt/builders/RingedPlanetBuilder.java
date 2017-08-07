@@ -3,10 +3,10 @@ package jhs.lc.opt.builders;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import jhs.lc.geom.TransitFunction;
 import jhs.lc.geom.ParametricTransitFunctionSource;
-import jhs.lc.opt.bfunctions.RingedPlanet;
+import jhs.lc.geom.TransitFunction;
 import jhs.lc.opt.params.ParameterSet;
+import jhs.lc.opt.transits.RingedPlanet;
 import jhs.math.util.ArrayUtil;
 
 public class RingedPlanetBuilder implements ParametricTransitFunctionSource {
@@ -28,7 +28,7 @@ public class RingedPlanetBuilder implements ParametricTransitFunctionSource {
 			@JsonProperty(value="tiltBounds", required=true) double[] tiltBounds,
 			@JsonProperty(value="obliquityBounds", required=true) double[] obliquityBounds,
 			@JsonProperty(value="planetRadiusBounds", required=true) double[] planetRadiusBounds,
-			@JsonProperty(value="planetRingGapBounds", required=true) double[] planetRingGapBounds,
+			@JsonProperty(value="ringInnerRadiusBounds", required=true) double[] ringInnerRadiusBounds,
 			@JsonProperty(value="ringWidthBounds", required=true) double[] ringWidthBounds,
 			@JsonProperty(value="ringGapBounds", required=true) double[] ringGapBounds,
 			@JsonProperty(value="ringOpticalDepthBounds", required=true) double[] ringOpticalDepthBounds
@@ -40,17 +40,13 @@ public class RingedPlanetBuilder implements ParametricTransitFunctionSource {
 		ps.addParameterDef(ParamId.IMPACT_PARAMETER, impactParameterBounds);
 		ps.addParameterDef(ParamId.TILT, tiltBounds);
 		ps.addParameterDef(ParamId.OBLIQUITY, obliquityBounds);
-		ps.addParameterDef(ParamId.PLANET_RADIUS, planetRadiusBounds);
-		ps.addParameterDef(ParamId.PLANET_RING_GAP, planetRingGapBounds);
 		ps.addParameterDef(ParamId.RING_WIDTH, ringWidthBounds);
 		ps.addParameterDef(ParamId.RING_GAP, ringGapBounds);
-		
-		ps.addMultiParameterDef(ParamId.RING_OPTICAL_DEPTHS, numRings, ringGapBounds);
-		
-		if(ps.getNumParameters() != ParamId.values().length) {
-			throw new IllegalStateException();
-		}
-		
+		ps.addParameterDef(ParamId.RING_INNER_RADIUS, ringInnerRadiusBounds);
+		ps.addParameterDef(ParamId.PLANET_RADIUS, planetRadiusBounds);
+
+		ps.addMultiParameterDef(ParamId.RING_OPTICAL_DEPTHS, numRings, ringOpticalDepthBounds);
+				
 		return new RingedPlanetBuilder(numRings, ps);
 	}
 	
@@ -62,16 +58,19 @@ public class RingedPlanetBuilder implements ParametricTransitFunctionSource {
 		double tilt = ps.getValue(ParamId.TILT, parameters);
 		double obliquity = ps.getValue(ParamId.OBLIQUITY, parameters);
 		double planetRadius = ps.getValue(ParamId.PLANET_RADIUS, parameters);
-		double planetRingGap = ps.getValue(ParamId.PLANET_RING_GAP, parameters);
+		double ringInnerRadius = ps.getValue(ParamId.RING_INNER_RADIUS, parameters);
 		double ringWidth = ps.getValue(ParamId.RING_WIDTH, parameters);
 		double ringGap = ps.getValue(ParamId.RING_GAP, parameters);
+		
 		double[] ringOpticalDepths = ps.getValues(ParamId.RING_OPTICAL_DEPTHS, parameters);
-		double[] ringOpacitiesAtMaxObliquity = ArrayUtil.map(ringOpticalDepths, od -> 1.0 - Math.exp(-od));
+		double[] ringTransmittancesWhenPerpendicular = null;
+		//double[] ringTransmittances = ArrayUtil.map(ringOpticalDepths, od -> Math.exp(-od));
+		double[] ringTransmittances = ArrayUtil.map(ringOpticalDepths, od -> Math.exp(-od));
 		
 		double extraOptimizerError = ps.getExtraOptimizerError(parameters, LAMBDA);
 		
-		return RingedPlanet.create(numRings, originX, impactParameter, tilt, obliquity, planetRadius, planetRingGap, 
-				ringWidth, ringGap, ringOpacitiesAtMaxObliquity, extraOptimizerError);
+		return RingedPlanet.create(numRings, originX, impactParameter, tilt, obliquity, planetRadius, ringInnerRadius, 
+				ringWidth, ringGap, ringTransmittances, ringTransmittancesWhenPerpendicular, extraOptimizerError);
 	}
 
 	@Override
@@ -91,7 +90,7 @@ public class RingedPlanetBuilder implements ParametricTransitFunctionSource {
 		TILT,
 		OBLIQUITY,		
 		PLANET_RADIUS,
-		PLANET_RING_GAP,
+		RING_INNER_RADIUS,
 		RING_WIDTH,
 		RING_GAP,
 		RING_OPTICAL_DEPTHS

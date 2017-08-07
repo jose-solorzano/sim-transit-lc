@@ -37,7 +37,7 @@ public class DiversifiedParticleSwarmOptimizer {
 	private double omega = 0.2;
 	private double phi = +2.0;
 	
-	private double weightDecayHalfFraction = 0.09491;
+	private double weightDecayHalfFraction = 0.20;
  	private double initialVelocitySd = 2.0;
 	
 	public DiversifiedParticleSwarmOptimizer(Random random, int populationSize) {

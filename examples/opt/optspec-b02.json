@@ -3,7 +3,7 @@
 	"heightPixels": 80,
 	"orbitPeriod": 150,
 	"orbitRadius": 300.5,
-	"orbitRadiusFlexibility": 0,
+	"orbitRadiusFlexibility": 0.02,
 	"method": {
 		"type": "neural",
 		"imageWidth": 2.0,
@@ -11,8 +11,8 @@
 		"comment": "The shift_rotate input filter will move the origin and rotate the image.",
 		"inputFilter": "shift_rotate",
 		"inputFilterProperties": {
-			"scaleX": 0.05,
-			"scaleY": 0.7
+			"scaleX": 0.03,
+			"scaleY": 0.8
 		},
 		"networks": {
 			"outputType": "binary",

@@ -1,6 +1,6 @@
 package jhs.lc.opt.params;
 
-public class MultiParameterDef {
+public class PlainParameterDef implements ParameterDef {
 	private static final double MAX_PARAM_VALUE = 1.733;
 	private static final double MIN_PARAM_VALUE = -MAX_PARAM_VALUE;
 	private static final double PARAM_RANGE = MAX_PARAM_VALUE - MIN_PARAM_VALUE;
@@ -9,7 +9,7 @@ public class MultiParameterDef {
 	private final int baseIndex;
 	private final double a, b;
 	
-	public MultiParameterDef(int numParameters, double min, double max, int baseIndex) {
+	public PlainParameterDef(int numParameters, double min, double max, int baseIndex) {
 		this.numParameters = numParameters;
 		this.baseIndex = baseIndex;
 		double maxMinDiff = max - min;

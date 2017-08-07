@@ -9,7 +9,7 @@ public class TestMultiParameterDef {
 	public void testLinearConversion() {
 		double min = -5.75;
 		double max = +0.33;
-		MultiParameterDef pd = new MultiParameterDef(1, min, max, 0);
+		PlainParameterDef pd = new PlainParameterDef(1, min, max, 0);
 		assertEquals(min, pd.getValue(new double[] { -1000 }, 0), 0.0001);
 		assertEquals(max, pd.getValue(new double[] { +1000 }, 0), 0.0001);
 		assertEquals((min + max) / 2, pd.getValue(new double[] { 0 }, 0), 0.0001);

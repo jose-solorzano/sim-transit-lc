@@ -6,11 +6,11 @@ mkdir -p ${workDir}
 
 echo "BO3 optimization: Models an inclined single-ring planet."
 
-OPTS="-log INFO -seed 1902 -pop 100 -noi 300 -npci 50 -nagd 200"
+OPTS="-log INFO -pop 100 -noi 500 -nagd 50"
 
 ${projectDir}/bin/lc-opt ${OPTS} \
 	-i ${projectDir}/examples/lc/sim-b03.csv \
 	-o ${workDir}/opt-b03.csv \
 	-or ${workDir}/opt-b03.json \
 	-oi ${workDir}/opt-b03.png \
-	${projectDir}/examples/opt/optspec-b03.json
+	${projectDir}/examples/opt/optspec-b03-code.json

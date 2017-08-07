@@ -1,0 +1,23 @@
+{
+	"widthPixels": 110,
+	"heightPixels": 55,
+	"orbitPeriod": 150,
+	"orbitRadius": 300.5,
+	"orbitRadiusFlexibility": 0.01,
+	"method": {
+		"type": "code",
+		"className": "RingedPlanetBuilder",
+		"properties": {
+			"numRings": 1,
+			"originXBounds": [ -0.03, 0.03 ],					
+			"impactParameterBounds": [ 0, 1.3 ],					
+			"tiltBounds": [ -1.57, 1.57 ],					
+			"obliquityBounds": [ 0, 1.57 ],					
+			"planetRadiusBounds": [ 0.04, 0.2 ],				
+			"ringInnerRadiusBounds": [ 0.05, 0.6 ],		
+			"ringWidthBounds": [ 0.01, 1.5 ],				
+			"ringGapBounds": [ 0, 0 ],	
+			"ringOpticalDepthBounds": [ 0.4, 4.6 ]	
+		}
+	}
+}

@@ -91,6 +91,10 @@ public final class ImageElementInfo {
 		}
 		return position;
 	}
+	
+	public static double[] blankClusteringPosition() {
+		return new double[CP_BOX_NPIXELS];
+	}
 
 	@Override
 	public int hashCode() {

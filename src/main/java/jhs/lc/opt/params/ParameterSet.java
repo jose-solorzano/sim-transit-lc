@@ -1,11 +1,11 @@
 package jhs.lc.opt.params;
 
 public class ParameterSet<T extends Enum<T>> {
-	private final MultiParameterDef[] paramMap;
+	private final ParameterDef[] paramMap;
 	private int paramCount = 0;
 	
 	public ParameterSet(T[] allIds) {
-		this.paramMap = new MultiParameterDef[allIds.length];
+		this.paramMap = new ParameterDef[allIds.length];
 	}
 
 	public final void addParameterDef(T id, double ... bounds) {
@@ -13,6 +13,13 @@ public class ParameterSet<T extends Enum<T>> {
 			throw new IllegalArgumentException("Parameter bounds must be an array of length 2.");
 		}
 		this.addMultiParameterDefImpl(id, 1, bounds[0], bounds[1]);
+	}
+
+	public final void addExpParameterDef(T id, double ... bounds) {
+		if(bounds == null || bounds.length != 2) {
+			throw new IllegalArgumentException("Parameter bounds must be an array of length 2.");
+		}
+		this.addExpParameterDefImpl(id, 1, bounds[0], bounds[1]);
 	}
 
 	public final void addMultiParameterDef(T id, int numParameters, double ... bounds) {
@@ -27,7 +34,17 @@ public class ParameterSet<T extends Enum<T>> {
 		if(this.paramMap[ordinal] != null) {
 			throw new IllegalArgumentException("ID " + id + " already added.");
 		}		
-		MultiParameterDef paramDef = new MultiParameterDef(numParameters, min, max, this.paramCount);
+		ParameterDef paramDef = new PlainParameterDef(numParameters, min, max, this.paramCount);
+		this.paramMap[ordinal] = paramDef;
+		this.paramCount += numParameters;
+	}
+
+	private void addExpParameterDefImpl(T id, int numParameters, double min, double max) {
+		int ordinal = id.ordinal();
+		if(this.paramMap[ordinal] != null) {
+			throw new IllegalArgumentException("ID " + id + " already added.");
+		}		
+		ParameterDef paramDef = new ExpParameterDef(numParameters, min, max, this.paramCount);
 		this.paramMap[ordinal] = paramDef;
 		this.paramCount += numParameters;
 	}
@@ -41,7 +58,7 @@ public class ParameterSet<T extends Enum<T>> {
 	}
 	
 	public final double getValue(T id, double[] parameters, int indexOffset) {
-		MultiParameterDef paramDef = this.paramMap[id.ordinal()];
+		ParameterDef paramDef = this.paramMap[id.ordinal()];
 		if(paramDef == null) {
 			throw new IllegalArgumentException("No parameter with that ID: " + id);
 		}
@@ -49,7 +66,7 @@ public class ParameterSet<T extends Enum<T>> {
 	}
 
 	public final double[] getValues(T id, double[] parameters) {
-		MultiParameterDef paramDef = this.paramMap[id.ordinal()];
+		ParameterDef paramDef = this.paramMap[id.ordinal()];
 		if(paramDef == null) {
 			throw new IllegalArgumentException("No parameter with that ID: " + id);
 		}
@@ -57,9 +74,9 @@ public class ParameterSet<T extends Enum<T>> {
 	}
 
 	public final double getExtraOptimizerError(double[] parameterPool, double lambda) {
-		MultiParameterDef[] paramMap = this.paramMap;
+		ParameterDef[] paramMap = this.paramMap;
 		double sum = 0;
-		for(MultiParameterDef paramDef : paramMap) {
+		for(ParameterDef paramDef : paramMap) {
 			if(paramDef != null) {
 				double sqDev = paramDef.getSquaredDeviationFromRange(parameterPool);
 				sum += sqDev;

@@ -1,4 +1,4 @@
-package jhs.lc.opt.bfunctions;
+package jhs.lc.opt.transits;
 
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
@@ -16,12 +16,12 @@ public final class RingedPlanet implements TransitFunction {
 	private final double planetRadiusSquared;
 	private final double[] ringInnerRadiiSquared;
 	private final double[] ringOuterRadiiSquared;
-	private final double[] ringOpacities;
+	private final double[] ringTransmittances;
 	private final double extraOptimizationError;
 	
 	public RingedPlanet(double originX, double originY, double sinTilt, double cosTilt, double sinObliquity,
 			double planetRadiusSquared, double[] ringInnerRadiiSquared, double[] ringOuterRadiiSquared,
-			double[] ringOpacities, double extraOptimizationError) {
+			double[] ringTransmittances, double extraOptimizationError) {
 		this.originX = originX;
 		this.originY = originY;
 		this.cosTilt = cosTilt;
@@ -30,7 +30,7 @@ public final class RingedPlanet implements TransitFunction {
 		this.planetRadiusSquared = planetRadiusSquared;
 		this.ringInnerRadiiSquared = ringInnerRadiiSquared;
 		this.ringOuterRadiiSquared = ringOuterRadiiSquared;
-		this.ringOpacities = ringOpacities;
+		this.ringTransmittances = ringTransmittances;
 		this.extraOptimizationError = extraOptimizationError;
 	}
 	
@@ -42,42 +42,61 @@ public final class RingedPlanet implements TransitFunction {
 		@JsonProperty("tilt") double tilt,
 		@JsonProperty(value="obliquity", required=false) double obliquity,
 		@JsonProperty(value="planetRadius", required=true) double planetRadius,
-		@JsonProperty(value="planetRingGap", required=false) double planetRingGap,
+		@JsonProperty(value="ringInnerRadius", required=false) double ringInnerRadius,
 		@JsonProperty(value="ringWidth", required=false) double ringWidth,
 		@JsonProperty(value="ringGap", required=false) double ringGap,
-		@JsonProperty(value="ringOpacities", required=false) double[] ringOpacitiesAtMaxObliquity,
+		@JsonProperty(value="ringTransmittances", required=false) double[] ringTransmittances,
+		@JsonProperty(value="ringTransmittancesWhenPerpendicular", required=false) double[] ringTransmittancesWhenPerpendicular,
 		@JsonProperty("doNotUse01") double extraOptimizerError) {
-		if(numRings != 0 && (ringOpacitiesAtMaxObliquity == null || ringOpacitiesAtMaxObliquity.length != numRings)) {
-			throw new IllegalArgumentException("ringOpacities must be an array of length equal to numRings (" + numRings + ").");
+		
+		double sinObliquity = Math.sin(obliquity);
+		if(numRings != 0) {
+			if(ringTransmittances == null && ringTransmittancesWhenPerpendicular == null) {
+				throw new IllegalArgumentException("One of ringTranmittances or ringTranmittancesWhenPerpendicular must be provided when there are rings.");
+			}
+			if(ringTransmittances != null && ringTransmittancesWhenPerpendicular != null) {
+				throw new IllegalArgumentException("Only one of ringTranmittances or ringTranmittancesWhenPerpendicular must be provided.");				
+			}
+			if(ringTransmittances == null) {
+				if(ringTransmittancesWhenPerpendicular.length != numRings) {
+					throw new IllegalArgumentException("ringTranmittancesWhenPerpendicular must be an array of length equal to numRings (" + numRings + ").");
+				}
+				double transmittanceExponent = sinObliquity == 0 ? 1.0 : 1.0 / Math.abs(sinObliquity);
+				ringTransmittances = new double[numRings];
+				for(int i = 0; i < numRings; i++) {
+					double stwp = ringTransmittancesWhenPerpendicular[i];
+					if(stwp > 1 || stwp < 0) {
+						throw new IllegalArgumentException("Transmittance of " + stwp + " is invalid.");
+					}
+					ringTransmittances[i] = stwp == 1.0 ? 1.0 : Math.pow(stwp, transmittanceExponent);
+				}
+			}
+			else {				
+				if(ringTransmittances.length != numRings) {
+					throw new IllegalArgumentException("ringTranmittances must be an array of length equal to numRings (" + numRings + ").");
+				}
+			}
 		}
 		if(numRings != 0 && ringWidth == 0) {
 			throw new IllegalArgumentException("A ringWidth must be specified when there are rings.");			
 		}
-		if(numRings != 0 && planetRingGap == 0) {
-			throw new IllegalArgumentException("A planetRingGap must be specified when there are rings.");			
+		if(numRings != 0 && ringInnerRadius == 0) {
+			throw new IllegalArgumentException("A ringInnerRadius must be specified when there are rings.");			
 		}
 		double sinTilt = Math.sin(tilt);
 		double cosTilt = Math.cos(tilt);
-		double sinObliquity = Math.sin(obliquity);
 		double planetRadiusSquared = planetRadius * planetRadius;
 		double[] ringInnerRadiiSquared = new double[numRings];
 		double[] ringOuterRadiiSquared = new double[numRings];
-		double[] ringOpacities = new double[numRings];
-		double opacityFactor = sinObliquity == 0 ? 1.0 : 1.0 / sinObliquity;
-		double rr = planetRadius + planetRingGap;
+		double rr = ringInnerRadius;
 		for(int i = 0; i < numRings; i++) {
-			double ro = ringOpacitiesAtMaxObliquity[i] * opacityFactor;
-			if(ro > 1) {
-				ro = 1;
-			}
-			ringOpacities[i] = ro;
 			ringInnerRadiiSquared[i] = rr * rr;
 			rr += ringWidth;
 			ringOuterRadiiSquared[i] = rr * rr;
 			rr += ringGap;
 		}
 		double originY = -impactParameter;
-		return new RingedPlanet(originX, originY, sinTilt, cosTilt, sinObliquity, planetRadiusSquared, ringInnerRadiiSquared, ringOuterRadiiSquared, ringOpacities, extraOptimizerError);
+		return new RingedPlanet(originX, originY, sinTilt, cosTilt, sinObliquity, planetRadiusSquared, ringInnerRadiiSquared, ringOuterRadiiSquared, ringTransmittances, extraOptimizerError);
 	}
 
 	/**
@@ -91,8 +110,8 @@ public final class RingedPlanet implements TransitFunction {
 		if(rs <= this.planetRadiusSquared) {
 			return 0;
 		}
-		double[] rop = this.ringOpacities;
-		int nr = rop.length;
+		double[] ringTransmittances = this.ringTransmittances;
+		int nr = ringTransmittances == null ? 0 : ringTransmittances.length;
 		if(nr == 0) {
 			return Double.NaN;
 		}		
@@ -110,7 +129,7 @@ public final class RingedPlanet implements TransitFunction {
 		double[] ror = this.ringOuterRadiiSquared;
 		for(int i = 0; i < nr; i++) {
 			if(rrs >= rir[i] && rrs <= ror[i]) {
-				double b = -(1 - rop[i]);
+				double b = -ringTransmittances[i];
 				if(b > 0) {
 					b = 0;
 				}
@@ -150,6 +169,6 @@ public final class RingedPlanet implements TransitFunction {
 		return "RingedPlanet [originX=" + originX + ", originY=" + originY + ", sinTilt=" + sinTilt + ", cosTilt="
 				+ cosTilt + ", sinObliquity=" + sinObliquity + ", planetRadiusSquared=" + planetRadiusSquared
 				+ ", ringInnerRadiiSquared=" + Arrays.toString(ringInnerRadiiSquared) + ", ringOuterRadiiSquared="
-				+ Arrays.toString(ringOuterRadiiSquared) + ", ringOpacities=" + Arrays.toString(ringOpacities) + "]";
+				+ Arrays.toString(ringOuterRadiiSquared) + ", ringTransmittances=" + Arrays.toString(ringTransmittances) + "]";
 	}
 }

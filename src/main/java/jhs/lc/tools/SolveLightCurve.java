@@ -57,9 +57,9 @@ public class SolveLightCurve extends AbstractTool {
 	private static final Logger logger = Logger.getLogger(SolveLightCurve.class.getName());
 	
 	private static final int DEF_MAX_WP_ITERATIONS = 0;
-	private static final int DEF_MAX_ITERATIONS = 100;
+	private static final int DEF_MAX_ITERATIONS = 300;
 	private static final int DEF_MAX_CONS_ITERATIONS = 200;
-	private static final int DEF_MAX_AGD_ITERATIONS = 100;	
+	private static final int DEF_MAX_AGD_ITERATIONS = 50;	
 	private static final int DEF_POP_SIZE = 100;
 	private static final int DEF_TEST_DEPICT_NUM_PIXELS = 40000;
 	
@@ -401,12 +401,13 @@ public class SolveLightCurve extends AbstractTool {
 				.create("oi");
 		Option outVideoOption = OptionBuilder.withArgName("mov-file")
 				.hasArg()
-				.withDescription("Sets path of MOV file where estimated transit video will be written.")
+				.withDescription("Sets path of MOV file where modeled transit video will be written.")
 				.create("video");
 		Option nsOption = OptionBuilder.withArgName("n")
 				.hasArg()
-				.withDescription("Sets the number of main (clustering) optimizer iterations/steps. Default is " + DEF_MAX_ITERATIONS + ".")
+				.withDescription("Sets the number of main optimizer iterations/steps. Default is " + DEF_MAX_ITERATIONS + ".")
 				.create("noi");
+		/*
 		Option nwiOption = OptionBuilder.withArgName("n")
 				.hasArg()
 				.withDescription("Sets the number of warmup iterations/steps used for sizing candidates. Default is " + DEF_MAX_WP_ITERATIONS + ".")
@@ -415,6 +416,7 @@ public class SolveLightCurve extends AbstractTool {
 				.hasArg()
 				.withDescription("Sets the number of post-clustering (consolidation) iterations/steps. Default is " + DEF_MAX_CONS_ITERATIONS + ".")
 				.create("npci");
+		*/
 		Option nagdOption = OptionBuilder.withArgName("n")
 				.hasArg()
 				.withDescription("Sets the number of approximate gradient descent (last push) iterations/steps. Default is " + DEF_MAX_AGD_ITERATIONS + ".")
@@ -435,10 +437,12 @@ public class SolveLightCurve extends AbstractTool {
 				.hasArg()
 				.withDescription("Sets the video duration in seconds. Default is " + DEF_VIDEO_DURATION + ".")
 				.create("vd");
+		/*
 		Option owpzOption = OptionBuilder.withArgName("zip-file")
 				.hasArg()
 				.withDescription("Sets the path of the ZIP file where post-warm-up model depictions are written. This is used in troubleshooting and optimizer analysis.")
 				.create("owpz");
+		*/
 		Option oczOption = OptionBuilder.withArgName("zip-file")
 				.hasArg()
 				.withDescription("Sets the path of the ZIP file where post-clustering model depictions are written. This is used in troubleshooting and optimizer analysis.")
@@ -454,14 +458,14 @@ public class SolveLightCurve extends AbstractTool {
 		options.addOption(seedOption);
 		options.addOption(timeUnitOption);
 		options.addOption(logOption);
-		options.addOption(nwiOption);
+		//options.addOption(nwiOption);
 		options.addOption(nsOption);
-		options.addOption(npcOption);
+		//options.addOption(npcOption);
 		options.addOption(nagdOption);
 		options.addOption(popOption);
 		options.addOption(angOption);		
 		options.addOption(videoDurationOption);
-		options.addOption(owpzOption);
+		//options.addOption(owpzOption);
 		options.addOption(oczOption);
 
 		return options;

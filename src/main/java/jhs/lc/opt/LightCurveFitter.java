@@ -148,13 +148,13 @@ public class LightCurveFitter {
 		//CircuitSearchEvaluator lf2 = new PrimaryLossFunction(sampler, fluxArray, 2, 0, 1);
 
 		
-		//TODO testing PSO
+		//TODO testing DPSO
 		//return this.optimizeCircuitSearch(lfWarmUp, lfFinal);
-		return this.optimizeWithCPSO(lfFinal);
+		return this.optimizeWithDPSO(lfFinal);
 	}
 	
 	private AbstractLossFunction getDefaultLossFunction(double[] fluxArray) {
-		return new PrimaryLossFunction(sampler, fluxArray, 1, 0, 1);
+		return new PrimaryLossFunction(sampler, fluxArray, 1, 0, 3);
 	}
 
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
@@ -214,13 +214,13 @@ public class LightCurveFitter {
 		return solution;
 	}
 
-	public Solution optimizeWithCPSO(ClusteredEvaluator errorFunction) throws MathException {
+	public Solution optimizeWithDPSO(ClusteredEvaluator errorFunction) throws MathException {
 		SolutionSampler sampler = this.sampler;
 		Random random = sampler.getRandom();
 		DiversifiedParticleSwarmOptimizer optimizer = new DiversifiedParticleSwarmOptimizer(random, this.populationSize) {
 			@Override
 			protected void informProgress(int iteration, RealPointValuePair pointValue) {
-				LightCurveFitter.this.informProgress("CPSO", iteration, pointValue.getValue());
+				LightCurveFitter.this.informProgress("dpso", iteration, pointValue.getValue());
 			}
 		};
 		optimizer.setMaxIterations(this.maxCSIterationsWithClustering);
