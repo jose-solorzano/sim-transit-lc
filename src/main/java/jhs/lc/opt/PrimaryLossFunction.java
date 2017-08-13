@@ -2,7 +2,6 @@ package jhs.lc.opt;
 
 import jhs.lc.data.LightCurve;
 import jhs.math.util.MathUtil;
-import org.apache.commons.math.FunctionEvaluationException;
 
 public class PrimaryLossFunction extends AbstractLossFunction {
 	private static final double MSE_FACTOR = 1E7;
@@ -17,7 +16,7 @@ public class PrimaryLossFunction extends AbstractLossFunction {
 	private final double trendChangeVariance;
 
 	public PrimaryLossFunction(SolutionSampler sampler, double[] targetFluxArray, double w0, double w1, double w2) {
-		super(sampler, 1.0);
+		super(sampler, 1.0, targetFluxArray);
 		this.w0 = w0;
 		this.w1 = w1;
 		this.w2 = w2;

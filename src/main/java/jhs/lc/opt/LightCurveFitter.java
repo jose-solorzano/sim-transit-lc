@@ -2,18 +2,14 @@ package jhs.lc.opt;
 
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import jhs.lc.data.LightCurve;
-import jhs.lc.data.LightCurvePoint;
-import jhs.math.nn.PlainNeuralNetwork;
-import jhs.math.util.ListUtil;
-import jhs.math.util.MathUtil;
 
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
 import org.apache.commons.math.optimization.RealPointValuePair;
+
+import jhs.lc.data.LightCurve;
+import jhs.lc.data.LightCurvePoint;
+import jhs.math.util.MathUtil;
 
 public class LightCurveFitter {	
 	//private static final Logger logger = Logger.getLogger(CSLightCurveFitter.class.getName());
@@ -144,17 +140,13 @@ public class LightCurveFitter {
 	public Solution optimizeStandardErrorCS(double[] fluxArray) throws MathException {
 		//ClusteredEvaluator lfWarmUp = new SizingLossFunction(sampler, fluxArray);
 		ClusteredEvaluator lfFinal = this.getDefaultLossFunction(fluxArray);
-		//CircuitSearchEvaluator lf1 = new PrimaryLossFunction(sampler, fluxArray, 3, 0, 1);
-		//CircuitSearchEvaluator lf2 = new PrimaryLossFunction(sampler, fluxArray, 2, 0, 1);
-
-		
-		//TODO testing DPSO
 		//return this.optimizeCircuitSearch(lfWarmUp, lfFinal);
-		return this.optimizeWithDPSO(lfFinal);
+		//return this.optimizeWithDPSO(lfFinal);
+		return this.optimizeCESO(lfFinal);
 	}
 	
 	private AbstractLossFunction getDefaultLossFunction(double[] fluxArray) {
-		return new PrimaryLossFunction(sampler, fluxArray, 1, 0, 3);
+		return new PrimaryLossFunction(sampler, fluxArray, 1, 0, 1);
 	}
 
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
@@ -208,6 +200,33 @@ public class LightCurveFitter {
 		optimizer.setMaxEliminationIterations(this.maxEliminationIterations);
 		int vectorLength = sampler.getNumParameters();
 		RealPointValuePair result = optimizer.optimize(vectorLength, warmUpErrorFunction, finalErrorFunction, alternatingErrorFunctions);
+
+		Solution solution = sampler.parametersAsSolution(result.getPointRef());
+
+		return solution;
+	}
+
+	public Solution optimizeCESO(ClusteredEvaluator finalErrorFunction, ClusteredEvaluator ... alternatingErrorFunctions) throws MathException {
+		SolutionSampler sampler = this.sampler;
+		Random random = sampler.getRandom();
+		ClusteredEvolutionarySwarmOptimizer optimizer = new ClusteredEvolutionarySwarmOptimizer(random, this.populationSize) {
+			@Override
+			protected void informProgress(Phase phase, int iteration, RealPointValuePair pointValue) {
+				LightCurveFitter.this.informProgress("ceso-" + phase.name().toLowerCase(), iteration, pointValue.getValue());
+			}
+
+			@Override
+			protected void informEndOfClusteringPhase(List<RealPointValuePair> pointValues) {
+				LightCurveFitter.this.informEndOfClusteringPhase(sampler, pointValues);
+			}						
+		};
+		optimizer.setInitialPoolSize(this.initialPoolSize);
+		optimizer.setConvergeDistance(this.convergeDistance);
+		optimizer.setMaxConsolidationIterations(this.maxExtraCSIterations);
+		optimizer.setMaxIterationsWithClustering(this.maxCSIterationsWithClustering);
+		optimizer.setMaxStartIterations(this.maxCSWarmUpIterations);
+		int vectorLength = sampler.getNumParameters();
+		RealPointValuePair result = optimizer.optimize(vectorLength, finalErrorFunction, alternatingErrorFunctions);
 
 		Solution solution = sampler.parametersAsSolution(result.getPointRef());
 

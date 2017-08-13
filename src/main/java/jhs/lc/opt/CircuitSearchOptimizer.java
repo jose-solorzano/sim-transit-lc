@@ -10,6 +10,11 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.analysis.MultivariateRealFunction;
+import org.apache.commons.math.optimization.RealPointValuePair;
+
 import jhs.math.clustering.KMeansClusteringProducer;
 import jhs.math.clustering.VectorialCluster;
 import jhs.math.clustering.VectorialClusteringResults;
@@ -19,11 +24,6 @@ import jhs.math.util.ArrayUtil;
 import jhs.math.util.ComparableValueHolder;
 import jhs.math.util.ListUtil;
 import jhs.math.util.MathUtil;
-
-import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.analysis.MultivariateRealFunction;
-import org.apache.commons.math.optimization.RealPointValuePair;
 
 public class CircuitSearchOptimizer {
 	private static final Logger logger = Logger.getLogger(CircuitSearchOptimizer.class.getName());

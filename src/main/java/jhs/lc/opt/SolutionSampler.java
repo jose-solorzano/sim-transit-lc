@@ -1,15 +1,13 @@
 package jhs.lc.opt;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
 import java.util.logging.Logger;
 
 import org.apache.commons.math.FunctionEvaluationException;
 
-import jhs.lc.data.LightCurve;
-import jhs.lc.geom.TransitFunction;
 import jhs.lc.geom.ParametricTransitFunctionSource;
+import jhs.lc.geom.TransitFunction;
 import jhs.lc.sims.ImageElementInfo;
 import jhs.lc.sims.SimulatedFlux;
 import jhs.lc.sims.SimulatedFluxSource;

@@ -56,9 +56,9 @@ import org.apache.commons.math.optimization.RealPointValuePair;
 public class SolveLightCurve extends AbstractTool {
 	private static final Logger logger = Logger.getLogger(SolveLightCurve.class.getName());
 	
-	private static final int DEF_MAX_WP_ITERATIONS = 0;
+	private static final int DEF_MAX_WP_ITERATIONS = 50;
 	private static final int DEF_MAX_ITERATIONS = 300;
-	private static final int DEF_MAX_CONS_ITERATIONS = 200;
+	private static final int DEF_MAX_CONS_ITERATIONS = 0;
 	private static final int DEF_MAX_AGD_ITERATIONS = 50;	
 	private static final int DEF_POP_SIZE = 100;
 	private static final int DEF_TEST_DEPICT_NUM_PIXELS = 40000;
@@ -126,7 +126,8 @@ public class SolveLightCurve extends AbstractTool {
 
 		String transitImageFileName = cmdLine.getOptionValue("oi");
 		if(transitImageFileName != null) {
-			this.writeTransitImageFile(transitImageFileName, timestamps, solution, optSpec.getWidthPixels(), optSpec.getHeightPixels());
+			int depictionNumPixels = this.getOptionInt(cmdLine, "oinp", DEF_OUT_NUM_PIXELS);
+			this.writeTransitImageFile(transitImageFileName, timestamps, solution, depictionNumPixels);
 		}		
 
 		String videoFileName = cmdLine.getOptionValue("video");
@@ -143,9 +144,8 @@ public class SolveLightCurve extends AbstractTool {
 		}
 	}
 	
-	private void writeTransitImageFile(String imageFileName, double[] timestamps, Solution solution, int transitWidthPixels, int transitHeightPixels) throws IOException {
-		int numPixels = DEF_OUT_NUM_PIXELS;
-		BufferedImage image = solution.produceDepiction(numPixels);
+	private void writeTransitImageFile(String imageFileName, double[] timestamps, Solution solution, int depictionNumPixels) throws IOException {
+		BufferedImage image = solution.produceDepiction(depictionNumPixels);
 		File outFile = new File(imageFileName);
 		try(OutputStream out = new BufferedOutputStream(new FileOutputStream(outFile), 100000)) {
 			ImageIO.write(image, "png", out);
@@ -399,6 +399,10 @@ public class SolveLightCurve extends AbstractTool {
 				.hasArg()
 				.withDescription("Sets path of PNG file where modeled transit image will be written.")
 				.create("oi");
+		Option oinpOption = OptionBuilder.withArgName("n")
+				.hasArg()
+				.withDescription("Sets the number of pixels of the transit depiction image. Default is " + DEF_OUT_NUM_PIXELS + ".")
+				.create("oinp");
 		Option outVideoOption = OptionBuilder.withArgName("mov-file")
 				.hasArg()
 				.withDescription("Sets path of MOV file where modeled transit video will be written.")
@@ -407,16 +411,14 @@ public class SolveLightCurve extends AbstractTool {
 				.hasArg()
 				.withDescription("Sets the number of main optimizer iterations/steps. Default is " + DEF_MAX_ITERATIONS + ".")
 				.create("noi");
-		/*
 		Option nwiOption = OptionBuilder.withArgName("n")
 				.hasArg()
-				.withDescription("Sets the number of warmup iterations/steps used for sizing candidates. Default is " + DEF_MAX_WP_ITERATIONS + ".")
+				.withDescription("Sets the number of warmup iterations/steps used to produce initial shapes. Default is " + DEF_MAX_WP_ITERATIONS + ".")
 				.create("nwi");
 		Option npcOption = OptionBuilder.withArgName("n")
 				.hasArg()
 				.withDescription("Sets the number of post-clustering (consolidation) iterations/steps. Default is " + DEF_MAX_CONS_ITERATIONS + ".")
 				.create("npci");
-		*/
 		Option nagdOption = OptionBuilder.withArgName("n")
 				.hasArg()
 				.withDescription("Sets the number of approximate gradient descent (last push) iterations/steps. Default is " + DEF_MAX_AGD_ITERATIONS + ".")
@@ -454,13 +456,14 @@ public class SolveLightCurve extends AbstractTool {
 		options.addOption(outCsvOption);
 		options.addOption(outResultsOption);
 		options.addOption(outImageOption);
+		options.addOption(oinpOption);
 		options.addOption(outVideoOption);
 		options.addOption(seedOption);
 		options.addOption(timeUnitOption);
 		options.addOption(logOption);
-		//options.addOption(nwiOption);
+		options.addOption(nwiOption);
 		options.addOption(nsOption);
-		//options.addOption(npcOption);
+		options.addOption(npcOption);
 		options.addOption(nagdOption);
 		options.addOption(popOption);
 		options.addOption(angOption);		

@@ -1,21 +1,17 @@
 package jhs.lc.opt;
 
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.Iterator;
 
 import jhs.lc.geom.EvaluatableSurfaceSphereFactory;
-import jhs.lc.geom.TransitFunction;
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.RotationAngleSphereFactory;
 import jhs.lc.geom.TransitDepictionProducer;
+import jhs.lc.geom.TransitFunction;
 import jhs.lc.sims.AngularSimulation;
 import jhs.lc.sims.SimulatedFlux;
 import jhs.lc.sims.SimulatedFluxSource;
-import jhs.math.util.MathUtil;
 
 public class Solution implements java.io.Serializable {
 	private static final long serialVersionUID = 2L;

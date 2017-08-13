@@ -1,0 +1,26 @@
+{
+	"orbitRadius": 300.0,
+	"orbitPeriod": 200.0,
+	"inclineAngle": 0,
+	"startTime": -10.0,
+	"endTime": 4.0,
+	"numSteps": 150,
+	"widthPixels": 200,
+	"heightPixels": 200,
+	"noiseFraction": 0.0002,
+	"transitShape": {
+		"type": "code",
+		"className": "GradientRingPlanet",
+		"properties": {
+			"planetRadius": 0.2,
+			"impactParameter": 0.7,
+			"ringInnerRadius": 0.3,
+			"ringOuterRadius": 100.0,
+			"tilt": 0.12,
+			"obliquity": 0.07,
+			"halfOpacityRadius": 2.0,
+			"maxRingOpacity": 0.7,
+			"decayType": "monod"
+		}		
+	}
+}

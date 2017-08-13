@@ -1,30 +1,22 @@
 package jhs.lc.opt;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import jhs.math.clustering.KMeansClusteringProducer;
-import jhs.math.clustering.VectorialCluster;
-import jhs.math.clustering.VectorialClusteringResults;
+import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.optimization.RealPointValuePair;
+
 import jhs.math.common.ItemUtil;
 import jhs.math.common.VectorialItem;
 import jhs.math.util.ArrayUtil;
 import jhs.math.util.ComparableValueHolder;
 import jhs.math.util.ListUtil;
 import jhs.math.util.MathUtil;
-
-import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.analysis.MultivariateRealFunction;
-import org.apache.commons.math.optimization.RealPointValuePair;
 
 public class DiversifiedParticleSwarmOptimizer {
 	private static final Logger logger = Logger.getLogger(DiversifiedParticleSwarmOptimizer.class.getName());
@@ -34,10 +26,10 @@ public class DiversifiedParticleSwarmOptimizer {
 	private int maxIterations = 200;
 	private double convergeDistance = 0.0001;
 	
-	private double omega = 0.2;
-	private double phi = +2.0;
+	private double omega = 0.1;
+	private double phi = 1.63;
 	
-	private double weightDecayHalfFraction = 0.20;
+	private double weightDecayHalfFraction = 0.10;
  	private double initialVelocitySd = 2.0;
 	
 	public DiversifiedParticleSwarmOptimizer(Random random, int populationSize) {
@@ -182,11 +174,12 @@ public class DiversifiedParticleSwarmOptimizer {
 		double phi = this.phi;
 		Particle suitablePeer = this.pickParticle(particles, weights);
 		double[] suitableDirection = MathUtil.subtract(suitablePeer.bestPosition.parameters, particle.currentPosition.parameters);
+		double dirSign = suitablePeer.bestPosition.getValue() < particle.currentPosition.getValue() ? +1 : -1;
 		double[] oldVelocity = particle.velocity;
 		double[] newVelocity = new double[oldVelocity.length];
 		for(int d = 0; d < newVelocity.length; d++) {
 			double rp = r.nextDouble();
-			newVelocity[d] = omega * oldVelocity[d] + phi * rp * suitableDirection[d];
+			newVelocity[d] = omega * oldVelocity[d] + phi * rp * suitableDirection[d] * dirSign;
 		}
 		particle.velocity = newVelocity;
 	}
