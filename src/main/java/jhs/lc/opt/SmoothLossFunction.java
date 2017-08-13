@@ -8,7 +8,7 @@ public class SmoothLossFunction extends AbstractLossFunction {
 	private final double[] smoothTargetFluxArray;
 	
 	public SmoothLossFunction(SolutionSampler sampler, double[] fluxArray, double sdFraction) {
-		super(sampler, 0);
+		super(sampler, 0, fluxArray);
 		double xSD = sdFraction * fluxArray.length;
 		this.smoother = new GaussianSmoother(xSD, 0.001);
 		this.smoothTargetFluxArray = this.smoother.smooth(fluxArray);

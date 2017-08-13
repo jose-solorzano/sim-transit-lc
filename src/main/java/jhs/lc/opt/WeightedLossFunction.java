@@ -2,14 +2,13 @@ package jhs.lc.opt;
 
 import jhs.lc.data.LightCurve;
 import jhs.math.util.MathUtil;
-import org.apache.commons.math.FunctionEvaluationException;
 
 public class WeightedLossFunction extends AbstractLossFunction {
 	private final double[] targetFluxArray;
 	private final double[] weights;
 	
 	public WeightedLossFunction(SolutionSampler sampler, double[] targetFluxArray, WeightType weightType, double wlf) {
-		super(sampler, 1.0);
+		super(sampler, 1.0, targetFluxArray);
 		this.targetFluxArray = targetFluxArray;
 		switch(weightType) {
 		case TREND:

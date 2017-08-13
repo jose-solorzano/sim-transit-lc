@@ -1,6 +1,5 @@
 package jhs.lc.opt;
 
-import jhs.math.smoothing.GaussianSmoother;
 import jhs.math.util.MathUtil;
 
 public class PlainLossFunction extends AbstractLossFunction {
@@ -9,7 +8,7 @@ public class PlainLossFunction extends AbstractLossFunction {
 	private final double variance;
 	
 	public PlainLossFunction(SolutionSampler sampler, double[] fluxArray) {
-		super(sampler, 1.0);
+		super(sampler, 1.0, fluxArray);
 		this.targetFluxArray = fluxArray;
 		this.variance = MathUtil.variance(fluxArray);
 	}

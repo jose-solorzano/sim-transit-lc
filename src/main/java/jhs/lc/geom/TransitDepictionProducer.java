@@ -2,6 +2,7 @@ package jhs.lc.geom;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
@@ -68,6 +69,7 @@ public class TransitDepictionProducer {
 		double yf = stellarImageRectangle.getHeight() / numRows;
 		Graphics2D g = image.createGraphics();
 		try {
+			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 			g.setColor(Color.WHITE);
 			g.fillRect(0, 0, numColumns, numRows);
 			double diameter = numColumns * 2.0 / stellarImageRectangle.getWidth();

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+projectDir=`dirname $0`/../..
+workDir=${projectDir}/work
+mkdir -p ${workDir}
+
+echo "Simulation of gradient ring planet transit, specified using the GradientRingPlanet opacity function."
+
+${projectDir}/bin/lc-sim -o ${workDir}/sim-gradient-ring.csv -video ${workDir}/sim-gradient-ring.mov ${projectDir}/examples/sim/simspec-gradient-ring.json
