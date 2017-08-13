@@ -56,9 +56,9 @@ import org.apache.commons.math.optimization.RealPointValuePair;
 public class SolveLightCurve extends AbstractTool {
 	private static final Logger logger = Logger.getLogger(SolveLightCurve.class.getName());
 	
-	private static final int DEF_MAX_WP_ITERATIONS = 0;
+	private static final int DEF_MAX_WP_ITERATIONS = 50;
 	private static final int DEF_MAX_ITERATIONS = 300;
-	private static final int DEF_MAX_CONS_ITERATIONS = 50;
+	private static final int DEF_MAX_CONS_ITERATIONS = 0;
 	private static final int DEF_MAX_AGD_ITERATIONS = 50;	
 	private static final int DEF_POP_SIZE = 100;
 	private static final int DEF_TEST_DEPICT_NUM_PIXELS = 40000;
@@ -413,7 +413,7 @@ public class SolveLightCurve extends AbstractTool {
 				.create("noi");
 		Option nwiOption = OptionBuilder.withArgName("n")
 				.hasArg()
-				.withDescription("Sets the number of warmup iterations/steps used for sizing candidates. Default is " + DEF_MAX_WP_ITERATIONS + ".")
+				.withDescription("Sets the number of warmup iterations/steps used to produce initial shapes. Default is " + DEF_MAX_WP_ITERATIONS + ".")
 				.create("nwi");
 		Option npcOption = OptionBuilder.withArgName("n")
 				.hasArg()
