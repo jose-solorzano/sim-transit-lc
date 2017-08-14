@@ -44,4 +44,5 @@ Scripts are provided under `examples/bin` that execute a number of example runs.
 
 #### Tutorials
 
-None yet.
+- [Modeling D792 as a Ringed Planet](http://www.science20.com/jose_solorzano/kic_8462852_modeling_d792_as_a_ringed_planet_with_simtransitlc-225246)
+
