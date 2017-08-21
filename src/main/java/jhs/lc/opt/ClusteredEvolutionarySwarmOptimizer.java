@@ -40,7 +40,7 @@ public class ClusteredEvolutionarySwarmOptimizer {
 	private int maxConsolidationIterations = 50;
 
 	private int maxClusterAlgoSteps = 3;
-	private int numParticlesPerCluster = 2;
+	private int numParticlesPerCluster = 1;
 
 	private double phi = 2.01;
 	private double omega = 0.1;
@@ -52,6 +52,8 @@ public class ClusteredEvolutionarySwarmOptimizer {
 	
 	private double fitnessWeightDecayHalfFraction = 0.25;
 	private double distanceWeightDecayHalfFraction = 1.00;
+	
+	private double startSD = 2.0; //TODO testing
 			
 	public ClusteredEvolutionarySwarmOptimizer(Random random, int populationSize) {
 		this.random = random;
@@ -200,8 +202,10 @@ public class ClusteredEvolutionarySwarmOptimizer {
 			List<Particle> newParticles = this.produceNewParticles(workingSet.toArray(new Particle[workingSet.size()]), errorFunction, fitnessWeights, distanceWeights);
 			if(!consolidationPhase) {
 				List<Particle> wsWithoutOutliers = this.removeErrorOutliers(workingSet);
+				//List<Particle> wsWithoutOutliers = this.extractBestWithClustering(n * 3 / 4, workingSet, 1);
 				List<Particle> clusteringSet = ListUtil.concat(wsWithoutOutliers, newParticles);
 				workingSet = this.extractBestWithClusteringDistance(n, clusteringSet);
+				//workingSet = this.extractBestWithClustering(n, clusteringSet, this.numParticlesPerCluster);
 			}
 			else {
 				workingSet = this.extractBest(n, ListUtil.concat(workingSet, newParticles));
@@ -552,9 +556,10 @@ public class ClusteredEvolutionarySwarmOptimizer {
 		if(logger.isLoggable(Level.INFO)) {
 			logger.info("Creating initial pool of " + poolSize + " particles.");
 		}
+		double ssd = this.startSD;
 		List<Particle> pool = new ArrayList<>();		
 		for(int i = 0; i < poolSize; i++) {
-			double[] params = MathUtil.sampleUniformSymmetric(r, 1.0, vectorLength);
+			double[] params = MathUtil.sampleUniformSymmetric(r, ssd, vectorLength);
 			ClusteredParamEvaluation eval = errorFunction.evaluate(params);
 			pool.add(new Particle(params, eval.getClusteringPosition(), eval.getError()));
 		}

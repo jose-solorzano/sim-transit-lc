@@ -146,7 +146,8 @@ public class LightCurveFitter {
 	}
 	
 	private AbstractLossFunction getDefaultLossFunction(double[] fluxArray) {
-		return new PrimaryLossFunction(sampler, fluxArray, 1, 0, 1);
+		//return new PrimaryLossFunction(sampler, fluxArray, 1, 0, 1);
+		return new FlexibleLossFunction(sampler, fluxArray, 0.50, 0.90);
 	}
 
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
