@@ -439,12 +439,10 @@ public class SolveLightCurve extends AbstractTool {
 				.hasArg()
 				.withDescription("Sets the video duration in seconds. Default is " + DEF_VIDEO_DURATION + ".")
 				.create("vd");
-		/*
 		Option owpzOption = OptionBuilder.withArgName("zip-file")
 				.hasArg()
 				.withDescription("Sets the path of the ZIP file where post-warm-up model depictions are written. This is used in troubleshooting and optimizer analysis.")
 				.create("owpz");
-		*/
 		Option oczOption = OptionBuilder.withArgName("zip-file")
 				.hasArg()
 				.withDescription("Sets the path of the ZIP file where post-clustering model depictions are written. This is used in troubleshooting and optimizer analysis.")
@@ -468,7 +466,7 @@ public class SolveLightCurve extends AbstractTool {
 		options.addOption(popOption);
 		options.addOption(angOption);		
 		options.addOption(videoDurationOption);
-		//options.addOption(owpzOption);
+		options.addOption(owpzOption);
 		options.addOption(oczOption);
 
 		return options;

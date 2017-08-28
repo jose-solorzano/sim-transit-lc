@@ -147,7 +147,7 @@ public class LightCurveFitter {
 	
 	private AbstractLossFunction getDefaultLossFunction(double[] fluxArray) {
 		//return new PrimaryLossFunction(sampler, fluxArray, 1, 0, 1);
-		return new FlexibleLossFunction(sampler, fluxArray, 0.50, 0.90);
+		return new FlexibleLossFunction(sampler, fluxArray, 0.50, 0.50);
 	}
 
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
@@ -220,6 +220,11 @@ public class LightCurveFitter {
 			protected void informEndOfClusteringPhase(List<RealPointValuePair> pointValues) {
 				LightCurveFitter.this.informEndOfClusteringPhase(sampler, pointValues);
 			}						
+			
+			@Override
+			protected void informEndOfWarmUpPhase(List<RealPointValuePair> pointValues) {
+				LightCurveFitter.this.informEndOfWarmUpPhase(sampler, pointValues);
+			}
 		};
 		optimizer.setInitialPoolSize(this.initialPoolSize);
 		optimizer.setConvergeDistance(this.convergeDistance);

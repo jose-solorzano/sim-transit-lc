@@ -45,16 +45,18 @@ public class ClusteredEvolutionarySwarmOptimizer {
 	private double phi = 2.01;
 	private double omega = 0.1;
 
-	private int maxSubspaceSize = 50;
+	private int maxSubspaceSize = 6;
 	
 	private double convergeDistance = 0.0001;
-	private double outlierErrorSDFactor = 1.0;
+	private double outlierErrorSDFactor = 0.5;
 	
 	private double fitnessWeightDecayHalfFraction = 0.25;
-	private double distanceWeightDecayHalfFraction = 1.00;
+	private double distanceWeightDecayHalfFraction = 0.10;
 	
-	private double startSD = 2.0; //TODO testing
-			
+	private double startSD = 1.5;
+	private double phiWarmup = -0.01;
+	private double omegaWarmup = 0.05;
+	
 	public ClusteredEvolutionarySwarmOptimizer(Random random, int populationSize) {
 		this.random = random;
 		this.populationSize = populationSize;
@@ -165,9 +167,10 @@ public class ClusteredEvolutionarySwarmOptimizer {
 		int n = this.populationSize;
 		double[] fitnessWeights = this.createGlobalWeights(n, this.fitnessWeightDecayHalfFraction);
 		double[] distanceWeights = this.createGlobalWeights(n, this.distanceWeightDecayHalfFraction);
-		Phase phase = Phase.CLUSTERING;
 		ClusteredEvaluator errorFunction = alternatingErrorFunctions.length > 0 ? alternatingErrorFunctions[0] : finalErrorFunction;
 		List<Particle> workingSet = this.createInitialWorkingSet(n, vectorLength, errorFunction);
+		this.informEndOfWarmUpPhase(ListUtil.map(workingSet, p -> p.getPointValuePair()));
+		Phase phase = Phase.CLUSTERING;
 		int maxIterationsWithClustering = this.maxIterationsWithClustering;
 		int maxConsolidationIterations = this.maxConsolidationIterations;
 		int currentAltFunctionIndex = -1;
@@ -245,7 +248,10 @@ public class ClusteredEvolutionarySwarmOptimizer {
 		}
 		return this.getBestPoint(workingSet);
 	}	
-	
+
+	protected void informEndOfWarmUpPhase(List<RealPointValuePair> pointValues) {
+	}
+
 	protected void informEndOfClusteringPhase(List<RealPointValuePair> pointValues) {
 	}
 
@@ -420,29 +426,19 @@ public class ClusteredEvolutionarySwarmOptimizer {
 	}
 	
 	private double[] getParticleWeights(Particle particle, Particle[] particles, double[] fitnessWeights, double[] distanceWeights, int[] subspace) {
-		double[] pivotParams = particle.parameters;
-		int[] ranks = ArrayUtil.ranks(particles, p -> MathUtil.euclideanDistanceSquared(p.parameters, pivotParams));
+		double[] pivotPoint = particle.parameters;
+		int[] ranks = ArrayUtil.ranks(particles, p -> distanceMetric(p.parameters, pivotPoint, subspace));
 		int length = fitnessWeights.length;
 		double[] weights = new double[length];
-		double minDistance = Double.POSITIVE_INFINITY;
-		int minDistanceIndex = -1;
 		for(int i = 0; i < length; i++) {
 			Particle p = particles[i];
 			if(p != particle) {
 				weights[i] = fitnessWeights[i] * distanceWeights[ranks[i]];
-				double d = this.distanceMetric(p.parameters, particle.parameters, subspace);
-				if(d < minDistance) {
-					minDistance = d;
-					minDistanceIndex = i;
-				}
 			}
-		}
-		if(minDistanceIndex == -1) {
-			throw new IllegalStateException();
 		}
 		return weights;
 	}
-	
+
 	private double distanceMetric(double[] point1, double[] point2, int[] subspace) {
 		double sum = 0;
 		for(int si = 0; si < subspace.length; si++) {
@@ -494,28 +490,127 @@ public class ClusteredEvolutionarySwarmOptimizer {
 	}
 
 	private List<Particle> createInitialWorkingSet(int n, int vectorLength, ClusteredEvaluator errorFunction) throws MathException {
-		Random r = this.random;
 		List<Particle> startList = this.createRandomStarts(n, vectorLength, errorFunction);
-		List<ParticleStart> startWorkingSet = new ArrayList<ParticleStart>(ListUtil.map(startList, s -> createStartParticle(s, s, startList)));
+		List<ParticleStart> workingSet = new ArrayList<ParticleStart>(ListUtil.map(startList, s -> createStartParticle2(s, s, startList)));
 		int ni = this.maxStartIterations;
 		for(int i = 0; i < ni; i++) {
-			for(int j = 0; j < n; j++) {
-				ParticleStart currentStart = startWorkingSet.get(j);
-				int refIndex;
-				do {
-					refIndex = Math.abs(r.nextInt() % n);
-				} while(refIndex == j);
-				ParticleStart refStart = startWorkingSet.get(refIndex);
-				ParticleStart newStart = this.newStart(currentStart, refStart, startWorkingSet, errorFunction);
-				if(newStart.minDistanceToOthers > currentStart.minDistanceToOthers && newStart.getValue() < currentStart.getValue()) {
-					startWorkingSet.set(j, newStart);
-				}
-			}
-			RealPointValuePair pointValue = this.getBestPointFromPS(startWorkingSet);
+			workingSet = this.updateInitialWorkingSet(n, vectorLength, workingSet, errorFunction);
+			RealPointValuePair pointValue = this.getBestPointFromPS(workingSet);
 			this.informProgress(Phase.WARMUP, i, pointValue);
 		}
-		return ListUtil.map(startWorkingSet, ParticleStart::getParticle);
+		return ListUtil.map(workingSet, ParticleStart::getParticle);
 	}
+
+	private List<ParticleStart> updateInitialWorkingSet(int n, int vectorLength, List<ParticleStart> workingSet, ClusteredEvaluator errorFunction) throws FunctionEvaluationException {
+		for(int j = 0; j < n; j++) {
+			ParticleStart currentStart = workingSet.get(j);
+			ParticleStart candidateStart  = this.newCandidateStart(vectorLength, currentStart, j, workingSet, errorFunction);
+			if(candidateStart.getValue() < currentStart.getValue()) {
+				workingSet.set(j, candidateStart);
+			}
+		}
+		return workingSet;		
+	}
+	
+	private ParticleStart newCandidateStart(int vectorLength, ParticleStart oldStart, int oldStartIndex, List<ParticleStart> workingSet, ClusteredEvaluator errorFunction) throws FunctionEvaluationException {
+		int[] subspace = this.createSubspace(vectorLength);
+		Particle particle1 = oldStart.particle;
+		double[] directionVector = this.startDirectionVector(vectorLength, oldStart, workingSet);
+		//Particle particle3 = this.randomParticle(workingSet, oldStartIndex);
+		Random r = this.random;
+		double phi = this.phiWarmup;
+		double omega = this.omegaWarmup;
+		double[] point1 = particle1.parameters;
+		//double[] point3 = particle3.parameters;
+		double[] newParams = Arrays.copyOf(point1, point1.length);
+		for(int si = 0; si < subspace.length; si++) {
+			int i = subspace[si];
+			double g = r.nextGaussian();
+			//double x = point1[i];
+			//x += (point3[i] - x) * g * omega;
+			double f = r.nextDouble();
+			double dv = directionVector[i];
+			newParams[i] =  point1[i] + dv * (g * omega + f * phi);
+		}
+		ClusteredParamEvaluation eval = errorFunction.evaluate(newParams);
+		Particle newParticle = new Particle(newParams, eval.getClusteringPosition(), eval.getError());
+		return this.createStartParticle(newParticle, newParticle, workingSet);
+	}
+	
+	private double[] startDirectionVector(int vectorLength, ParticleStart oldStart, List<ParticleStart> workingSet) {
+		Particle oldStartParticle = oldStart.particle;
+		double[] oldStartCP = oldStartParticle.clusteringPosition;
+		double[] oldStartParams = oldStartParticle.parameters;
+		//double[] dv = new double[vectorLength];
+		double[] dvz = null;
+		int dvzCount = 0;
+		double[] minParams = null;
+		double minDistance = Double.POSITIVE_INFINITY;
+		//double weightSum = 0;
+		for(ParticleStart ps : workingSet) {
+			Particle psp = ps.particle;
+			if(psp != oldStartParticle) {
+				double cd = MathUtil.euclideanDistanceSquared(psp.clusteringPosition, oldStartCP);
+				double[] direction = MathUtil.subtract(psp.parameters, oldStartParams);
+				if(cd == 0) {
+					if(dvz == null) {
+						dvz = new double[vectorLength];
+					}
+					MathUtil.addInPlace(dvz, direction);
+					dvzCount++;
+				}
+				else {
+					//double weight = 1.0 / cd;
+					//MathUtil.addInPlace(dv, MathUtil.multiply(direction, weight));
+					//weightSum += weight;
+					if(cd < minDistance) {
+						minDistance = cd;
+						minParams = psp.parameters;
+					}
+				}
+			}
+		}
+		if(dvzCount > 0) {
+			MathUtil.divideInPlace(dvz, dvzCount);
+			return dvz;
+		}
+		else {
+			//if(weightSum != 0) {
+			//	MathUtil.divideInPlace(dv, weightSum);
+			//}
+			//return dv;
+			return MathUtil.subtract(minParams, oldStartParams);
+		}
+	}
+	
+	private Particle randomParticle(List<ParticleStart> workingSet, int exceptIndex) {
+		int n = workingSet.size();
+		Random r = this.random;
+		int refIndex;
+		do {
+			refIndex = Math.abs(r.nextInt() % n);
+		} while(refIndex == exceptIndex);
+		return workingSet.get(refIndex).particle;
+	}
+
+	/*
+	private List<ParticleStart> updateInitialWorkingSet(int n, List<ParticleStart> workingSet, ClusteredEvaluator errorFunction) throws FunctionEvaluationException {
+		Random r = this.random;
+		for(int j = 0; j < n; j++) {
+			ParticleStart currentStart = workingSet.get(j);
+			int refIndex;
+			do {
+				refIndex = Math.abs(r.nextInt() % n);
+			} while(refIndex == j);
+			ParticleStart refStart = workingSet.get(refIndex);
+			ParticleStart newStart = this.newStart(currentStart, refStart, workingSet, errorFunction);
+			if(newStart.minDistanceToOthers > currentStart.minDistanceToOthers && newStart.getValue() < currentStart.getValue()) {
+				workingSet.set(j, newStart);
+			}
+		}
+		return workingSet;
+	}
+	*/
 	
 	private ParticleStart newStart(ParticleStart priorStart, ParticleStart refStart, List<ParticleStart> startWorkingSet, ClusteredEvaluator errorFunction) throws FunctionEvaluationException {
 		double[] priorParams = priorStart.particle.parameters;
@@ -529,16 +624,16 @@ public class ClusteredEvolutionarySwarmOptimizer {
 		}
 		ClusteredParamEvaluation eval = errorFunction.evaluate(newParams);
 		Particle newParticle = new Particle(newParams, eval.getClusteringPosition(), eval.getError());
-		List<Particle> particleWorkingSet = ListUtil.map(startWorkingSet, ParticleStart::getParticle);
-		return this.createStartParticle(newParticle, priorStart.particle, particleWorkingSet);
+		return this.createStartParticle(newParticle, priorStart.particle, startWorkingSet);
 	}
 	
-	private ParticleStart createStartParticle(Particle particle, Particle except, List<Particle> others) {
+	private ParticleStart createStartParticle(Particle particle, Particle except, List<ParticleStart> others) {
 		double[] pivotPos = particle.clusteringPosition;
 		double minDistance = Double.POSITIVE_INFINITY;
-		for(Particle op : others) {
-			if(op != except) {
-				double d = MathUtil.euclideanDistanceSquared(op.clusteringPosition, pivotPos);
+		for(ParticleStart op : others) {
+			Particle opp = op.particle;
+			if(opp != except) {
+				double d = MathUtil.euclideanDistanceSquared(opp.clusteringPosition, pivotPos);
 				if(d < minDistance) {
 					minDistance = d;
 				}
@@ -546,7 +641,21 @@ public class ClusteredEvolutionarySwarmOptimizer {
 		}
 		return new ParticleStart(minDistance, particle);
 	}
-	
+
+	private ParticleStart createStartParticle2(Particle particle, Particle except, List<Particle> others) {
+		double[] pivotPos = particle.clusteringPosition;
+		double minDistance = Double.POSITIVE_INFINITY;
+		for(Particle opp : others) {
+			if(opp != except) {
+				double d = MathUtil.euclideanDistanceSquared(opp.clusteringPosition, pivotPos);
+				if(d < minDistance) {
+					minDistance = d;
+				}
+			}
+		}
+		return new ParticleStart(minDistance, particle);
+	}
+
 	private List<Particle> createRandomStarts(int n, int vectorLength, ClusteredEvaluator errorFunction) throws MathException {
 		Random r = this.random;
 		int poolSize = this.initialPoolSize;
