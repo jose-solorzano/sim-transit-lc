@@ -54,9 +54,7 @@ public class ClusteredEvolutionarySwarmOptimizer {
 	private double distanceWeightDecayHalfFraction = 0.50;
 	
 	private double startSD = 1.5;
-	//private double phiWarmup = -0.03;
 	private double omegaWarmup = 0.01;
-	//private double warmUpDistanceWeightDecayHalfFraction = 0.03;
 	
 	public ClusteredEvolutionarySwarmOptimizer(Random random, int populationSize) {
 		this.random = random;

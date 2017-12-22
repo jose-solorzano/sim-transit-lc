@@ -21,6 +21,7 @@ public class ApproximateGradientDescentOptimizer {
 	private double initialGradientFactor = 0.1;
 	private double gfAlpha = 0.2;
 	private double searchFactor = 2.0;
+	private double numPointsFactor = 2.0;
 	
 	private RealConvergenceChecker convergenceChecker = new GradientReductionConvergenceChecker(0.1, 0.003);
 	
@@ -173,16 +174,16 @@ public class ApproximateGradientDescentOptimizer {
 
 	public final double[] gradient(RealPointValuePair pointValue, MultivariateRealFunction errorFunction, double[] epsilon) throws FunctionEvaluationException {
 		int numParams = pointValue.getPointRef().length;
-		int numPoints = (int) Math.ceil((1 + Math.sqrt(1 + 8 * numParams)) / 2); 
+		int numPoints = (int) Math.ceil(this.numPointsFactor * (1 + Math.sqrt(1 + 8 * numParams)) / 2); 
 		RealPointValuePair[] pointValues = new RealPointValuePair[numPoints];
 		pointValues[0] = pointValue;
 		for(int i = 1; i < numPoints; i++) {
 			pointValues[i] = this.smallDisplacement(pointValue, errorFunction, epsilon);
 		}
-		return this.gradient(numParams, pointValues, pointValue.getPointRef().length);
+		return this.gradient(numParams, pointValues);
 	}
 	
-	private double[] gradient(int numParams, RealPointValuePair[] pointValues, int numParameters) {
+	private double[] gradient(int numParams, RealPointValuePair[] pointValues) {
 		int count = 0;
 		double[] vectorSum = ArrayUtil.repeat(0.0, numParams);
 		for(int i = 0; i < pointValues.length; i++) {
@@ -195,9 +196,21 @@ public class ApproximateGradientDescentOptimizer {
 		if(count < numParams) {
 			throw new IllegalStateException();
 		}
+		MathUtil.divideInPlace(vectorSum, (double) count / numParams);
 		return vectorSum;
 	}
-	
+
+	private double[] fallbackGradient(int numParams, RealPointValuePair pointValue, RealPointValuePair[] pointValues) {
+		RealPointValuePair minPv = MathUtil.min(pointValues, pv -> pv.getValue());
+		if(minPv.getValue() > pointValue.getValue()) {
+			RealPointValuePair maxPv = MathUtil.max(pointValues, pv -> pv.getValue());
+			return this.gradientVector(maxPv, pointValue);			
+		}
+		else {
+			return this.gradientVector(minPv, pointValue);
+		}
+	}
+
 	private double[] gradientVector(RealPointValuePair pointValue1, RealPointValuePair pointValue2) {
 		double errorDiff = pointValue2.getValue() - pointValue1.getValue();
 		double[] diffVector = MathUtil.subtract(pointValue2.getPointRef(), pointValue1.getPointRef());

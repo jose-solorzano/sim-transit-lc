@@ -9,6 +9,7 @@ import org.apache.commons.math.optimization.RealPointValuePair;
 
 import jhs.lc.data.LightCurve;
 import jhs.lc.data.LightCurvePoint;
+import jhs.lc.opt.ClusteredGridSearchOptimizer.Phase;
 import jhs.math.util.MathUtil;
 
 public class LightCurveFitter {	
@@ -138,20 +139,12 @@ public class LightCurveFitter {
 	}
 
 	public Solution optimizeStandardErrorCS(double[] fluxArray) throws MathException {
-		//ClusteredEvaluator lfWarmUp = new SizingLossFunction(sampler, fluxArray);
-		ClusteredEvaluator lfFinal = this.getDefaultLossFunction(fluxArray);
-		//return this.optimizeCircuitSearch(lfWarmUp, lfFinal);
-		//return this.optimizeWithDPSO(lfFinal);
-		return this.optimizeCESO(lfFinal);
+		ClusteredEvaluator lfFinal = new FlexibleLossFunction(sampler, fluxArray, 0.50, 0.50);
+		return this.optimizeCGSO(lfFinal);
 	}
 	
-	private AbstractLossFunction getDefaultLossFunction(double[] fluxArray) {
-		//return new PrimaryLossFunction(sampler, fluxArray, 1, 0, 1);
-		return new FlexibleLossFunction(sampler, fluxArray, 0.50, 0.25);
-	}
-
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
-		MultivariateRealFunction errorFunction = this.getDefaultLossFunction(fluxArray);
+		MultivariateRealFunction errorFunction = new FlexibleLossFunction(sampler, fluxArray, 0.25, 0.25);
 		return this.optimizeAGD(fluxArray, initialSolution, errorFunction, maxIterations);
 	}
 
@@ -207,9 +200,10 @@ public class LightCurveFitter {
 		return solution;
 	}
 
-	public Solution optimizeCESO(ClusteredEvaluator finalErrorFunction, ClusteredEvaluator ... alternatingErrorFunctions) throws MathException {
+	public Solution optimizeCGSO(ClusteredEvaluator finalErrorFunction, ClusteredEvaluator ... alternatingErrorFunctions) throws MathException {
 		SolutionSampler sampler = this.sampler;
 		Random random = sampler.getRandom();
+		/*
 		ClusteredEvolutionarySwarmOptimizer optimizer = new ClusteredEvolutionarySwarmOptimizer(random, this.populationSize) {
 			@Override
 			protected void informProgress(Phase phase, int iteration, RealPointValuePair pointValue) {
@@ -231,8 +225,21 @@ public class LightCurveFitter {
 		optimizer.setMaxConsolidationIterations(this.maxExtraCSIterations);
 		optimizer.setMaxIterationsWithClustering(this.maxCSIterationsWithClustering);
 		optimizer.setMaxStartIterations(this.maxCSWarmUpIterations);
+		*/
+		
+		int numClusters = 10; //TODO configurable
+		int numParticlesPerCluster = (int) Math.round(this.populationSize / numClusters);
+		ClusteredGridSearchOptimizer optimizer = new ClusteredGridSearchOptimizer(random, numClusters, numParticlesPerCluster) {
+			@Override
+			protected void informProgress(Phase phase, int iteration, RealPointValuePair pointValue) {
+				LightCurveFitter.this.informProgress("cgso-" + phase.name().toLowerCase(), iteration, pointValue.getValue());
+			}			
+		};
+		
+		optimizer.setMaxIterations(this.maxCSIterationsWithClustering); //TODO configurable
+		
 		int vectorLength = sampler.getNumParameters();
-		RealPointValuePair result = optimizer.optimize(vectorLength, finalErrorFunction, alternatingErrorFunctions);
+		RealPointValuePair result = optimizer.optimize(vectorLength, finalErrorFunction);
 
 		Solution solution = sampler.parametersAsSolution(result.getPointRef());
 

@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Function;
 
 import jhs.math.regression.linear.WeightedLinearRegression;
 
@@ -1138,6 +1139,25 @@ public class MathUtil {
 		return max;		
 	}
 
+	public static <T> T max(T[] data, Function<T,Double> mapper) {
+		double maxValue = Double.NEGATIVE_INFINITY;
+		T max = null;
+		for(int i = 0; i < data.length; i++) {
+			T entry = data[i];
+			if(i == 0) {
+				max = entry;
+			}
+			else {
+				double value = mapper.apply(entry);
+				if(value > maxValue) {
+					maxValue = value;
+					max = entry;
+				}
+			}
+		}
+		return max;				
+	}
+
 	public static double min(double ... data) {
 		double min = Double.POSITIVE_INFINITY;
 		for(int i = 0; i < data.length; i++) {
@@ -1198,6 +1218,25 @@ public class MathUtil {
 			}
 		}
 		return min;		
+	}
+	
+	public static <T> T min(T[] data, Function<T,Double> mapper) {
+		double minValue = Double.POSITIVE_INFINITY;
+		T min = null;
+		for(int i = 0; i < data.length; i++) {
+			T entry = data[i];
+			if(i == 0) {
+				min = entry;
+			}
+			else {
+				double value = mapper.apply(entry);
+				if(value < minValue) {
+					minValue = value;
+					min = entry;
+				}
+			}
+		}
+		return min;				
 	}
 
 	public static double[] add(double[] data1, double[] data2) {
