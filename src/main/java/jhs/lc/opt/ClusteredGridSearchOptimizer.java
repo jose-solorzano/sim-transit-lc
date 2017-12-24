@@ -39,8 +39,11 @@ public class ClusteredGridSearchOptimizer {
 
 	private double convergeDistance = 0.0001;
 		
-	private double startSD = 0.75;
-	private double boundsIterativeFactor = 0.993;
+	private double startRange = 2.0;
+	private double initialSamplingSD = 0.75;
+	private int numInitialTestPoints = 20;
+	
+	private double boundsIterativeFactor = 0.992;
 	private int maxSubspaceSize = 4;
 	
 	private int maxAgdIterations = 3;
@@ -82,7 +85,7 @@ public class ClusteredGridSearchOptimizer {
 		int maxI = this.maxIterations;
 		double factor = this.boundsIterativeFactor;
 		List<Particle> clusterParticles = this.createInitialClusterParticles(nc, vectorLength, errorFunction);
-		double boundsSd = this.startSD;
+		double boundsSd = this.initialSamplingSD;
 		for(int i = 0; i < maxI; i++) {
 			List<Particle> particles = this.populateParticlesAroundClusters(clusterParticles, nppc - 1, boundsSd, vectorLength, errorFunction);
 			if(particles.size() != n) {
@@ -174,14 +177,30 @@ public class ClusteredGridSearchOptimizer {
 	
 	private List<Particle> createInitialClusterParticles(int numClusters, int vectorLength, ClusteredEvaluator errorFunction) throws FunctionEvaluationException {
 		Random r = this.random;
-		double ssd = this.startSD;
+		double ssd = this.startRange;
+		int numTrials = this.numInitialTestPoints;
 		List<Particle> pool = new ArrayList<>();		
 		for(int i = 0; i < numClusters; i++) {
-			double[] params = MathUtil.sampleUniformSymmetric(r, ssd, vectorLength);
-			ClusteredParamEvaluation eval = errorFunction.evaluate(params);
-			pool.add(new Particle(params, eval.getClusteringPosition(), eval.getError()));
+			double[] direction = MathUtil.sampleUniformSymmetric(r, ssd, vectorLength);
+			pool.add(this.selectInitialParticle(direction, errorFunction, numTrials));
 		}
 		return pool;
+	}
+	
+	private Particle selectInitialParticle(double[] direction, ClusteredEvaluator errorFunction, int numTrials) throws FunctionEvaluationException {
+		Random r = this.random;
+		Particle result = null;
+		for(int i = 0; i < numTrials; i++) {
+			double[] params = MathUtil.multiply(direction, r.nextDouble());
+			ClusteredParamEvaluation eval = errorFunction.evaluate(params);
+			if(result == null || eval.getError() < result.getValue()) {
+				result = new Particle(params, eval.getClusteringPosition(), eval.getError());
+			}
+		}
+		if(result == null) {
+			throw new IllegalStateException();
+		}
+		return result;
 	}
 	
 	private void populateRandomParticles(List<Particle> pool, Particle refParticle, double sd, int n, int vectorLength, ClusteredEvaluator errorFunction) throws FunctionEvaluationException {
