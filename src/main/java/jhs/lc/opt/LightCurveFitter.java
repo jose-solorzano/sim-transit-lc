@@ -76,7 +76,7 @@ public class LightCurveFitter {
 	}
 	
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
-		MultivariateRealFunction errorFunction = new FlexibleLossFunction(sampler, fluxArray, 0.25, 0.25);
+		MultivariateRealFunction errorFunction = new FlexibleLossFunction(sampler, fluxArray, 0.10, 0.10);
 		return this.optimizeAGD(fluxArray, initialSolution, errorFunction, maxIterations);
 	}
 

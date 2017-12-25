@@ -46,7 +46,7 @@ public class ClusteredGridSearchOptimizer {
 	private double boundsIterativeFactor = 0.992;
 	private int maxSubspaceSize = 4;
 	
-	private int maxAgdIterations = 3;
+	private int maxAgdIterations = 7;
 	
 	public ClusteredGridSearchOptimizer(Random random, int numClusters, int numParticlesPerCluster) {
 		this.random = random;
