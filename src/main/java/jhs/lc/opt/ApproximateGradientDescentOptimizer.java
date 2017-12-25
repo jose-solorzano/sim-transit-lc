@@ -18,9 +18,11 @@ public class ApproximateGradientDescentOptimizer {
 	private final Random random;
 	private int maxIterations = 2000;
 	private int maxSearchIterations = 10;
+	private int maxSubspaceSize = 4;
 	private double initialGradientFactor = 0.1;
 	private double gfAlpha = 0.2;
 	private double searchFactor = 2.0;
+	private double numPointsFactor = 2.0;
 	
 	private RealConvergenceChecker convergenceChecker = new GradientReductionConvergenceChecker(0.1, 0.003);
 	
@@ -31,6 +33,22 @@ public class ApproximateGradientDescentOptimizer {
 		this.random = random;
 	}
 	
+	public final int getMaxSubspaceSize() {
+		return maxSubspaceSize;
+	}
+
+	public final void setMaxSubspaceSize(int maxSubspaceSize) {
+		this.maxSubspaceSize = maxSubspaceSize;
+	}
+
+	public final double getNumPointsFactor() {
+		return numPointsFactor;
+	}
+
+	public final void setNumPointsFactor(double numPointsFactor) {
+		this.numPointsFactor = numPointsFactor;
+	}
+
 	public final int getNumEvaluations() {
 		return numEvaluations;
 	}
@@ -132,8 +150,18 @@ public class ApproximateGradientDescentOptimizer {
 	}
 	
 	private AdvanceResults advance(MultivariateRealFunction errorFunction, RealPointValuePair pointValue, double gradientFactor, double[] epsilon) throws FunctionEvaluationException {
-		double[] gradient = this.gradient(pointValue, errorFunction, epsilon);
-		return this.searchInGradient(errorFunction, pointValue, gradient, gradientFactor);
+		int[] subspace = this.createSubspace(epsilon.length);
+		GradientInfo gradientInfo = this.gradient(pointValue, errorFunction, epsilon, subspace);
+		AdvanceResults ar = this.searchInGradient(errorFunction, pointValue, gradientInfo.gradient, gradientFactor);
+		if(ar == null || ar.pointValue.getValue() > pointValue.getValue()) {
+			ar = this.selectBest(gradientInfo.testPointValues, gradientFactor);
+		}
+		return ar;
+	}
+	
+	private AdvanceResults selectBest(RealPointValuePair[] pointValues, double gradientFactor) {
+		RealPointValuePair minPv = MathUtil.min(pointValues, pv -> pv.getValue());
+		return new AdvanceResults(minPv, gradientFactor);
 	}
 	
 	private AdvanceResults searchInGradient(MultivariateRealFunction errorFunction, RealPointValuePair pointValue, double[] gradient, double gradientFactor) throws FunctionEvaluationException {
@@ -171,18 +199,19 @@ public class ApproximateGradientDescentOptimizer {
 		return newParameters;
 	}
 
-	public final double[] gradient(RealPointValuePair pointValue, MultivariateRealFunction errorFunction, double[] epsilon) throws FunctionEvaluationException {
-		int numParams = pointValue.getPointRef().length;
-		int numPoints = (int) Math.ceil((1 + Math.sqrt(1 + 8 * numParams)) / 2); 
+	public final GradientInfo gradient(RealPointValuePair pointValue, MultivariateRealFunction errorFunction, double[] epsilon, int[] subspace) throws FunctionEvaluationException {
+		int numPoints = (int) Math.ceil(this.numPointsFactor * (1 + Math.sqrt(1 + 8 * subspace.length)) / 2); 
 		RealPointValuePair[] pointValues = new RealPointValuePair[numPoints];
 		pointValues[0] = pointValue;
 		for(int i = 1; i < numPoints; i++) {
-			pointValues[i] = this.smallDisplacement(pointValue, errorFunction, epsilon);
+			pointValues[i] = this.smallDisplacement(pointValue, errorFunction, epsilon, subspace);
 		}
-		return this.gradient(numParams, pointValues, pointValue.getPointRef().length);
+		int numParams = epsilon.length;
+		double[] gradient = this.gradient(numParams, pointValues);
+		return new GradientInfo(gradient, pointValues);
 	}
 	
-	private double[] gradient(int numParams, RealPointValuePair[] pointValues, int numParameters) {
+	private double[] gradient(int numParams, RealPointValuePair[] pointValues) {
 		int count = 0;
 		double[] vectorSum = ArrayUtil.repeat(0.0, numParams);
 		for(int i = 0; i < pointValues.length; i++) {
@@ -195,9 +224,10 @@ public class ApproximateGradientDescentOptimizer {
 		if(count < numParams) {
 			throw new IllegalStateException();
 		}
+		MathUtil.divideInPlace(vectorSum, (double) count / numParams);
 		return vectorSum;
 	}
-	
+
 	private double[] gradientVector(RealPointValuePair pointValue1, RealPointValuePair pointValue2) {
 		double errorDiff = pointValue2.getValue() - pointValue1.getValue();
 		double[] diffVector = MathUtil.subtract(pointValue2.getPointRef(), pointValue1.getPointRef());
@@ -210,17 +240,28 @@ public class ApproximateGradientDescentOptimizer {
 		return diffVector;
 	}
 	
-	private RealPointValuePair smallDisplacement(RealPointValuePair point, MultivariateRealFunction errorFunction, double[] epsilon) throws FunctionEvaluationException {
+	private RealPointValuePair smallDisplacement(RealPointValuePair point, MultivariateRealFunction errorFunction, double[] epsilon, int[] subspace) throws FunctionEvaluationException {
+		double factor = 1.0 / Math.sqrt(subspace.length);
 		Random r = this.random;
 		double[] vector = point.getPointRef();
-		int length = vector.length;
-		double[] newVector = new double[length];
-		for(int i = 0; i < length; i++) {
-			newVector[i] = vector[i] + r.nextGaussian() * epsilon[i];
+		double[] newVector = Arrays.copyOf(vector, vector.length);
+		for(int si = 0; si < subspace.length; si++) {
+			int i = subspace[si];
+			newVector[i] = vector[i] + r.nextGaussian() * epsilon[i] * factor;
 		}
 		this.numEvaluations++;
 		double error = errorFunction.value(newVector);
 		return new RealPointValuePair(newVector, error);
+	}
+
+	private int[] createSubspace(int vectorLength) {
+		int[] vars = ArrayUtil.indexIdentity(vectorLength);
+		int maxSS = this.maxSubspaceSize;
+		if(maxSS >= vectorLength) {
+			return vars;
+		}
+		ArrayUtil.shuffle(vars, random);
+		return Arrays.copyOf(vars, maxSS);
 	}
 	
 	private static class AdvanceResults {
@@ -232,6 +273,17 @@ public class ApproximateGradientDescentOptimizer {
 			super();
 			this.pointValue = pointValue;
 			this.recommendedGradientFactor = recommendedGradientFactor;
+		}
+	}
+	
+	private static class GradientInfo {
+		private final double[] gradient;
+		private final RealPointValuePair[] testPointValues;
+		
+		public GradientInfo(double[] gradient, RealPointValuePair[] testPointValues) {
+			super();
+			this.gradient = gradient;
+			this.testPointValues = testPointValues;
 		}
 	}
 }

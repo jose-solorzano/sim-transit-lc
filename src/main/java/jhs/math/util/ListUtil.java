@@ -37,6 +37,21 @@ public class ListUtil {
 		return maxItem;
 	}
 
+	public static <T> int maxIndex(List<T> list, Function<T,Double> evaluator) {
+		double maxValue = Double.NEGATIVE_INFINITY;
+		int maxIndex = -1;
+		int size = list.size();
+		for(int index = 0; index < size; index++) {
+			T item = list.get(index);
+			Double value = evaluator.apply(item);
+			if(value != null && value.doubleValue() > maxValue) {
+				maxValue = value.doubleValue();
+				maxIndex = index;
+			}
+		}
+		return maxIndex;
+	}
+
 	public static <T> T min(List<T> list, Function<T,Double> evaluator) {
 		double minValue = Double.POSITIVE_INFINITY;
 		T minItem = null;

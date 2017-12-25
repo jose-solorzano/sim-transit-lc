@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import jhs.lc.geom.TransitFunction;
+import jhs.math.util.MathUtil;
 
 public final class ImageElementInfo {
 	private static final int CP_BOX_LENGTH = 12;

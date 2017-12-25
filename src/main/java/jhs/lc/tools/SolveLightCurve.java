@@ -56,11 +56,10 @@ import org.apache.commons.math.optimization.RealPointValuePair;
 public class SolveLightCurve extends AbstractTool {
 	private static final Logger logger = Logger.getLogger(SolveLightCurve.class.getName());
 	
-	private static final int DEF_MAX_WP_ITERATIONS = 50;
 	private static final int DEF_MAX_ITERATIONS = 300;
-	private static final int DEF_MAX_CONS_ITERATIONS = 0;
 	private static final int DEF_MAX_AGD_ITERATIONS = 50;	
-	private static final int DEF_POP_SIZE = 100;
+	private static final int DEF_NUM_CLUSTERS = 10;
+	private static final int DEF_NPPC = 10;
 	private static final int DEF_TEST_DEPICT_NUM_PIXELS = 40000;
 	
 	private static final double DEF_VIDEO_DURATION = 60;
@@ -94,21 +93,20 @@ public class SolveLightCurve extends AbstractTool {
 		//logger.info("Transit peak estimated to occur at index " + minIndex + " of the flux sequence, whose length is " + fluxArray.length + ".");
 		LimbDarkeningParams ldParams = optSpec.getLimbDarkeningParams() == null ? LimbDarkeningParams.SUN : new LimbDarkeningParams(optSpec.getLimbDarkeningParams());
 		SolutionSampler sampler = this.getSampler(random, timestamps, fluxArray, ldParams, optSpec, cmdLine, specFile);
-		int populationSize = this.getOptionInt(cmdLine, "pop", DEF_POP_SIZE);
-		int numWarmUpIterations = this.getOptionInt(cmdLine, "nwi", DEF_MAX_WP_ITERATIONS);
+		int numClusters = this.getOptionInt(cmdLine, "nc", DEF_NUM_CLUSTERS);
+		int numParticlesPerCluster = this.getOptionInt(cmdLine, "nppc", DEF_NPPC);
 		int numClusteringIterations = this.getOptionInt(cmdLine, "noi", DEF_MAX_ITERATIONS);
-		int numPostClusteringIterations = this.getOptionInt(cmdLine, "npci", DEF_MAX_CONS_ITERATIONS);
 		int numGradientDescentIterations = this.getOptionInt(cmdLine, "nagd", DEF_MAX_AGD_ITERATIONS);
 		
 		String warmUpDepictionsPath = cmdLine.getOptionValue("owpz");
 		String clusteringDepictionsPath = cmdLine.getOptionValue("ocz");
 		
 		logger.info("Number of optimization parameters: " + sampler.getNumParameters() + ".");
-		logger.info("Population size: " + populationSize + ".");
+		logger.info("Particles per cluster: " + numParticlesPerCluster + ".");
 		logger.info("Max iterations: " + numClusteringIterations + ".");
 		logger.info("Initial orbit radius: " + optSpec.getOrbitRadius());
 		long time1 = System.currentTimeMillis();
-		Solution solution = this.solve(optSpec, lightCurve, sampler, populationSize, numWarmUpIterations, numClusteringIterations, numPostClusteringIterations, numGradientDescentIterations, warmUpDepictionsPath, clusteringDepictionsPath);		
+		Solution solution = this.solve(optSpec, lightCurve, sampler, numClusters, numParticlesPerCluster, numClusteringIterations, numGradientDescentIterations, warmUpDepictionsPath, clusteringDepictionsPath);		
 		long time2 = System.currentTimeMillis();
 		double elapsedSeconds = (time2 - time1) / 1000.0;
 		
@@ -164,8 +162,8 @@ public class SolveLightCurve extends AbstractTool {
         System.out.println("Wrote " + outFile);		
 	}
 		
-	private Solution solve(OptSpec optSpec, LightCurvePoint[] lightCurve, SolutionSampler sampler, int populationSize, int numWarmUpIterations, int numClusteringIterations, int numPostClusteringIterations, int numGradientDescentIterations, String warmUpDepictionsPath, String clusteringDepictionsPath) throws MathException {
-		LightCurveFitter fitter = new LightCurveFitter(sampler, populationSize) {
+	private Solution solve(OptSpec optSpec, LightCurvePoint[] lightCurve, SolutionSampler sampler, int numClusters, int numParticlesPerCluster, int numClusteringIterations, int numGradientDescentIterations, String warmUpDepictionsPath, String clusteringDepictionsPath) throws MathException {
+		LightCurveFitter fitter = new LightCurveFitter(sampler, numClusters, numParticlesPerCluster) {
 			@Override
 			protected void informProgress(String stage, int iteration, double error) {
 				if(logger.isLoggable(Level.INFO)) {
@@ -187,15 +185,8 @@ public class SolveLightCurve extends AbstractTool {
 				}
 			}
 		};
-		// TODO: configure with options
-		fitter.setInitialPoolSize(populationSize);
-		fitter.setCircuitShuffliness(0.1);
-		fitter.setDisplacementFactor(0.04);
-		fitter.setExpansionFactor(2.0);
-		fitter.setMaxCSWarmUpIterations(numWarmUpIterations);
-		fitter.setMaxCSIterationsWithClustering(numClusteringIterations);
-		fitter.setMaxExtraCSIterations(numPostClusteringIterations);
-		fitter.setMaxEliminationIterations(0);
+		
+		fitter.setMaxClusteringIterations(numClusteringIterations);
 		fitter.setMaxGradientDescentIterations(numGradientDescentIterations);
 				
 		Solution solution = fitter.optimize(lightCurve);
@@ -411,22 +402,18 @@ public class SolveLightCurve extends AbstractTool {
 				.hasArg()
 				.withDescription("Sets the number of main optimizer iterations/steps. Default is " + DEF_MAX_ITERATIONS + ".")
 				.create("noi");
-		Option nwiOption = OptionBuilder.withArgName("n")
-				.hasArg()
-				.withDescription("Sets the number of warmup iterations/steps used to produce initial shapes. Default is " + DEF_MAX_WP_ITERATIONS + ".")
-				.create("nwi");
-		Option npcOption = OptionBuilder.withArgName("n")
-				.hasArg()
-				.withDescription("Sets the number of post-clustering (consolidation) iterations/steps. Default is " + DEF_MAX_CONS_ITERATIONS + ".")
-				.create("npci");
 		Option nagdOption = OptionBuilder.withArgName("n")
 				.hasArg()
 				.withDescription("Sets the number of approximate gradient descent (last push) iterations/steps. Default is " + DEF_MAX_AGD_ITERATIONS + ".")
 				.create("nagd");
-		Option popOption = OptionBuilder.withArgName("n")
+		Option ncOption = OptionBuilder.withArgName("n")
 				.hasArg()
-				.withDescription("Sets the optimizer's population size. Default is " + DEF_POP_SIZE + ".")
-				.create("pop");
+				.withDescription("Sets the optimizer's number of clusters. Default is " + DEF_NUM_CLUSTERS + ".")
+				.create("nc");
+		Option nppcOption = OptionBuilder.withArgName("n")
+				.hasArg()
+				.withDescription("Sets the optimizer's population size per cluster. Default is " + DEF_NPPC + ".")
+				.create("nppc");
 		Option logOption = OptionBuilder.withArgName("level")
 				.hasArg()
 				.withDescription("Sets the java.util.logging level.")
@@ -439,12 +426,10 @@ public class SolveLightCurve extends AbstractTool {
 				.hasArg()
 				.withDescription("Sets the video duration in seconds. Default is " + DEF_VIDEO_DURATION + ".")
 				.create("vd");
-		/*
 		Option owpzOption = OptionBuilder.withArgName("zip-file")
 				.hasArg()
 				.withDescription("Sets the path of the ZIP file where post-warm-up model depictions are written. This is used in troubleshooting and optimizer analysis.")
 				.create("owpz");
-		*/
 		Option oczOption = OptionBuilder.withArgName("zip-file")
 				.hasArg()
 				.withDescription("Sets the path of the ZIP file where post-clustering model depictions are written. This is used in troubleshooting and optimizer analysis.")
@@ -461,14 +446,13 @@ public class SolveLightCurve extends AbstractTool {
 		options.addOption(seedOption);
 		options.addOption(timeUnitOption);
 		options.addOption(logOption);
-		options.addOption(nwiOption);
 		options.addOption(nsOption);
-		options.addOption(npcOption);
+		options.addOption(ncOption);
+		options.addOption(nppcOption);
 		options.addOption(nagdOption);
-		options.addOption(popOption);
 		options.addOption(angOption);		
 		options.addOption(videoDurationOption);
-		//options.addOption(owpzOption);
+		options.addOption(owpzOption);
 		options.addOption(oczOption);
 
 		return options;

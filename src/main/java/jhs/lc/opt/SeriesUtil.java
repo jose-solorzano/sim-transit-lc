@@ -1,48 +1,70 @@
 package jhs.lc.opt;
 
 public class SeriesUtil {
-	public static double centerOfSquaredDev(double[] series, double mean) {
+	public static double centerOfMass(double[] series, double maxIgnoreError, double meanValue) {
 		double sum = 0;
 		double weightSum = 0;
 		for(int i = 0; i < series.length; i++) {
-			double dev = series[i] - mean;
-			double weight = dev * dev;
-			weightSum += weight;
-			sum += weight * i;
+			double dev = series[i] - meanValue;
+			double weight = Math.abs(dev);
+			if(weight > maxIgnoreError) {
+				weightSum += weight;
+				sum += weight * i;
+			}
 		}
 		return weightSum == 0 ? series.length / 2.0 : sum / weightSum;
 	}
 	
-	public static double seriesWidth(double[] series, double mean, double cosd) {
+	public static double massVariance(double[] series, double maxIgnoreError, double meanValue, double centerOfMass) {
 		double sum = 0;
 		double weightSum = 0;
 		for(int i = 0; i < series.length; i++) {
-			double dev = series[i] - mean;
-			double posDev = i - cosd;
+			double dev = series[i] - meanValue;
 			double weight = Math.abs(dev);
-			weightSum += weight;
-			sum += weight * (posDev * posDev);
+			if(weight > maxIgnoreError) {
+				double posDev = i - centerOfMass;
+				weightSum += weight;
+				sum += weight * (posDev * posDev);
+			}
 		}
-		return weightSum == 0 ? 0 : Math.sqrt(sum / weightSum);		
+		return weightSum == 0 ? 0 : sum / weightSum;		
 	}	
-	
-	public static double[] skewSeries(double[] series, double mean, double expectedCosd, double expectedWidth) {
-		if(expectedWidth == 0) {
-			throw new IllegalArgumentException("expectedWidth: " + expectedWidth);
+
+	public static final double massDeviation(double[] series, double maxIgnoreError, double meanValue, double centerOfMass) {
+		return Math.sqrt(massVariance(series, maxIgnoreError, meanValue, centerOfMass));
+	}
+
+	public static final double[] stretchToMatch(double[] series, double maxIgnoreError, double meanValue, double expectedCenterOfMass, double expectedDeviation) {
+		if(expectedDeviation == 0) {
+			throw new IllegalArgumentException("expectedDeviation: " + expectedDeviation);
 		}
-		double cosd = centerOfSquaredDev(series, mean);
-		double width = seriesWidth(series, mean, cosd);
+		double com = centerOfMass(series, maxIgnoreError, meanValue);
+		double deviation = massDeviation(series, maxIgnoreError, meanValue, com);
+		double indexFactor = deviation / expectedDeviation;
+		double offset = com - expectedCenterOfMass * indexFactor;
+		return stretchSeries(series, meanValue, indexFactor, offset);
+	}
+	
+	public static double getIndexFactor(double expectedDeviation, double deviation) {
+		if(expectedDeviation == 0) {
+			throw new IllegalArgumentException("expectedDeviation: " + expectedDeviation);
+		}
+		return deviation / expectedDeviation;
+	}
+	
+	public static double getIndexOffset(double indexFactor, double expectedCenterOfMass, double centerOfMass) {
+		return centerOfMass - expectedCenterOfMass * indexFactor;		
+	}
+	
+	public static double[] stretchSeries(double[] series, double meanValue, double indexFactor, double offset) {
 		int length = series.length;
-		double factor = width / expectedWidth;
 		double[] skewedSeries = new double[length];
 		for(int i = 0; i < length; i++) {
-			double xFromCosd = i - expectedCosd;
-			double xOrigFromCosd = xFromCosd * factor;
-			double origIndex = cosd + xOrigFromCosd;
+			double origIndex = i * indexFactor + offset;
 			int origIndexFloor = (int) Math.floor(origIndex);
 			int origIndexCeil = (int) Math.ceil(origIndex);
 			if(origIndexFloor < 0 || origIndexCeil >= length) {
-				skewedSeries[i] = mean;
+				skewedSeries[i] = meanValue;
 			}
 			else {
 				double k = origIndex - origIndexFloor;
@@ -53,4 +75,5 @@ public class SeriesUtil {
 		}
 		return skewedSeries;
 	}
+
 }

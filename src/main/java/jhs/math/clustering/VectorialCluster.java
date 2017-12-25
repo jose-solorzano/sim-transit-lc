@@ -99,6 +99,15 @@ public class VectorialCluster<T extends VectorialItem> implements Iterable<T>, j
 		}
 	}
 	
+	public static <T extends VectorialItem> VectorialCluster<T> build(List<T> items) {
+		double[] meanPosition = ItemUtil.meanPosition(items);
+		VectorialCluster<T> cluster = new VectorialCluster<>(meanPosition);
+		for(T item : items) {
+			cluster.addMember(item);
+		}
+		return cluster;
+	}
+	
 	private static class FoundCluster<T extends VectorialItem> {
 		private final VectorialCluster<T> cluster;
 		private final double distanceSq;

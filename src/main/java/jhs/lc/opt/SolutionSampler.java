@@ -204,7 +204,6 @@ public class SolutionSampler {
 				}
 			}
 		}
-		MathUtil.divideInPlace(baseVector, Math.sqrt(optimizerParameters.length));
 		return baseVector;
 	}
 	

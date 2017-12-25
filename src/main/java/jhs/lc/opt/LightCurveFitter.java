@@ -9,51 +9,24 @@ import org.apache.commons.math.optimization.RealPointValuePair;
 
 import jhs.lc.data.LightCurve;
 import jhs.lc.data.LightCurvePoint;
+import jhs.lc.opt.ClusteredGridSearchOptimizer.Phase;
 import jhs.math.util.MathUtil;
 
 public class LightCurveFitter {	
 	//private static final Logger logger = Logger.getLogger(CSLightCurveFitter.class.getName());
 	private final SolutionSampler sampler;
-	private final int populationSize;
-	
-	private int initialPoolSize = 1000;
-	
-	private int maxCSWarmUpIterations = 50;
-	private int maxCSIterationsWithClustering = 100;
-	private int maxExtraCSIterations = 10;
-	private int maxEliminationIterations = 0;
-	private int maxGradientDescentIterations = 10;
-
-	private double expansionFactor = 3.0;
-	private double displacementFactor = 0.03;
-	private double convergeDistance = 0.0001;
-	private double circuitShuffliness = 0.5;
+	private final int numClusters;
+	private final int numParticlesPerCluster;
+		
+	private int maxClusteringIterations = 300;
+	private int maxGradientDescentIterations = 200;
 	
 	private double epsilonFactor = 3.0;
 
-	public LightCurveFitter(SolutionSampler sampler, int populationSize) {
+	public LightCurveFitter(SolutionSampler sampler, int numClusters, int numParticlesPerCluster) {
 		this.sampler = sampler;
-		this.populationSize = populationSize;
-	}
-
-	public final int getInitialPoolSize() {
-		return initialPoolSize;
-	}
-
-	public final void setInitialPoolSize(int initialPoolSize) {
-		this.initialPoolSize = initialPoolSize;
-	}
-
-	public final int getMaxCSWarmUpIterations() {
-		return maxCSWarmUpIterations;
-	}
-
-	public final void setMaxCSWarmUpIterations(int maxCSWarmUpIterations) {
-		this.maxCSWarmUpIterations = maxCSWarmUpIterations;
-	}
-
-	public final int getPopulationSize() {
-		return populationSize;
+		this.numClusters = numClusters;
+		this.numParticlesPerCluster = numParticlesPerCluster;
 	}
 
 	public final double getEpsilonFactor() {
@@ -64,22 +37,6 @@ public class LightCurveFitter {
 		this.epsilonFactor = epsionFactor;
 	}
 
-	public final int getMaxCSIterationsWithClustering() {
-		return maxCSIterationsWithClustering;
-	}
-
-	public final void setMaxCSIterationsWithClustering(int maxCSIterationsWithClustering) {
-		this.maxCSIterationsWithClustering = maxCSIterationsWithClustering;
-	}
-
-	public final int getMaxExtraCSIterations() {
-		return maxExtraCSIterations;
-	}
-
-	public final void setMaxExtraCSIterations(int maxExtraCSIterations) {
-		this.maxExtraCSIterations = maxExtraCSIterations;
-	}
-
 	public final int getMaxGradientDescentIterations() {
 		return maxGradientDescentIterations;
 	}
@@ -88,44 +45,20 @@ public class LightCurveFitter {
 		this.maxGradientDescentIterations = maxGradientDescentIterations;
 	}
 
-	public int getMaxEliminationIterations() {
-		return maxEliminationIterations;
+	public final int getMaxClusteringIterations() {
+		return maxClusteringIterations;
 	}
 
-	public void setMaxEliminationIterations(int maxEliminationIterations) {
-		this.maxEliminationIterations = maxEliminationIterations;
+	public final void setMaxClusteringIterations(int maxClusteringIterations) {
+		this.maxClusteringIterations = maxClusteringIterations;
 	}
 
-	public final double getExpansionFactor() {
-		return expansionFactor;
+	public final int getNumClusters() {
+		return numClusters;
 	}
 
-	public final void setExpansionFactor(double expansionFactor) {
-		this.expansionFactor = expansionFactor;
-	}
-
-	public final double getDisplacementFactor() {
-		return displacementFactor;
-	}
-
-	public final void setDisplacementFactor(double displacementFactor) {
-		this.displacementFactor = displacementFactor;
-	}
-
-	public final double getConvergeDistance() {
-		return convergeDistance;
-	}
-
-	public final void setConvergeDistance(double convergeDistance) {
-		this.convergeDistance = convergeDistance;
-	}
-
-	public final double getCircuitShuffliness() {
-		return circuitShuffliness;
-	}
-
-	public final void setCircuitShuffliness(double circuitShuffliness) {
-		this.circuitShuffliness = circuitShuffliness;
+	public final int getNumParticlesPerCluster() {
+		return numParticlesPerCluster;
 	}
 
 	public Solution optimize(LightCurvePoint[] lightCurve) throws MathException {
@@ -138,19 +71,12 @@ public class LightCurveFitter {
 	}
 
 	public Solution optimizeStandardErrorCS(double[] fluxArray) throws MathException {
-		//ClusteredEvaluator lfWarmUp = new SizingLossFunction(sampler, fluxArray);
-		ClusteredEvaluator lfFinal = this.getDefaultLossFunction(fluxArray);
-		//return this.optimizeCircuitSearch(lfWarmUp, lfFinal);
-		//return this.optimizeWithDPSO(lfFinal);
-		return this.optimizeCESO(lfFinal);
+		ClusteredEvaluator lfFinal = new FlexibleLossFunction(sampler, fluxArray, 0.50, 0.50);
+		return this.optimizeCGSO(lfFinal);
 	}
 	
-	private AbstractLossFunction getDefaultLossFunction(double[] fluxArray) {
-		return new PrimaryLossFunction(sampler, fluxArray, 1, 0, 1);
-	}
-
 	public Solution optimizeStandardErrorAGD(double[] fluxArray, Solution initialSolution, int maxIterations) throws MathException {
-		MultivariateRealFunction errorFunction = this.getDefaultLossFunction(fluxArray);
+		MultivariateRealFunction errorFunction = new FlexibleLossFunction(sampler, fluxArray, 0.10, 0.10);
 		return this.optimizeAGD(fluxArray, initialSolution, errorFunction, maxIterations);
 	}
 
@@ -170,82 +96,23 @@ public class LightCurveFitter {
 		return sampler.parametersAsSolution(optPoint.getPointRef());
 	}
 
-	public Solution optimizeCircuitSearch(ClusteredEvaluator warmUpErrorFunction, ClusteredEvaluator finalErrorFunction, ClusteredEvaluator ... alternatingErrorFunctions) throws MathException {
+	public Solution optimizeCGSO(ClusteredEvaluator finalErrorFunction, ClusteredEvaluator ... alternatingErrorFunctions) throws MathException {
 		SolutionSampler sampler = this.sampler;
 		Random random = sampler.getRandom();
-		CircuitSearchOptimizer optimizer = new CircuitSearchOptimizer(random, this.populationSize) {
-			@Override
-			protected void informProgress(int iteration, RealPointValuePair pointValue) {
-				LightCurveFitter.this.informProgress("circuit search", iteration, pointValue.getValue());
-			}
-
-			@Override
-			protected void informEndOfWarmUpPhase(List<RealPointValuePair> pointValues) {
-				LightCurveFitter.this.informEndOfWarmUpPhase(sampler, pointValues);
-			}
-
-			@Override
-			protected void informEndOfClusteringPhase(List<RealPointValuePair> pointValues) {
-				LightCurveFitter.this.informEndOfClusteringPhase(sampler, pointValues);
-			}						
-		};
-		optimizer.setInitialPoolSize(this.initialPoolSize);
-		optimizer.setCircuitShuffliness(this.circuitShuffliness);
-		optimizer.setConvergeDistance(this.convergeDistance);
-		optimizer.setDisplacementFactor(this.displacementFactor);
-		optimizer.setExpansionFactor(this.expansionFactor);
-		optimizer.setMaxWarmUpIterations(this.maxCSWarmUpIterations);
-		optimizer.setMaxConsolidationIterations(this.maxExtraCSIterations);
-		optimizer.setMaxIterationsWithClustering(this.maxCSIterationsWithClustering);
-		optimizer.setMaxEliminationIterations(this.maxEliminationIterations);
-		int vectorLength = sampler.getNumParameters();
-		RealPointValuePair result = optimizer.optimize(vectorLength, warmUpErrorFunction, finalErrorFunction, alternatingErrorFunctions);
-
-		Solution solution = sampler.parametersAsSolution(result.getPointRef());
-
-		return solution;
-	}
-
-	public Solution optimizeCESO(ClusteredEvaluator finalErrorFunction, ClusteredEvaluator ... alternatingErrorFunctions) throws MathException {
-		SolutionSampler sampler = this.sampler;
-		Random random = sampler.getRandom();
-		ClusteredEvolutionarySwarmOptimizer optimizer = new ClusteredEvolutionarySwarmOptimizer(random, this.populationSize) {
+		ClusteredGridSearchOptimizer optimizer = new ClusteredGridSearchOptimizer(random, numClusters, numParticlesPerCluster) {
 			@Override
 			protected void informProgress(Phase phase, int iteration, RealPointValuePair pointValue) {
-				LightCurveFitter.this.informProgress("ceso-" + phase.name().toLowerCase(), iteration, pointValue.getValue());
-			}
-
-			@Override
-			protected void informEndOfClusteringPhase(List<RealPointValuePair> pointValues) {
-				LightCurveFitter.this.informEndOfClusteringPhase(sampler, pointValues);
-			}						
+				LightCurveFitter.this.informProgress("cgso-" + phase.name().toLowerCase(), iteration, pointValue.getValue());
+			}			
 		};
-		optimizer.setInitialPoolSize(this.initialPoolSize);
-		optimizer.setConvergeDistance(this.convergeDistance);
-		optimizer.setMaxConsolidationIterations(this.maxExtraCSIterations);
-		optimizer.setMaxIterationsWithClustering(this.maxCSIterationsWithClustering);
-		optimizer.setMaxStartIterations(this.maxCSWarmUpIterations);
+		
+		optimizer.setMaxIterations(this.maxClusteringIterations);
+		
 		int vectorLength = sampler.getNumParameters();
-		RealPointValuePair result = optimizer.optimize(vectorLength, finalErrorFunction, alternatingErrorFunctions);
+		RealPointValuePair result = optimizer.optimize(vectorLength, finalErrorFunction);
 
 		Solution solution = sampler.parametersAsSolution(result.getPointRef());
 
-		return solution;
-	}
-
-	public Solution optimizeWithDPSO(ClusteredEvaluator errorFunction) throws MathException {
-		SolutionSampler sampler = this.sampler;
-		Random random = sampler.getRandom();
-		DiversifiedParticleSwarmOptimizer optimizer = new DiversifiedParticleSwarmOptimizer(random, this.populationSize) {
-			@Override
-			protected void informProgress(int iteration, RealPointValuePair pointValue) {
-				LightCurveFitter.this.informProgress("dpso", iteration, pointValue.getValue());
-			}
-		};
-		optimizer.setMaxIterations(this.maxCSIterationsWithClustering);
-		int vectorLength = sampler.getNumParameters();
-		RealPointValuePair result = optimizer.optimize(vectorLength, errorFunction);
-		Solution solution = sampler.parametersAsSolution(result.getPointRef());
 		return solution;
 	}
 
