@@ -12,6 +12,7 @@ import jhs.lc.geom.TransitFunction;
 import jhs.lc.sims.AngularSimulation;
 import jhs.lc.sims.SimulatedFlux;
 import jhs.lc.sims.SimulatedFluxSource;
+import jhs.lc.sims.SimulationImageSet;
 
 public class Solution implements java.io.Serializable {
 	private static final long serialVersionUID = 2L;
@@ -66,6 +67,7 @@ public class Solution implements java.io.Serializable {
 		return this.brightnessFunction.getExtraOptimizerError();
 	}
 
+	/*
 	public Dimension suggestImageDimension(int numPixels) {
 		TransitDepictionProducer tdp = new TransitDepictionProducer(this.brightnessFunction);
 		double imageWidth = tdp.minWidth(true);
@@ -78,6 +80,7 @@ public class Solution implements java.io.Serializable {
 		int widthPixels = (int) Math.round((double) numPixels / heightPixels);
 		return new Dimension(widthPixels, heightPixels);		
 	}
+	*/
 
 	public BufferedImage produceDepiction(int numPixels) {
 		return this.produceDepiction(numPixels, true);
@@ -88,7 +91,7 @@ public class Solution implements java.io.Serializable {
 		return tdp.produceDepiction(numPixels, addStarCircle);
 	}
 
-	public Iterator<BufferedImage> produceModelImages(double inclineAngle, double orbitalPeriod, LimbDarkeningParams ldParams, double[] timestamps, double peakFraction, String timestampPrefix, int numPixels) {
+	public SimulationImageSet produceModelImages(double inclineAngle, double orbitalPeriod, LimbDarkeningParams ldParams, double[] timestamps, double peakFraction, String timestampPrefix, int numPixels, double lcvwf) {
 		TransitDepictionProducer tdp = new TransitDepictionProducer(this.brightnessFunction);
 		RotationAngleSphereFactory sphereFactory = new EvaluatableSurfaceSphereFactory(this.brightnessFunction);
 		AngularSimulation simulation = new AngularSimulation(inclineAngle, this.orbitRadius, orbitalPeriod, ldParams, sphereFactory);
@@ -100,7 +103,17 @@ public class Solution implements java.io.Serializable {
 		}
 		double aspectRatio = imageWidth / imageHeight;
 		int heightPixels = (int) Math.round(Math.sqrt(numPixels / aspectRatio));
+		if(heightPixels % 2 != 0) {
+			heightPixels = heightPixels + 1;
+		}
 		int widthPixels = (int) Math.round((double) numPixels / heightPixels);
-		return simulation.produceModelImages(timestamps, peakFraction, widthPixels, heightPixels, noiseSd, timestampPrefix);
+		if(widthPixels % 2 != 0) {
+			widthPixels = widthPixels + 1;
+		}
+		int lightCurveViewWidth = (int) Math.round(widthPixels * lcvwf);
+		if(lightCurveViewWidth % 2 != 0) {
+			lightCurveViewWidth = lightCurveViewWidth + 1;
+		}
+		return new SimulationImageSet(simulation, timestamps, peakFraction, widthPixels, lightCurveViewWidth, heightPixels, noiseSd, timestampPrefix);
 	}	
 }

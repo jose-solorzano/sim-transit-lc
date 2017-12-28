@@ -36,6 +36,7 @@ import jhs.lc.sims.AngleUnsupportedException;
 import jhs.lc.sims.AngularFluxSource;
 import jhs.lc.sims.FastApproximateFluxSource;
 import jhs.lc.sims.SimulatedFluxSource;
+import jhs.lc.sims.SimulationImageSet;
 import jhs.lc.tools.inputs.AbstractOptMethod;
 import jhs.lc.tools.inputs.OptResultsSpec;
 import jhs.lc.tools.inputs.OptSpec;
@@ -61,8 +62,9 @@ public class SolveLightCurve extends AbstractTool {
 	private static final int DEF_NUM_CLUSTERS = 10;
 	private static final int DEF_NPPC = 10;
 	private static final int DEF_TEST_DEPICT_NUM_PIXELS = 40000;
-	
+
 	private static final double DEF_VIDEO_DURATION = 60;
+	private static final double DEF_LCWF = 7.0 / 9.0; 	
 
 	private void run(CommandLine cmdLine) throws Exception {
 		String[] args = cmdLine.getArgs();
@@ -138,7 +140,8 @@ public class SolveLightCurve extends AbstractTool {
 			if(videoDuration <= 0) {
 				throw new IllegalStateException("Invalid video duration: " + videoDuration + ".");
 			}
-			this.writeVideo(videoFileName, timeCaption, videoDuration, timestamps, solution, optSpec, ldParams);
+			double lightCurveViewWidthFraction = getOptionDouble(cmdLine, "lcwf", DEF_LCWF);
+			this.writeVideo(videoFileName, timeCaption, videoDuration, timestamps, solution, optSpec, ldParams, lightCurveViewWidthFraction);
 		}
 	}
 	
@@ -151,14 +154,13 @@ public class SolveLightCurve extends AbstractTool {
 		System.out.println("Wrote " + outFile);
 	}	
 	
-	private void writeVideo(String videoFileName, String timeCaption, double videoDuration, double[] timestamps, Solution solution, OptSpec optSpec, LimbDarkeningParams ldParams) throws Exception {
+	private void writeVideo(String videoFileName, String timeCaption, double videoDuration, double[] timestamps, Solution solution, OptSpec optSpec, LimbDarkeningParams ldParams, double lcvwf) throws Exception {
 		int numPixels = DEF_OUT_NUM_PIXELS;
-		Iterator<BufferedImage> iterator = solution.produceModelImages(optSpec.getInclineAngle(), optSpec.getOrbitPeriod(), ldParams, timestamps, solution.getPeakFraction(), timeCaption, numPixels);
+		SimulationImageSet imageSet = solution.produceModelImages(optSpec.getInclineAngle(), optSpec.getOrbitPeriod(), ldParams, timestamps, solution.getPeakFraction(), timeCaption, numPixels, lcvwf);
 		double frameRate = timestamps.length / videoDuration;
-		Dimension dimension = solution.suggestImageDimension(numPixels);
-        BufferedImageVideoProducer producer = new BufferedImageVideoProducer(dimension.width, dimension.height, (float) frameRate, FileTypeDescriptor.QUICKTIME);
+        BufferedImageVideoProducer producer = new BufferedImageVideoProducer(imageSet.getImageWidth(), imageSet.getImageHeight(), (float) frameRate, FileTypeDescriptor.QUICKTIME);
         File outFile = new File(videoFileName);
-        producer.writeToFile(outFile, iterator);
+        producer.writeToFile(outFile, imageSet.iterator());
         System.out.println("Wrote " + outFile);		
 	}
 		

@@ -56,4 +56,7 @@ public abstract class AbstractTool {
 		}
 	}
 	
+	protected static int getEven(int n) {
+		return n % 2 == 0 ? n : n + 1;
+	}	
 }
