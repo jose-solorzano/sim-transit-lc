@@ -172,7 +172,7 @@ public class AngularSimulation implements java.io.Serializable {
 		double baseFlux = SphereViewport.totalBrightness(baseMatrix, starViewWidth, height);
 		final double[][] matrix = new double[starViewWidth][height];
 		final boolean onlyFront = sphere.isOnlyFrontVisible();
-		final int fontSize = starViewWidth / 35;	
+		final int fontSize = starViewWidth / 30;	
 		return new Iterator<BufferedImage>() {
 			private final List<LightCurvePoint> lightCurve = new ArrayList<>();
 			private int index = 0;
@@ -209,11 +209,11 @@ public class AngularSimulation implements java.io.Serializable {
 						}
 					}
 				}
-				if(fontSize >= 6) {
-					this.addText(image, timestampPrefix  + " " + NFORMAT.format(timestamp));
-				}
 				if(lightCurveViewWidth > 0) {
 					this.addLightCurve(image, starViewWidth, lightCurveViewWidth);
+				}
+				if(fontSize >= 6) {
+					this.addText(image, timestampPrefix  + " " + NFORMAT.format(timestamp));
 				}
 				return image;
 			}
@@ -223,11 +223,12 @@ public class AngularSimulation implements java.io.Serializable {
 				Graphics2D g = image.createGraphics();
 				try {
 					g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-					g.setColor(Color.WHITE);
-					g.fillRect(fromX, 0, width, height);
 					g.setColor(Color.DARK_GRAY);
+					g.fillRect(fromX, 0, width, height);
+					g.setColor(Color.LIGHT_GRAY);
 					g.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[] { 3, 9 }, 0));
 					g.drawLine(fromX, baselineY, fromX + width, baselineY);
+					g.setColor(Color.GREEN.brighter());
 					g.setStroke(new BasicStroke(2));
 					int prevX = -1;
 					int prevY = -1;
@@ -241,7 +242,7 @@ public class AngularSimulation implements java.io.Serializable {
 						prevY = py;
 					}
 					if(prevX >= 0 && prevY >= 0) {
-						g.setColor(Color.GREEN);
+						g.setColor(Color.GREEN.darker());
 						g.fillOval(prevX - 3, prevY - 3, 6, 6);
 					}
 				} finally {
