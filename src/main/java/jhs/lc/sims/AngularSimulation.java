@@ -1,5 +1,6 @@
 package jhs.lc.sims;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
@@ -7,12 +8,14 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
+import jhs.lc.data.LightCurvePoint;
 import jhs.lc.geom.AbstractRotatableSphere;
 import jhs.lc.geom.AbstractRotationAngleSphere;
 import jhs.lc.geom.ExtraNoiseSphere;
-import jhs.lc.geom.ImageUtil;
 import jhs.lc.geom.LimbDarkeningParams;
 import jhs.lc.geom.RotationAngleSphereFactory;
 import jhs.lc.geom.SolidSphere;
@@ -125,11 +128,12 @@ public class AngularSimulation implements java.io.Serializable {
 	}	
 	
 	
-	public final Iterator<BufferedImage> produceModelImages(final double[] timestamps, final double peakTimespanFraction, final int width, final int height, double noiseSd, final String timestampPrefix) {
-		return this.produceModelImages(timestamps, peakTimespanFraction, width, height, noiseSd, timestampPrefix, Double.NaN, Double.NaN);
+	public final Iterator<BufferedImage> produceModelImages(double[] timestamps, double peakTimespanFraction, int starViewWidth, int lightCurveViewWidth, int height, double noiseSd, final String timestampPrefix) {
+		return this.produceModelImages(timestamps, peakTimespanFraction, starViewWidth, lightCurveViewWidth, height, noiseSd, timestampPrefix, Double.NaN, Double.NaN);
 	}
 
-	public final Iterator<BufferedImage> produceModelImages(final double[] timestamps, final double peakTimespanFraction, final int width, final int height, double noiseSd, final String timestampPrefix, double minTimestamp, double maxTimestamp) {
+	public final Iterator<BufferedImage> produceModelImages(double[] timestamps, final double peakTimespanFraction, 
+			int starViewWidth, int lightCurveViewWidth, int height, double noiseSd, String timestampPrefix, double minTimestamp, double maxTimestamp) {
 		final int length = timestamps.length;
 		if(length < 2) {
 			throw new IllegalArgumentException("Too few timestamps.");
@@ -145,6 +149,11 @@ public class AngularSimulation implements java.io.Serializable {
 		
 		final double[] restrictedTimestamps = Double.isNaN(maxTimestamp - minTimestamp) ? timestamps : ArrayUtil.filter(timestamps, value -> value >= minTimestamp && value <= maxTimestamp);
 		final int restrictedLength = restrictedTimestamps.length;
+		if(restrictedLength < 2) {
+			throw new IllegalArgumentException("Too few timestamps.");			
+		}
+		double firstTimestamp = restrictedTimestamps[0];
+		double lastTimestamp = restrictedTimestamps[restrictedLength - 1];
 		
 		AbstractRotationAngleSphere nnSphere = this.sphereFactory.create(this.orbitRadius, this.inclineAngle);
 		final AbstractRotationAngleSphere sphere;
@@ -157,13 +166,15 @@ public class AngularSimulation implements java.io.Serializable {
 		final SphereViewport viewport = new SphereViewport(sphere, this.boxWidth, this.boxHeight);
 		Sphere starSphere = new SolidSphere(1.0, this.ldParams);
 		SphereViewport starViewport = new SphereViewport(starSphere, this.boxWidth, this.boxHeight);
-		final double[][] baseMatrix = new double[width][height];
+		final double[][] baseMatrix = new double[starViewWidth][height];
 		MatrixUtil.fill(baseMatrix, Double.NaN);
 		starViewport.populateBrightness(baseMatrix, true);
-		final double[][] matrix = new double[width][height];
+		double baseFlux = SphereViewport.totalBrightness(baseMatrix, starViewWidth, height);
+		final double[][] matrix = new double[starViewWidth][height];
 		final boolean onlyFront = sphere.isOnlyFrontVisible();
-		final int fontSize = width / 35;	
+		final int fontSize = starViewWidth / 30;	
 		return new Iterator<BufferedImage>() {
+			private final List<LightCurvePoint> lightCurve = new ArrayList<>();
 			private int index = 0;
 			
 			@Override
@@ -179,12 +190,76 @@ public class AngularSimulation implements java.io.Serializable {
 				sphere.setRotationAngle(rotationAngle);
 				MatrixUtil.copyMatrix(baseMatrix, matrix);
 				viewport.populateBrightness(matrix, onlyFront);
-								
-				BufferedImage image = ImageUtil.buildImage(matrix, width, height);
+				double flux = SphereViewport.totalBrightness(matrix, starViewWidth, height);
+				lightCurve.add(new LightCurvePoint(timestamp, flux / baseFlux));
+				return this.buildImage(matrix, timestamp);
+			}
+			
+			private BufferedImage buildImage(double[][] matrix, double timestamp) {
+				int totalWidth = starViewWidth + lightCurveViewWidth;
+				BufferedImage image = new BufferedImage(totalWidth, height, BufferedImage.TYPE_INT_RGB);
+				for(int x = 0; x < starViewWidth; x++) {
+					double[] column = matrix[x];
+					for(int y = 0; y < height; y++) {
+						double b = column[height - y - 1];
+						if(b >= 0) {
+							int color = (int) Math.round(255 * b);
+							int rgb = (color << 16) | (color << 8) | (color / 2);
+							image.setRGB(x, y, rgb);
+						}
+					}
+				}
+				if(lightCurveViewWidth > 0) {
+					this.addLightCurve(image, starViewWidth, lightCurveViewWidth);
+				}
 				if(fontSize >= 6) {
 					this.addText(image, timestampPrefix  + " " + NFORMAT.format(timestamp));
 				}
 				return image;
+			}
+			
+			private void addLightCurve(BufferedImage image, int fromX, int width) {
+				int baselineY = (int) Math.round(height * 0.05);
+				Graphics2D g = image.createGraphics();
+				try {
+					g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+					g.setColor(Color.DARK_GRAY);
+					g.fillRect(fromX, 0, width, height);
+					g.setColor(Color.LIGHT_GRAY);
+					g.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[] { 3, 9 }, 0));
+					g.drawLine(fromX, baselineY, fromX + width, baselineY);
+					g.setColor(Color.GREEN.brighter());
+					g.setStroke(new BasicStroke(2));
+					int prevX = -1;
+					int prevY = -1;
+					for(LightCurvePoint point : lightCurve) {
+						int px = pointX(point, fromX, width);
+						int py = pointY(point, baselineY);
+						if(prevX >= 0 && prevY >= 0) {
+							g.drawLine(prevX, prevY, px, py);
+						}
+						prevX = px;
+						prevY = py;
+					}
+					if(prevX >= 0 && prevY >= 0) {
+						g.setColor(Color.GREEN.darker());
+						g.fillOval(prevX - 3, prevY - 3, 6, 6);
+					}
+				} finally {
+					g.dispose();
+				}
+			}
+			
+			private int pointX(LightCurvePoint point, int fromX, int width) {
+				return fromX + (int) Math.round(width * (point.getTimestamp() - firstTimestamp) / (lastTimestamp - firstTimestamp));				
+			}
+			
+			private int pointY(LightCurvePoint point, int baselineY) {
+				double normFlux = point.getFlux();
+				if(Double.isNaN(normFlux)) {
+					return baselineY;
+				}
+				return baselineY + (int) (Math.round(height - baselineY) * (1 - normFlux));
 			}
 
 			private void addText(BufferedImage image, String text) {

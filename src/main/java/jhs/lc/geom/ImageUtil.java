@@ -27,20 +27,4 @@ public class ImageUtil {
 		}
 		return brightnessMatrix;
 	}
-	
-	public static BufferedImage buildImage(double[][] brightnessMatrix, int width, int height) {
-		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-		for(int x = 0; x < width; x++) {
-			double[] column = brightnessMatrix[x];
-			for(int y = 0; y < height; y++) {
-				double b = column[height - y - 1];
-				if(b >= 0) {
-					int color = (int) Math.round(255 * b);
-					int rgb = (color << 16) | (color << 8) | (color / 2);
-					image.setRGB(x, y, rgb);
-				}
-			}
-		}
-		return image;
-	}
 }

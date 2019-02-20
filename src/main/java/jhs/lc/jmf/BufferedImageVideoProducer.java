@@ -33,7 +33,6 @@ public class BufferedImageVideoProducer {
 	
 	public BufferedImageVideoProducer(int width, int height, float frameRate,
 			String fileTypeDescriptor) {
-		super();
 		this.width = width;
 		this.height = height;
 		this.frameRate = frameRate;

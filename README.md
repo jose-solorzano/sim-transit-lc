@@ -3,7 +3,7 @@
 This is a set of command-line tools that can produce synthetic transit light curves and 
 transit videos. 
 
-The optimization tool, lc-opt, can produce transit models by fitting
+The optimization tool, `lc-opt`, can produce transit models by fitting
 light curves. It can be configured using built-in methods, including
 an experimental neural network, or by writing code.
 
@@ -15,7 +15,7 @@ You must have [JavaSE 1.8+](http://www.oracle.com/technetwork/java/javase/downlo
 
 #### Installation
 
-If JAVA_HOME is set, make sure it's pointing to the right version.
+JAVA_HOME should point to a JDK 1.8+ (not JRE) installation.
 
 Every time you pull down an update, run:
 

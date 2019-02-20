@@ -36,6 +36,7 @@ import org.apache.commons.cli.PosixParser;
 public class GenerateSimulatedData extends AbstractTool {
 	private static final Logger logger = Logger.getLogger(GenerateSimulatedData.class.getName());
 	private static final double DEF_VIDEO_DURATION = 60;
+	private static final double DEF_LCWF = 7.0 / 9.0;
 	
 	private void run(CommandLine cmdLine) throws Exception {
 		String[] args = cmdLine.getArgs();
@@ -56,8 +57,8 @@ public class GenerateSimulatedData extends AbstractTool {
 		Random random = new Random(seed * 5 - 19);
 		AngularSimulation sim = this.getSimulation(simSpec, contextFile);
 		double[] timestamps = AngularSimulation.timestamps(simSpec.getStartTime(), simSpec.getEndTime(), simSpec.getNumSteps());
-		int width = simSpec.getWidthPixels();
-		int height = simSpec.getHeightPixels();
+		int width = getEven(simSpec.getWidthPixels());
+		int height = getEven(simSpec.getHeightPixels());
 		double noiseFraction = simSpec.getNoiseFraction();
 		double noiseSd = Math.log(1.0 + noiseFraction);
 		String csvFileName = cmdLine.getOptionValue("o");
@@ -89,15 +90,19 @@ public class GenerateSimulatedData extends AbstractTool {
 			if(timeCaption == null) {
 				timeCaption = "Day";
 			}
+			double lightCurveViewWidthFraction = getOptionDouble(cmdLine, "lcwf", DEF_LCWF);
 			double peakTimespanFraction = 0.5;
 			double logitNoiseSd = noiseSd * 10;
-			Iterator<BufferedImage> iterator = sim.produceModelImages(timestamps, peakTimespanFraction, width, height, logitNoiseSd, timeCaption, simSpec.getStartTime(), simSpec.getEndTime());
+			int lightCurveViewWidth = getEven((int) Math.round(width * lightCurveViewWidthFraction));
+			
+			int totalWidth = width + lightCurveViewWidth;
+			Iterator<BufferedImage> iterator = sim.produceModelImages(timestamps, peakTimespanFraction, width, lightCurveViewWidth, height, logitNoiseSd, timeCaption, simSpec.getStartTime(), simSpec.getEndTime());
 			double videoDuration = this.getOptionDouble(cmdLine, "vd", DEF_VIDEO_DURATION);
 			if(videoDuration <= 0) {
 				throw new IllegalStateException("Invalid video duration: " + videoDuration + ".");
 			}
 			double frameRate = timestamps.length / videoDuration;
-	        BufferedImageVideoProducer producer = new BufferedImageVideoProducer(width, height, (float) frameRate, FileTypeDescriptor.QUICKTIME);
+	        BufferedImageVideoProducer producer = new BufferedImageVideoProducer(totalWidth, height, (float) frameRate, FileTypeDescriptor.QUICKTIME);
 	        File outFile = new File(videoFileName);
 	        producer.writeToFile(outFile, iterator);
 	        System.out.println("Wrote " + outFile);

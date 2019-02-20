@@ -134,12 +134,15 @@ public class TestSimulation {
 		
 		double[] timestamps = new double[] { -0.001, +0.001 };		
 		int width = 5;
+		int lightCurveViewWidth = 0;
 		int height = 5;
 		double noiseSd = 0;
 		String timestampPrefix = "Day";
-		Iterator<BufferedImage> images = simulation.produceModelImages(timestamps, 0.5, width, height, noiseSd, timestampPrefix);
+		Iterator<BufferedImage> images = simulation.produceModelImages(timestamps, 0.5, width, lightCurveViewWidth, height, noiseSd, timestampPrefix);
 		assertTrue(images.hasNext());
 		BufferedImage simImage = images.next();
+		assertEquals(width, simImage.getWidth());
+		assertEquals(height, simImage.getHeight());
 		double[] pixel = getCenterPixel(simImage);
 		double mean = MathUtil.mean(pixel);
 		assertTrue("Center color: " + mean, mean <= 1);		
