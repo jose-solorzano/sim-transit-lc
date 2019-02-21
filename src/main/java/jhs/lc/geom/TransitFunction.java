@@ -10,6 +10,10 @@ public interface TransitFunction extends java.io.Serializable {
 	 */
 	public double fluxOrTransmittance(double x, double y, double z);
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public Rectangle2D getBoundingBox();
 	
 	public double getExtraOptimizerError();

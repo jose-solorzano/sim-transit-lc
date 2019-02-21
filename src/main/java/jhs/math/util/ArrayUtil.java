@@ -17,6 +17,15 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class ArrayUtil {
+	public static boolean isSorted(double[] data) {
+		for (int i = 1; i < data.length; i++) {
+			if (data[i - 1] > data[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	public static <T> double[] map(double[] values, Function<Double,Double> mapping) {
 		int length = values.length;
 		double[] result = new double[length];

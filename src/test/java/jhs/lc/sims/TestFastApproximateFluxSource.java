@@ -1,10 +1,12 @@
 package jhs.lc.sims;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
+import java.util.Random;
 
 import jhs.lc.geom.TransitFunction;
 import jhs.lc.geom.LimbDarkeningParams;
@@ -25,9 +27,6 @@ public class TestFastApproximateFluxSource {
 			@Override
 			public Rectangle2D getBoundingBox() {
 				return new Rectangle2D.Double(-1.8, -1.4, 3.3, 2.4);
-				//return new Rectangle2D.Double(-2.0, -2.0, 4.0, 4.0);
-				//return new Rectangle2D.Double(-1.5, -0.7, 3.0, 1.4);
-				//return new Rectangle2D.Double(-discRadius, -discRadius, discRadius * 2.03, discRadius * 2.05);
 			}
 			
 			@Override
@@ -128,6 +127,54 @@ public class TestFastApproximateFluxSource {
 		double peakFraction = 0.5;
 		assertArrayEquals(ArrayUtil.repeat(1.0, timestamps.length), fastFluxSource.produceModeledFlux(peakFraction, brightnessSource, orbitRadius).getFluxArray(), 0.0001);
 	}	
+	
+	@Test
+	public void testTimestampIndexBounds() {
+		Random random = new Random(2);
+		for(int t = 0; t < 50; t++) {
+			this.testOneInstanceOfTimestampIndexBounds(random);
+		}
+	}
+	
+	private void testOneInstanceOfTimestampIndexBounds(Random random) {
+		double[] timestamps = MathUtil.multiply(MathUtil.sampleUniform(random, 200), 100);
+		Arrays.sort(timestamps);
+		double imageX = random.nextGaussian();
+		double widthFactor = (random.nextDouble() + 0.75) / 50.0;
+		int colIdx = Math.abs(random.nextInt() % 100);
+		double orbitRadius = (random.nextDouble() + 0.1) * 1000.0;
+		double startTimestamp = timestamps[0];
+		double timeSpan = timestamps[timestamps.length - 1] - startTimestamp;
+		double cycleFraction = random.nextDouble() * 0.03;
+		double angularRange = 2 * Math.PI * cycleFraction;
+		double startAngle = -angularRange / 2.0 + random.nextGaussian() * 0.0001;
+		double timeToAngleFactor =  angularRange / timeSpan;
+		int lowerIndex = FastApproximateFluxSource.lowerTimestampIndex(timestamps, imageX, widthFactor, colIdx, orbitRadius, startTimestamp, startAngle, timeToAngleFactor);
+		int upperIndex = FastApproximateFluxSource.upperTimestampIndex(timestamps, imageX, widthFactor, colIdx, orbitRadius, startTimestamp, startAngle, timeToAngleFactor);
+		int lowerIndexScanned = -1;
+		int upperIndexScanned = -1;
+		for (int i = 0; i < timestamps.length; i++) {
+			double timestamp = timestamps[i];
+			double rotationAngle = startAngle + (timestamp - startTimestamp) * timeToAngleFactor;
+			double xoffset = orbitRadius * Math.sin(rotationAngle);
+			double displacedImageX = imageX + xoffset;
+			double elementXInStar = displacedImageX + widthFactor * (colIdx + 0.5);
+			if(lowerIndexScanned == -1 && elementXInStar >= -1.0) {
+				lowerIndexScanned = i;
+			}
+			if(upperIndexScanned == -1 && elementXInStar > +1.0) {
+				upperIndexScanned = i;
+			}
+		}
+		if(lowerIndexScanned == -1) {
+			lowerIndexScanned = timestamps.length;
+		}
+		if(upperIndexScanned == -1) {
+			upperIndexScanned = timestamps.length;
+		}
+		assertEquals(lowerIndex, lowerIndexScanned);
+		assertEquals(upperIndex, upperIndexScanned);
+	}
 	
 	private SimulatedFluxSource getFluxSource(boolean angular, double[] timestamps, double orbitalPeriod, double inclineAngle) {
 		LimbDarkeningParams ldParams = new LimbDarkeningParams(0.90, -0.2, 0.1);
