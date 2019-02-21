@@ -85,36 +85,6 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		this.normalizeFluxArray(fluxArray, baseFlux);
 
 		return new SimulatedFlux(fluxArray, imageElementInfo.clusteringPosition);
-
-		/*
-
-		double baseFlux = this.estimateBaseFlux(star, boundingBox);
-
-		double startTimestamp = timestamps[0];
-		double endTimestamp = timestamps[length - 1];
-		double timeSpan = endTimestamp - startTimestamp;
-		double cycleFraction = timeSpan / this.orbitalPeriod;
-				
-		double angularRange = Math.PI * 2 * cycleFraction;
-		double startAngle = -angularRange * peakFraction;
-		double timeToAngleFactor = angularRange / timeSpan;
-		
-		double yoffset = -orbitRadius * Math.sin(this.inclineAngle);
-		
-		for(int i = 0; i < length; i++) {
-			double timestamp = timestamps[i];
-			double rotationAngle = startAngle + (timestamp - startTimestamp) * timeToAngleFactor;
-			double xoffset = orbitRadius * Math.sin(rotationAngle);
-			double fluxDiff = this.fluxDifference(star, imageElementInfo, boundingBox, xoffset, yoffset);
-			double flux = baseFlux + fluxDiff;
-			double normFlux = flux / baseFlux;
-			if(Double.isNaN(normFlux)) {
-				throw new IllegalStateException("Flux is NaN: baseFlux=" + baseFlux + ", flux=" + flux);
-			}
-			fluxArray[i] = normFlux;
-		}
-		return new SimulatedFlux(fluxArray, imageElementInfo.clusteringPosition);
-		*/
 	}
 	
 	private double[] getDisplacedImageXArray(double[] timestamps, double imageX, double orbitRadius, double startAngle, double timeToAngleFactor) {
@@ -167,12 +137,6 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 			toIndex = upperTimestampIndex(timestamps, imageX, widthFactor, colIdx, orbitRadius, startTimestamp, startAngle, timeToAngleFactor);
 		}
 		for (int i = fromIndex; i < toIndex; i++) {
-			/*
-			double timestamp = timestamps[i];
-			double rotationAngle = startAngle + (timestamp - startTimestamp) * timeToAngleFactor;
-			double xoffset = orbitRadius * Math.sin(rotationAngle);
-			double displacedImageX = imageX + xoffset;
-			*/
 			double displacedImageX = displacedImageXArray[i];
 			double elementXInStar = displacedImageX + widthFactor * (colIdx + 0.5);
 			if (elementXInStar >= -1.0 && elementXInStar <= +1.0) {
@@ -243,71 +207,6 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 	}
 
 	
-	/*
-	private double fluxDifference(Sphere star, ImageElementInfo imageElementInfo, Rectangle2D imageBounds, double xoffset, double yoffset) {
-		double diffSum = 0;
-		double imageX = imageBounds.getX();
-		double imageY = imageBounds.getY();
-		double imageWidth = imageBounds.getWidth();
-		double imageHeight = imageBounds.getHeight();
-		
-		double displacedImageX = imageX + xoffset;
-		double displacedImageY = imageY + yoffset;
-		if(this.starOutsideImageView(displacedImageX, displacedImageY, imageWidth, imageHeight)) {
-			return imageElementInfo.totalPositiveFlux;
-		}
-
-		int widthPixels = this.frameWidthPixels;
-		int heightPixels = this.frameHeightPixels;
-		double widthFactor = imageWidth / widthPixels;
-		double heightFactor = imageHeight / heightPixels;
-		for(ImageElement element : imageElementInfo.elements) {
-			double elementBrightness = element.brightness;
-			int colIdx = element.colIdx;
-			int rowIdx = element.rowIdx;
-			double starX = displacedImageX + widthFactor * (colIdx + 0.5);
-			double starY = displacedImageY + heightFactor * (rowIdx + 0.5);
-			if(starX <= -1 || starX >= +1 || starY <= -1 || starY >= +1) {
-				if(elementBrightness > 0) {
-					diffSum += elementBrightness;
-				}
-			}
-			else {
-				double starPointBrightness = star.getBrightness(starX, starY, true);				
-				double diff;
-				if(elementBrightness > 0) {
-					if(starPointBrightness >= 0) {
-						diff = elementBrightness - starPointBrightness;
-					}
-					else { // starPointBrightness < 0 or NaN
-						diff = elementBrightness;
-					}
-				}
-				else if(elementBrightness <= 0) {
-					if(starPointBrightness > 0) {
-						double newBrightness = starPointBrightness * (-elementBrightness);
-						diff = newBrightness - starPointBrightness;
-					}
-					else { // starPointBrightness <= 0 or NaN
-						diff = 0;
-					}
-				}
-				else { // elementBrightness is NaN
-					diff = 0;
-				}
-				diffSum += diff;
-			}
-		}		
-		return diffSum;
-	}
-	*/
-	
-	/*
-	private boolean starOutsideImageView(double imageX, double imageY, double imageWidth, double imageHeight) {
-		return imageX >= +1.0 || imageX + imageWidth <= -1.0 || imageY >= +1.0 || imageY + imageHeight <= -1.0;
-	}
-	*/
-		
 	private double estimateBaseFlux(Sphere star, Rectangle2D imageBounds) {
 		double imageWidth = imageBounds.getWidth();
 		double imageHeight = imageBounds.getHeight();
