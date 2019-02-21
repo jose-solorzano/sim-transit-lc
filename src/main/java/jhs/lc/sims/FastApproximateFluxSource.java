@@ -74,10 +74,12 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		double startAngle = -angularRange * peakFraction;
 		double timeToAngleFactor = angularRange / timeSpan;
 
+		double[] displacedImageXArray = this.getDisplacedImageXArray(timestamps, boundingBox.getX(), orbitRadius, startAngle, timeToAngleFactor);
+		
 		int ne = elements.length;
 		for(int i = 0; i < ne; i++) {
 			ImageElement element = elements[i];
-			this.alterFluxArray(fluxArray, star, timestamps, boundingBox, element, orbitRadius, yoffset, startAngle, timeToAngleFactor);
+			this.alterFluxArray(fluxArray, star, timestamps, displacedImageXArray, boundingBox, element, orbitRadius, yoffset, startAngle, timeToAngleFactor);
 		}
 		
 		this.normalizeFluxArray(fluxArray, baseFlux);
@@ -115,6 +117,19 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		*/
 	}
 	
+	private double[] getDisplacedImageXArray(double[] timestamps, double imageX, double orbitRadius, double startAngle, double timeToAngleFactor) {
+		double startTimestamp = timestamps[0];
+		int length = timestamps.length;
+		double[] result = new double[length];
+		for (int i = 0; i < length; i++) {
+			double timestamp = timestamps[i];
+			double rotationAngle = startAngle + (timestamp - startTimestamp) * timeToAngleFactor;
+			double xoffset = orbitRadius * Math.sin(rotationAngle);
+			result[i] = imageX + xoffset;
+		}
+		return result;
+	}
+	
 	private void normalizeFluxArray(double[] fluxArray, double baseFlux) {
 		double maxFlux = MathUtil.max(fluxArray);
 		double actualBaseFlux = Math.max(baseFlux, maxFlux);
@@ -123,7 +138,7 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		}
 	}
 	
-	private void alterFluxArray(double[] fluxArray, Sphere star, double[] timestamps, Rectangle2D imageBounds, ImageElement element, double orbitRadius, double yoffset, double startAngle, double timeToAngleFactor) {
+	private void alterFluxArray(double[] fluxArray, Sphere star, double[] timestamps, double[] displacedImageXArray, Rectangle2D imageBounds, ImageElement element, double orbitRadius, double yoffset, double startAngle, double timeToAngleFactor) {
 		int length = timestamps.length;
 		double startTimestamp = timestamps[0];
 		double imageX = imageBounds.getX();
@@ -141,7 +156,7 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		double elementYInStar = displacedImageY + heightFactor * (rowIdx + 0.5);
 
 		double elementBrightness = element.brightness;		
-		
+
 		int fromIndex, toIndex;
 		if(elementBrightness > 0) {
 			fromIndex = 0;
@@ -152,30 +167,35 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 			toIndex = upperTimestampIndex(timestamps, imageX, widthFactor, colIdx, orbitRadius, startTimestamp, startAngle, timeToAngleFactor);
 		}
 		for (int i = fromIndex; i < toIndex; i++) {
+			/*
 			double timestamp = timestamps[i];
 			double rotationAngle = startAngle + (timestamp - startTimestamp) * timeToAngleFactor;
 			double xoffset = orbitRadius * Math.sin(rotationAngle);
 			double displacedImageX = imageX + xoffset;
+			*/
+			double displacedImageX = displacedImageXArray[i];
 			double elementXInStar = displacedImageX + widthFactor * (colIdx + 0.5);
-			double starPointBrightness = star.getBrightness(elementXInStar, elementYInStar, true);
-			double diff;
-			if (elementBrightness > 0) {
-				if (starPointBrightness >= 0) {
-					diff = elementBrightness - starPointBrightness;
-				} else { // starPointBrightness < 0 or NaN
-					diff = elementBrightness;
-				}
-			} else if (elementBrightness <= 0) {
-				if (starPointBrightness > 0) {
-					double newBrightness = starPointBrightness * (-elementBrightness);
-					diff = newBrightness - starPointBrightness;
-				} else { // starPointBrightness <= 0 or NaN
+			if (elementXInStar >= -1.0 && elementXInStar <= +1.0) {
+				double starPointBrightness = star.getBrightness(elementXInStar, elementYInStar, true);
+				double diff;
+				if (elementBrightness > 0) {
+					if (starPointBrightness >= 0) {
+						diff = elementBrightness - starPointBrightness;
+					} else { // starPointBrightness < 0 or NaN
+						diff = elementBrightness;
+					}
+				} else if (elementBrightness <= 0) {
+					if (starPointBrightness > 0) {
+						double newBrightness = starPointBrightness * (-elementBrightness);
+						diff = newBrightness - starPointBrightness;
+					} else { // starPointBrightness <= 0 or NaN
+						diff = 0;
+					}
+				} else { // elementBrightness is NaN
 					diff = 0;
 				}
-			} else { // elementBrightness is NaN
-				diff = 0;
+				fluxArray[i] += diff;
 			}
-			fluxArray[i] += diff;
 		}
 	}
 	
