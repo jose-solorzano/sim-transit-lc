@@ -23,11 +23,15 @@ public final class ImageElementInfo {
 		this.clusteringPosition = clusteringPosition;
 	}
 
-	public static ImageElementInfo createImageFrameElements(TransitFunction brightnessFunction, int withInPixels, int heightInPixels) {
-		return createImageFrameElements(brightnessFunction, withInPixels, heightInPixels, brightnessFunction.getBoundingBox());
+	public static ImageElementInfo createImageFrameElements(TransitFunction brightnessFunction, int withInPixels, int heightInPixels, double yoffset) {
+		return createImageFrameElements(brightnessFunction, withInPixels, heightInPixels, yoffset, brightnessFunction.getBoundingBox());
 	}
 
-	public static ImageElementInfo createImageFrameElements(TransitFunction brightnessFunction, int withInPixels, int heightInPixels, Rectangle2D boundingBox) {
+	/**
+	 * Gets pixel elements of the simulated image that would affect overall brightness. Transparent pixels are not included.
+	 * Out of bounds pixels are only included if they are bright.
+	 */
+	public static ImageElementInfo createImageFrameElements(TransitFunction brightnessFunction, int withInPixels, int heightInPixels, double yoffset, Rectangle2D boundingBox) {
 		double imageWidth = boundingBox.getWidth();
 		double imageHeight = boundingBox.getHeight();
 		double fromX = boundingBox.getX();
@@ -50,7 +54,8 @@ public final class ImageElementInfo {
 				double y = fromY + (r + 0.5)  * ycw;
 				//int cpr = (int) ((y - fromY) * ycpf);
 				double b = brightnessFunction.fluxOrTransmittance(x, y, 1.0);
-				if(b > -1.0) { // also, not NaN
+				double yInStar = y + yoffset;
+				if(b > 0 || (b <= 0 && b > -1.0 && yInStar <= 1.0 && yInStar >= -1.0)) { // also, not NaN
 					//clusteringPosition[cpr * CP_BOX_LENGTH + cpc] += (b + 1.0);
 					elementList.add(new ImageElement(x, y, c, r, b));
 					if(b > 0) {

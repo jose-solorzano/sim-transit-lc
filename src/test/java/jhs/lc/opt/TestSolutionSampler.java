@@ -42,7 +42,7 @@ public class TestSolutionSampler {
 			
 			@Override
 			public ImageElementInfo createImageElementInfo(
-					TransitFunction brightnessFunction) {
+					TransitFunction brightnessFunction, double orbitRadius) {
 				return null;
 			}
 		};

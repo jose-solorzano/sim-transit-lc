@@ -33,8 +33,9 @@ public final class AngularFluxSource implements SimulatedFluxSource {
 	}
 	
 	@Override
-	public ImageElementInfo createImageElementInfo(TransitFunction brightnessFunction) {
-		return ImageElementInfo.createImageFrameElements(brightnessFunction, this.width, this.height);
+	public ImageElementInfo createImageElementInfo(TransitFunction brightnessFunction, double orbitRadius) {
+		double yoffset = -orbitRadius * Math.sin(this.inclineAngle);		
+		return ImageElementInfo.createImageFrameElements(brightnessFunction, this.width, this.height, yoffset);
 	}	
 	
 	@Override

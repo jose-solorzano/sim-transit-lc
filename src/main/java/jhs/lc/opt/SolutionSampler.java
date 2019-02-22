@@ -274,8 +274,8 @@ public class SolutionSampler {
 	private ImageState imageState(double[] optimizerParameters) {
 		Solution solution = this.parametersAsSolution(optimizerParameters);
 		TransitFunction bf = solution.getBrightnessFunction();
-		ImageElementInfo imageElementInfo = this.fluxSource.createImageElementInfo(bf);
 		double orbitRadius = this.getOrbitRadius(optimizerParameters);
+		ImageElementInfo imageElementInfo = this.fluxSource.createImageElementInfo(bf, orbitRadius);
 		int problemArcPixels = (int) Math.round(this.fluxSource.numPixelsInTimeSpanArc(bf, orbitRadius) * NPF);
 		return new ImageState(imageElementInfo, problemArcPixels);
 	}
