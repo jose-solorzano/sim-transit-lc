@@ -123,6 +123,7 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		
 		int rowIdx = element.rowIdx;
 		int colIdx = element.colIdx;
+		double wfciTerm = widthFactor * (colIdx + 0.5);
 		double elementYInStar = displacedImageY + heightFactor * (rowIdx + 0.5);
 
 		double elementBrightness = element.brightness;		
@@ -133,33 +134,31 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 			toIndex = length;
 		}
 		else {
+			// Range of relevant timestamps where element has an effect.
 			fromIndex = lowerTimestampIndex(timestamps, imageX, widthFactor, colIdx, orbitRadius, startTimestamp, startAngle, timeToAngleFactor);
 			toIndex = upperTimestampIndex(timestamps, imageX, widthFactor, colIdx, orbitRadius, startTimestamp, startAngle, timeToAngleFactor);
 		}
 		for (int i = fromIndex; i < toIndex; i++) {
-			double displacedImageX = displacedImageXArray[i];
-			double elementXInStar = displacedImageX + widthFactor * (colIdx + 0.5);
-			if (elementXInStar >= -1.0 && elementXInStar <= +1.0) {
-				double starPointBrightness = star.getBrightness(elementXInStar, elementYInStar, true);
-				double diff;
-				if (elementBrightness > 0) {
-					if (starPointBrightness >= 0) {
-						diff = elementBrightness - starPointBrightness;
-					} else { // starPointBrightness < 0 or NaN
-						diff = elementBrightness;
-					}
-				} else if (elementBrightness <= 0) {
-					if (starPointBrightness > 0) {
-						double newBrightness = starPointBrightness * (-elementBrightness);
-						diff = newBrightness - starPointBrightness;
-					} else { // starPointBrightness <= 0 or NaN
-						diff = 0;
-					}
-				} else { // elementBrightness is NaN
+			double elementXInStar = displacedImageXArray[i] + wfciTerm;
+			double starPointBrightness = star.getBrightness(elementXInStar, elementYInStar, true);
+			double diff;
+			if (elementBrightness > 0) {
+				if (starPointBrightness >= 0) {
+					diff = elementBrightness - starPointBrightness;
+				} else { // starPointBrightness < 0 or NaN
+					diff = elementBrightness;
+				}
+			} else if (elementBrightness <= 0) {
+				if (starPointBrightness > 0) {
+					double newBrightness = starPointBrightness * (-elementBrightness);
+					diff = newBrightness - starPointBrightness;
+				} else { // starPointBrightness <= 0 or NaN
 					diff = 0;
 				}
-				fluxArray[i] += diff;
+			} else { // elementBrightness is NaN
+				diff = 0;
 			}
+			fluxArray[i] += diff;
 		}
 	}
 	
@@ -246,7 +245,7 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		double startTimestamp = timestamps[0];
 		double endTimestamp = timestamps[length - 1];
 		double timeSpan = endTimestamp - startTimestamp;
-		double cycleFraction = timeSpan / this.orbitalPeriod;				
+		double cycleFraction = timeSpan / this.orbitalPeriod;		
 		double angularRange = Math.PI * 2 * cycleFraction;
 		double arcDistance = orbitRadius * angularRange;
 		return this.frameWidthPixels * arcDistance / boundingBox.getWidth();
