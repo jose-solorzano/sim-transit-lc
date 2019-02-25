@@ -68,7 +68,7 @@ public final class GradientRingPlanet implements TransitFunction {
 		@JsonProperty(value="halfOpacityRadius", required=true) double halfOpacityRadius,
 		@JsonProperty(value="maxRingOpacity", required=true) double maxRingOpacity,		
 		@JsonProperty(value="decayType", required=true) DecayType decayType,
-		@JsonProperty("doNotUse01") double extraOptimizerError) {
+		@JsonProperty("__do_not_use_01") double extraOptimizerError) {
 		
 		double originY = -impactParameter;
 		return new GradientRingPlanet(originX, originY, tilt, obliquity, planetRadius, 

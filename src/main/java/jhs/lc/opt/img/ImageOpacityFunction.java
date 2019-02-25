@@ -8,15 +8,15 @@ import jhs.lc.geom.ImageUtil;
 
 public class ImageOpacityFunction implements TransitFunction {
 	private static final long serialVersionUID = 1L;
-	private final float[][] brightnessMatrix;
+	private final float[][] transmittanceMatrix;
 	private final float topLeftX, topLeftY;
 	private final int numColumns, numRows;
 	private final double imageWidth, imageHeight;
 
-	public ImageOpacityFunction(float[][] brightnessMatrix, float x, float y, int numColumns, int numRows,
+	public ImageOpacityFunction(float[][] transmittanceMatrix, float x, float y, int numColumns, int numRows,
 			double imageWidth, double imageHeight) {
 		super();
-		this.brightnessMatrix = brightnessMatrix;
+		this.transmittanceMatrix = transmittanceMatrix;
 		this.topLeftX = x;
 		this.topLeftY = y;
 		this.numColumns = numColumns;
@@ -28,7 +28,7 @@ public class ImageOpacityFunction implements TransitFunction {
 	public static ImageOpacityFunction createOpacitySource(BufferedImage image, double imageWidth, double imageHeight) {
 		int numColumns = image.getWidth();
 		int numRows = image.getHeight();
-		float[][] brightnessMatrix = ImageUtil.blackOnWhiteToOpacityMatrix(image);
+		float[][] brightnessMatrix = ImageUtil.blackOnWhiteToTransmittanceMatrix(image);
 		return new ImageOpacityFunction(brightnessMatrix, (float) (-imageWidth / 2), (float) (-imageHeight / 2), numColumns, numRows, imageWidth, imageHeight);
 	}
 
@@ -43,7 +43,7 @@ public class ImageOpacityFunction implements TransitFunction {
 		if(columnInt < 0 || columnInt >= nc || rowInt < 0 || rowInt >= nr) {
 			return Double.NaN;
 		}
-		return this.brightnessMatrix[columnInt][rowInt];
+		return -this.transmittanceMatrix[columnInt][rowInt];
 	}
 
 	@Override
