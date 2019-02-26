@@ -58,6 +58,7 @@ public class ClassOptMethod extends AbstractOptMethod {
 			params = new HashMap<>();
 		}
 		params.put(SPECIAL_PARAM_FILE_CONTEXT, context);
+		logger.fine("Will convert parameters map to POJO: " + params);
 		@SuppressWarnings("unchecked")
 		ParametricTransitFunctionSource pfs = SpecMapper.mapToPojo(params, (Class<ParametricTransitFunctionSource>) c);
 		return pfs;

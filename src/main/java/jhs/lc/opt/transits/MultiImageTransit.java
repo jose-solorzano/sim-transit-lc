@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import javax.imageio.ImageIO;
@@ -18,6 +19,7 @@ import jhs.lc.geom.ImageUtil;
 import jhs.lc.geom.TransitFunction;
 
 public class MultiImageTransit implements TransitFunction {
+	private static final Logger logger = Logger.getLogger(MultiImageTransit.class.getName());
 	private static final long serialVersionUID = 1L;
 	private final ImageInfo[] images;
 	private final Rectangle2D boundingBox;
@@ -33,6 +35,9 @@ public class MultiImageTransit implements TransitFunction {
 	public static MultiImageTransit create(@JsonProperty(value = "images", required = true) ImageSpec[] imageSpecs,
 			@JsonProperty(value = "__file_context", required = false) File fileContext,
 			@JsonProperty(value = "__do_not_use_01", required = false) double extraOptimizerError) throws IOException {
+		if(fileContext == null) {
+			logger.warning("File context is null.");
+		}
 		ImageInfo[] images = getImages(imageSpecs, fileContext);
 		Rectangle2D boundingBox = getBoundingBox(images);
 		return new MultiImageTransit(images, boundingBox, extraOptimizerError);
@@ -69,11 +74,10 @@ public class MultiImageTransit implements TransitFunction {
 		if(boundList.isEmpty()) {
 			return new Rectangle2D.Double(0, 0, 0, 0);
 		}
-		Stream<Point2D> stream = boundList.stream();
-		double x1 = stream.mapToDouble(v -> v.getX()).min().orElse(Double.NaN);
-		double x2 = stream.mapToDouble(v -> v.getX()).max().orElse(Double.NaN);
-		double y1 = stream.mapToDouble(v -> v.getY()).min().orElse(Double.NaN);
-		double y2 = stream.mapToDouble(v -> v.getY()).max().orElse(Double.NaN);
+		double x1 = boundList.stream().mapToDouble(v -> v.getX()).min().orElse(Double.NaN);
+		double x2 = boundList.stream().mapToDouble(v -> v.getX()).max().orElse(Double.NaN);
+		double y1 = boundList.stream().mapToDouble(v -> v.getY()).min().orElse(Double.NaN);
+		double y2 = boundList.stream().mapToDouble(v -> v.getY()).max().orElse(Double.NaN);
 		return new Rectangle2D.Double(x1, y1, x2 - x1, y2 - y1);
 	}
 	
@@ -87,11 +91,11 @@ public class MultiImageTransit implements TransitFunction {
 
 	private static ImageInfo getImage(ImageSpec imageSpec, File fileContext) throws IOException {
 		File imageFile;
-		if (new File(imageSpec.imageFilePath).exists()) {
-			imageFile = new File(imageSpec.imageFilePath);
+		if (new File(imageSpec.filePath).exists()) {
+			imageFile = new File(imageSpec.filePath);
 		} else {
 			File parent = fileContext == null ? new File(".") : (fileContext.isDirectory() ? fileContext : fileContext.getParentFile());
-			imageFile = new File(parent, imageSpec.imageFilePath);
+			imageFile = new File(parent, imageSpec.filePath);
 		}
 		if(!imageFile.exists()) {
 			throw new IllegalArgumentException("Image file does not exist: " + imageFile);
@@ -156,6 +160,7 @@ public class MultiImageTransit implements TransitFunction {
 			if (row < 0 || row >= columnArray.length) {
 				return 1.0;
 			}
+			// TODO these calculations can be included in the transmittance matrix.
 			double baseOpacity = 1.0 - columnArray[row];
 			double opacity = baseOpacity * this.generalOpacity;
 			return 1.0 - opacity;
@@ -198,7 +203,7 @@ public class MultiImageTransit implements TransitFunction {
 	}	
 	
 	public static class ImageSpec {
-		private String imageFilePath;
+		private String filePath;
 		private double tilt;
 		private double originX;
 		private double originY;
@@ -206,12 +211,12 @@ public class MultiImageTransit implements TransitFunction {
 		private double height;
 		private double opacity;
 
-		public final String getImageFilePath() {
-			return imageFilePath;
+		public final String getFilePath() {
+			return filePath;
 		}
 
-		public final void setImageFilePath(String imageFilePath) {
-			this.imageFilePath = imageFilePath;
+		public final void setFilePath(String imageFilePath) {
+			this.filePath = imageFilePath;
 		}
 
 		public final double getTilt() {

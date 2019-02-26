@@ -68,7 +68,7 @@ public class SolveLightCurve extends AbstractTool {
 
 	private void run(CommandLine cmdLine) throws Exception {
 		String[] args = cmdLine.getArgs();
-		this.configureLoggingLevel(cmdLine);
+		this.configureLoggingLevel(cmdLine, logger);
 		if(args.length != 1) {
 			logger.info("run(): Command line arguments: " + Arrays.toString(args));
 			throw new IllegalArgumentException("One command line argument is required: The optimization specification JSON file.");
@@ -300,6 +300,7 @@ public class SolveLightCurve extends AbstractTool {
 
 	private SolutionSampler getSampler(Random random, double[] timestamps, double[] fluxArray, LimbDarkeningParams ldParams, OptSpec optSpec, CommandLine cmdLine, File contextFile) throws Exception {
 		AbstractOptMethod method = optSpec.getMethod();
+		logger.fine("getSampler();: method=" + method);
 		ParametricTransitFunctionSource ffs = method.createFluxFunctionSource(contextFile);
 		SimulatedFluxSource fluxSource = this.getFluxSource(cmdLine, optSpec, timestamps, ldParams, contextFile);
 		double baseRadius = optSpec.getOrbitRadius();

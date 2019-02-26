@@ -43,7 +43,8 @@ public class GenerateSimulatedData extends AbstractTool {
 		if(args.length != 1) {
 			throw new IllegalArgumentException("One command line argument is required: The simulation specification JSON file.");
 		}
-		this.configureLoggingLevel(cmdLine);
+		this.configureLoggingLevel(cmdLine, logger);
+		logger.fine("Root logger level: " + Logger.getLogger("").getLevel());
 		String specFileName = args[0];
 		File specFile = new File(specFileName);
 		SimSpec simSpec = SpecMapper.parseSimSpec(specFile);
