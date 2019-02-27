@@ -1,13 +1,36 @@
 package jhs.lc.opt.params;
 
-public class ParameterSet<T extends Enum<T>> {
+import java.util.HashMap;
+import java.util.Map;
+
+public class ParameterSet<T> {
 	private final ParameterDef[] paramMap;
+	private final Map<T, Integer> ordinalMap = new HashMap<>();
 	private int paramCount = 0;
 	
 	public ParameterSet(T[] allIds) {
 		this.paramMap = new ParameterDef[allIds.length];
 	}
 
+	public ParameterSet(int numParams) {
+		this.paramMap = new ParameterDef[numParams];
+	}
+
+	public final int getUniqueParameterCount() {
+		return this.ordinalMap.size();
+	}
+	
+	public final int getParameterIndex(T id) {
+		if (id instanceof Enum) {
+			return ((Enum<?>) id).ordinal();
+		}
+		Integer index = this.ordinalMap.get(id);
+		if(index == null) {
+			throw new IllegalArgumentException("Parameter ID " + id + " is undefined.");
+		}
+		return index.intValue();
+	}
+	
 	public final void addParameterDef(T id, double ... bounds) {
 		if(bounds == null || bounds.length != 2) {
 			throw new IllegalArgumentException("Parameter bounds must be an array of length 2.");
@@ -30,7 +53,7 @@ public class ParameterSet<T extends Enum<T>> {
 	}
 
 	private void addMultiParameterDefImpl(T id, int numParameters, double min, double max) {
-		int ordinal = id.ordinal();
+		int ordinal = ordinal(id);
 		if(this.paramMap[ordinal] != null) {
 			throw new IllegalArgumentException("ID " + id + " already added.");
 		}		
@@ -40,7 +63,7 @@ public class ParameterSet<T extends Enum<T>> {
 	}
 
 	private void addExpParameterDefImpl(T id, int numParameters, double min, double max) {
-		int ordinal = id.ordinal();
+		int ordinal = ordinal(id);
 		if(this.paramMap[ordinal] != null) {
 			throw new IllegalArgumentException("ID " + id + " already added.");
 		}		
@@ -49,6 +72,20 @@ public class ParameterSet<T extends Enum<T>> {
 		this.paramCount += numParameters;
 	}
 
+	private final int ordinal(T value) {
+		if(value instanceof Enum) {
+			return ((Enum<?>) value).ordinal();
+		}
+		else {
+			Integer ordinal = this.ordinalMap.get(value);
+			if(ordinal == null) {
+				ordinal = this.ordinalMap.size();
+				this.ordinalMap.put(value, ordinal);
+			}
+			return ordinal;
+		}		
+	}
+	
 	public final int getNumParameters() {
 		return this.paramCount;
 	}
@@ -58,7 +95,7 @@ public class ParameterSet<T extends Enum<T>> {
 	}
 	
 	public final double getValue(T id, double[] parameters, int indexOffset) {
-		ParameterDef paramDef = this.paramMap[id.ordinal()];
+		ParameterDef paramDef = this.paramMap[ordinal(id)];
 		if(paramDef == null) {
 			throw new IllegalArgumentException("No parameter with that ID: " + id);
 		}
@@ -66,7 +103,7 @@ public class ParameterSet<T extends Enum<T>> {
 	}
 
 	public final double[] getValues(T id, double[] parameters) {
-		ParameterDef paramDef = this.paramMap[id.ordinal()];
+		ParameterDef paramDef = this.paramMap[ordinal(id)];
 		if(paramDef == null) {
 			throw new IllegalArgumentException("No parameter with that ID: " + id);
 		}

@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jhs.lc.geom.ImageUtil;
 import jhs.lc.geom.TransitFunction;
+import jhs.math.util.MatrixUtil;
 
 public class MultiImageTransit implements TransitFunction {
 	private static final Logger logger = Logger.getLogger(MultiImageTransit.class.getName());
@@ -39,6 +40,11 @@ public class MultiImageTransit implements TransitFunction {
 			logger.warning("File context is null.");
 		}
 		ImageInfo[] images = getImages(imageSpecs, fileContext);
+		Rectangle2D boundingBox = getBoundingBox(images);
+		return new MultiImageTransit(images, boundingBox, extraOptimizerError);
+	}
+	
+	public static MultiImageTransit create(ImageInfo[] images, double extraOptimizerError) {
 		Rectangle2D boundingBox = getBoundingBox(images);
 		return new MultiImageTransit(images, boundingBox, extraOptimizerError);
 	}
@@ -102,15 +108,14 @@ public class MultiImageTransit implements TransitFunction {
 		}
 		BufferedImage image = ImageIO.read(imageFile);
 		float[][] transmittanceMatrix = ImageUtil.blackOnWhiteToTransmittanceMatrix(image);
-		
-		int widthPixels = image.getWidth();
-		int heightPixels = image.getHeight();
-		double imageWidth = imageSpec.width;
-		double imageHeight = imageSpec.height;
-		double originX = imageSpec.originX;
-		double originY = imageSpec.originY;		
-		
-		double tilt = imageSpec.tilt;
+		adjustTransmittance(transmittanceMatrix, imageSpec.getOpacity());
+		return getImageInfo(transmittanceMatrix, image.getWidth(), image.getHeight(), 
+				imageSpec.getHeight(), imageSpec.getAspectRatio(), imageSpec.getOriginX(), imageSpec.getOriginY(), imageSpec.getTilt());		
+	}
+
+	public static ImageInfo getImageInfo(float[][] transmittanceMatrix, int widthPixels, int heightPixels, double imageHeight, double aspectRatio, double originX, double originY, double tilt) {
+		double imageWidth = imageHeight * aspectRatio;
+
 		double rotA = Math.cos(tilt);
 		double rotB = Math.sin(tilt);
 		double wf = widthPixels / imageWidth;
@@ -124,18 +129,30 @@ public class MultiImageTransit implements TransitFunction {
 		double rowB = -rotA * hf;
 		double rowC = heightPixels / 2.0 + (originX * (-rotB) + originY * rotA) * hf;
 
-		return new ImageInfo(transmittanceMatrix, widthPixels, heightPixels, colA, colB, colC, rowA, rowB, rowC, imageSpec.opacity);
+		return new ImageInfo(transmittanceMatrix, widthPixels, heightPixels, colA, colB, colC, rowA, rowB, rowC);		
 	}
-
+	
+	public static void adjustTransmittance(float[][] transmittanceMatrix, double opacityFactor) {
+		int numCols = transmittanceMatrix.length;
+		for(int x = 0; x < numCols; x++) {
+			float[] column = transmittanceMatrix[x];
+			int numRows = column.length;
+			for(int y = 0; y < numRows;  y++) {
+				double cellOpacity = 1.0 - column[y];
+				double newOpacity = cellOpacity * opacityFactor;
+				column[y] = (float) (1.0 - newOpacity);
+			}
+		}
+	}
+	
 	public static final class ImageInfo {
 		private final float[][] transmittanceMatrix;
 		private final int widthPixels, heightPixels;
 		private final double colA, colB, colC;
 		private final double rowA, rowB, rowC;
-		private final double generalOpacity;
 
 		public ImageInfo(float[][] transmittanceMatrix, int widthPixels, int heightPixels, double colA, double colB,
-				double colC, double rowA, double rowB, double rowC, double generalOpacity) {
+				double colC, double rowA, double rowB, double rowC) {
 			super();
 			this.transmittanceMatrix = transmittanceMatrix;
 			this.widthPixels = widthPixels;
@@ -146,7 +163,6 @@ public class MultiImageTransit implements TransitFunction {
 			this.rowA = rowA;
 			this.rowB = rowB;
 			this.rowC = rowC;
-			this.generalOpacity = generalOpacity;
 		}
 
 		public final double getTransmittance(double x, double y) {
@@ -160,10 +176,13 @@ public class MultiImageTransit implements TransitFunction {
 			if (row < 0 || row >= columnArray.length) {
 				return 1.0;
 			}
+			return columnArray[row];
+			/*
 			// TODO these calculations can be included in the transmittance matrix.
 			double baseOpacity = 1.0 - columnArray[row];
 			double opacity = baseOpacity * this.generalOpacity;
 			return 1.0 - opacity;
+			*/
 		}
 		
 		public final Point2D getStarPosition(int column, int row) {
@@ -207,8 +226,8 @@ public class MultiImageTransit implements TransitFunction {
 		private double tilt;
 		private double originX;
 		private double originY;
-		private double width;
 		private double height;
+		private double aspectRatio;
 		private double opacity;
 
 		public final String getFilePath() {
@@ -243,12 +262,12 @@ public class MultiImageTransit implements TransitFunction {
 			this.originY = originY;
 		}
 
-		public final double getWidth() {
-			return width;
+		public final double getAspectRatio() {
+			return aspectRatio;
 		}
 
-		public final void setWidth(double width) {
-			this.width = width;
+		public final void setAspectRatio(double aspectRatio) {
+			this.aspectRatio = aspectRatio;
 		}
 
 		public final double getHeight() {
