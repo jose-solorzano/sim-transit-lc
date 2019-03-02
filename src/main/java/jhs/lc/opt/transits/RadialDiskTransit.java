@@ -14,10 +14,12 @@ public final class RadialDiskTransit implements TransitFunction {
 	private final double sinTilt, cosTilt;
 	private final double sinObliquity;
 	private final double diskRadiusSquared;
+	private final double planetRadiusSquared;
 	private final double decayCoefficient;
 	private final double extraOptimizationError;
 	
 	public RadialDiskTransit(double originX, double originY, double tilt, double obliquity,
+			double planetRadius,
 			double diskRadius, double decayCoefficient, double extraOptimizationError) {
 		super();
 		this.originX = originX;
@@ -26,6 +28,7 @@ public final class RadialDiskTransit implements TransitFunction {
 		this.cosTilt = Math.cos(tilt);
 		this.sinObliquity = Math.sin(obliquity);
 		this.diskRadiusSquared = diskRadius * diskRadius;
+		this.planetRadiusSquared = planetRadius * planetRadius;
 		this.decayCoefficient = decayCoefficient;
 		this.extraOptimizationError = extraOptimizationError;
 	}
@@ -36,12 +39,13 @@ public final class RadialDiskTransit implements TransitFunction {
 		@JsonProperty("impactParameter") double impactParameter,
 		@JsonProperty("tilt") double tilt,
 		@JsonProperty(value="obliquity", required=false) double obliquity,
-		@JsonProperty(value="planetRadius", required=true) double diskRadius,
+		@JsonProperty(value="planetRadius", required=true) double planetRadius,
+		@JsonProperty(value="diskRadius", required=true) double diskRadius,
 		@JsonProperty(value="decayCoefficient", required=true) double decayCoefficient,
 		@JsonProperty("__do_not_use_01") double extraOptimizerError) {
 		
 		double originY = -impactParameter;
-		return new RadialDiskTransit(originX, originY, tilt, obliquity, diskRadius, decayCoefficient, extraOptimizerError);
+		return new RadialDiskTransit(originX, originY, tilt, obliquity, planetRadius, diskRadius, decayCoefficient, extraOptimizerError);
 	}
 
 	/**
@@ -51,6 +55,10 @@ public final class RadialDiskTransit implements TransitFunction {
 	public final double fluxOrTransmittance(double x, double y, double z) {
 		double xdiff = x - this.originX;
 		double ydiff = y - this.originY;
+		double rs = xdiff * xdiff + ydiff * ydiff;
+		if(rs <= this.planetRadiusSquared) {
+			return 0;
+		}
 		double rotA = this.cosTilt;
 		double rotB = this.sinTilt;
 		double xr = xdiff * rotA + ydiff * rotB;

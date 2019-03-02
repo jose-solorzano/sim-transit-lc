@@ -30,7 +30,7 @@ import jhs.math.util.ListUtil;
 import jhs.math.util.MathUtil;
 
 public class ClusteredGridSearchOptimizer {
-	//private static final Logger logger = Logger.getLogger(ClusteredGridSearchOptimizer.class.getName());
+	private static final Logger logger = Logger.getLogger(ClusteredGridSearchOptimizer.class.getName());
 	private final Random random;	
 	private final int numClusters, numParticlesPerCluster;
 	
@@ -84,7 +84,13 @@ public class ClusteredGridSearchOptimizer {
 		int n = nc * nppc;
 		int maxI = this.maxIterations;
 		double factor = this.boundsIterativeFactor;
+		if(logger.isLoggable(Level.INFO)) {
+			logger.info("optimize(): vectorLength=" + vectorLength + ", nc=" + nc + ", nppc=" + nppc + ", n=" + n + ", maxI=" + maxI);
+		}
 		List<Particle> clusterParticles = this.createInitialClusterParticles(nc, vectorLength, errorFunction);
+		if(clusterParticles.size() != nc) {
+			throw new IllegalStateException("Expected an initial cluster of size " + nc + " but got " + clusterParticles.size() + ".");
+		}
 		double boundsSd = this.initialSamplingSD;
 		for(int i = 0; i < maxI; i++) {
 			List<Particle> particles = this.populateParticlesAroundClusters(clusterParticles, nppc - 1, boundsSd, vectorLength, errorFunction);
@@ -93,7 +99,7 @@ public class ClusteredGridSearchOptimizer {
 			}
 			clusterParticles = this.extractBestWithClustering(clusterParticles, particles);
 			if(clusterParticles.size() != nc) {
-				throw new IllegalStateException();
+				throw new IllegalStateException("Expected " + nc + " clusters, but got " + clusterParticles.size() + ". Number of particles:  " + particles.size() + ".");
 			}
 			RealPointValuePair bestPv = this.getBestPoint(clusterParticles);
 			this.informProgress(Phase.CLUSTERING, i, bestPv);
@@ -143,6 +149,9 @@ public class ClusteredGridSearchOptimizer {
 		List<Particle> result = new ArrayList<>();
 		for(VectorialCluster<Particle> cluster : clusterList) {
 			List<Particle> cp = this.extractBest(1, cluster.getItems());
+			if(cp.isEmpty()) {
+				throw new IllegalStateException("Did not expect cluster of size zero.");
+			}
 			result.addAll(cp);
 		}
 		return result;
@@ -194,7 +203,8 @@ public class ClusteredGridSearchOptimizer {
 			double[] params = MathUtil.multiply(direction, r.nextDouble());
 			ClusteredParamEvaluation eval = errorFunction.evaluate(params);
 			if(result == null || eval.getError() < result.getValue()) {
-				result = new Particle(params, eval.getClusteringPosition(), eval.getError());
+				double[] clusteringPosition = params; // eval.getClusteringPosition()
+				result = new Particle(params, clusteringPosition, eval.getError());
 			}
 		}
 		if(result == null) {
@@ -208,7 +218,8 @@ public class ClusteredGridSearchOptimizer {
 		for(int i = 0; i < n; i++) {
 			double[] params = this.newRandomParams(refParams, sd, vectorLength);
 			ClusteredParamEvaluation eval = errorFunction.evaluate(params);
-			pool.add(new Particle(params, eval.getClusteringPosition(), eval.getError()));
+			double[] clusteringPosition = params; // eval.getClusteringPosition()
+			pool.add(new Particle(params, clusteringPosition, eval.getError()));
 		}		
 	}
 	
