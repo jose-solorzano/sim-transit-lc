@@ -147,7 +147,7 @@ public class MultiImageTransitBuilder implements ParametricTransitFunctionSource
 				return new SimpleValueInfo(value);
 			} catch(NumberFormatException nfe) {
 				int paramIndex = parameterSet.getParameterIndex(valueText);
-				return new ParamValueInfo(paramIndex);
+				return new ParamValueInfo(parameterSet, paramIndex);
 			}
 		}
 	}
@@ -170,15 +170,17 @@ public class MultiImageTransitBuilder implements ParametricTransitFunctionSource
 	}
 	
 	private static final class ParamValueInfo implements ValueInfo {
+		private final ParameterSet<String> parameterSet;
 		private final int paramIndex;
-
-		public ParamValueInfo(int paramIndex) {
+		
+		public ParamValueInfo(ParameterSet<String> parameterSet, int paramIndex) {
 			super();
+			this.parameterSet = parameterSet;
 			this.paramIndex = paramIndex;
 		}
 
 		public double getValue(double[] parameters) {
-			return parameters[this.paramIndex];
+			return this.parameterSet.getValueFromIndex(this.paramIndex, parameters);
 		}
 	}	
 	

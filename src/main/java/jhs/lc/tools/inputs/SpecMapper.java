@@ -19,7 +19,8 @@ public class SpecMapper {
 
 	private static final ObjectMapper PARAMS_MAPPER = new ObjectMapper()
 			.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
-			.disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
+			.disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+			.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
 	private static ObjectMapper getObjectMapper() {
 		return DEFAULT_MAPPER;

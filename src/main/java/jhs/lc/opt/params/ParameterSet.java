@@ -102,6 +102,14 @@ public class ParameterSet<T> {
 		return paramDef.getValue(parameters, indexOffset);
 	}
 
+	public final double getValueFromIndex(int ordinal, double[] parameters) {
+		ParameterDef paramDef = this.paramMap[ordinal];
+		if(paramDef == null) {
+			throw new IllegalArgumentException("No parameter with that ordinal: " + ordinal);
+		}
+		return paramDef.getValue(parameters, 0);
+	}
+
 	public final double[] getValues(T id, double[] parameters) {
 		ParameterDef paramDef = this.paramMap[ordinal(id)];
 		if(paramDef == null) {
