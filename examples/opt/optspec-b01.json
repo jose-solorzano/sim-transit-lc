@@ -1,6 +1,6 @@
 {
-	"widthPixels": 64,
-	"heightPixels": 64,
+	"widthPixels": 100,
+	"heightPixels": 100,
 	"orbitPeriod": 150,
 	"orbitRadius": 296,
 	"orbitRadiusFlexibility": 0.03,
