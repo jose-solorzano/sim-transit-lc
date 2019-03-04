@@ -55,10 +55,12 @@ public final class RadialDiskTransit implements TransitFunction {
 	public final double fluxOrTransmittance(double x, double y, double z) {
 		double xdiff = x - this.originX;
 		double ydiff = y - this.originY;
+		/*
 		double rs = xdiff * xdiff + ydiff * ydiff;
 		if(rs <= this.planetRadiusSquared) {
 			return 0;
 		}
+		*/
 		double rotA = this.cosTilt;
 		double rotB = this.sinTilt;
 		double xr = xdiff * rotA + ydiff * rotB;
@@ -68,15 +70,44 @@ public final class RadialDiskTransit implements TransitFunction {
 			return Double.NaN;
 		}
 		yr /= sinOb;
-		double rrs = xr * xr + yr * yr;
+		double xrSq = xr * xr;
+		double yrSq = yr * yr;
+		double rrs = xrSq + yrSq;
 		if(rrs > this.diskRadiusSquared) {
 			return Double.NaN;
 		}
-		double distanceFromCenter = StrictMath.sqrt(rrs);
-		double coeff = this.decayCoefficient;
-		double denominator = coeff * distanceFromCenter;
-		double opacity = denominator <= 1 ? 1.0 : 1.0 / denominator;
-		return -(1.0 - opacity);
+
+		/*
+		if(rrs < this.planetRadiusSquared) {
+			return 0;
+		}
+		*/
+		
+		
+		/*
+		double planetRadius = Math.sqrt(this.planetRadiusSquared);				
+		double plainDistance = StrictMath.sqrt(rrs);				
+		if(plainDistance <= planetRadius) {
+			// TODO parameterize
+			return -0.97;
+		}
+		double ratio = planetRadius / plainDistance;
+		double ratio1m = 1 - ratio;
+		double xrr = xr * ratio1m;
+		double yrr = yr * ratio1m;
+		double opacityDistance = StrictMath.sqrt(xrr * xrr * sinOb * sinOb + yrr * yrr);
+		*/
+		
+		/*
+		double opacityDistance = plainDistance - planetRadius;
+		*/
+		
+		double opacityDistance = StrictMath.sqrt(xrSq * sinOb * sinOb + yrSq);
+		
+		double dc = this.decayCoefficient;
+		double denominator1 = dc * opacityDistance;
+		double opacity1 = denominator1 <= 1 ? 1.0 : 1.0 / denominator1;
+		return -(1.0 - opacity1);
 	}
 
 	@Override
@@ -105,7 +136,9 @@ public final class RadialDiskTransit implements TransitFunction {
 	@Override
 	public String toString() {
 		return "RadialDiskTransit [originX=" + originX + ", originY=" + originY + ", sinTilt=" + sinTilt + ", cosTilt="
-				+ cosTilt + ", sinObliquity=" + sinObliquity + ", diskRadiusSquared=" + diskRadiusSquared
+				+ cosTilt + ", sinObliquity=" + sinObliquity + 
+				", planetRadiusSquared=" + planetRadiusSquared +
+				", diskRadiusSquared=" + diskRadiusSquared
 				+ ", decayCoefficient=" + decayCoefficient + ", extraOptimizationError=" + extraOptimizationError + "]";
 	}
 }
