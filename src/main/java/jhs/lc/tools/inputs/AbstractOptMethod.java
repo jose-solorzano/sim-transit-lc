@@ -16,7 +16,8 @@ import jhs.lc.geom.ParametricTransitFunctionSource;
 @JsonSubTypes({
 	    @Type(value = ClassOptMethod.class, name = "code"),
 	    @Type(value = ImageOptMethod.class, name = "image"),
-	    @Type(value = NeuralOptMethod.class, name = "neural")
+	    @Type(value = NeuralOptMethod.class, name = "neural"),
+	    @Type(value = MultiImageOptMethod.class, name = "multi-image"),
 })
 public abstract class AbstractOptMethod {
 	public abstract ParametricTransitFunctionSource createFluxFunctionSource(File context) throws Exception;	

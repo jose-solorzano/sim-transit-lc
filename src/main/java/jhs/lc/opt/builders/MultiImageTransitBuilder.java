@@ -20,21 +20,19 @@ import jhs.lc.opt.transits.MultiImageTransit.ImageInfo;
 import jhs.math.util.MatrixUtil;
 
 public class MultiImageTransitBuilder implements ParametricTransitFunctionSource {	
+	private static final double LAMBDA = 0.1;
 	private final ParameterSet<String> parameterSet;
 	private final ResolvedImageSpec[] resolvedImageSpecs;
-	private final double lambda;
 	
-	public MultiImageTransitBuilder(ParameterSet<String> parameterSet, ResolvedImageSpec[] resolvedImageSpecs, double lambda) {
+	public MultiImageTransitBuilder(ParameterSet<String> parameterSet, ResolvedImageSpec[] resolvedImageSpecs) {
 		this.parameterSet = parameterSet;
 		this.resolvedImageSpecs = resolvedImageSpecs;
-		this.lambda = lambda;
 	}
 
 	@JsonCreator
 	public static MultiImageTransitBuilder create(
 			@JsonProperty(value="parameters", required=true) Map<String, double[]> parameters,
 			@JsonProperty(value="images", required=true) BuilderImageSpec[] imageSpecs,
-			@JsonProperty(value="lambda", required=false) double lambda,
 			@JsonProperty(value = "__file_context", required = false) File fileContext
 		) throws IOException {		
 		ParameterSet<String> parameterSet = new ParameterSet<>(parameters.size());
@@ -47,7 +45,7 @@ public class MultiImageTransitBuilder implements ParametricTransitFunctionSource
 			throw new IllegalStateException("There are duplicate parameters names.");
 		}		
 		ResolvedImageSpec[] resolvedImageSpecs = resolveImageSpecs(imageSpecs, fileContext, parameterSet);
-		return new MultiImageTransitBuilder(parameterSet, resolvedImageSpecs, lambda);
+		return new MultiImageTransitBuilder(parameterSet, resolvedImageSpecs);
 	}
 	
 	private static ResolvedImageSpec[] resolveImageSpecs(BuilderImageSpec[] imageSpecs, File fileContext, ParameterSet<String> parameterSet) throws IOException {
@@ -61,7 +59,7 @@ public class MultiImageTransitBuilder implements ParametricTransitFunctionSource
 
 	@Override
 	public final TransitFunction getTransitFunction(double[] parameters) {		
-		double extraOptimizerError = this.parameterSet.getExtraOptimizerError(parameters, this.lambda);
+		double extraOptimizerError = this.parameterSet.getExtraOptimizerError(parameters, LAMBDA);
 		ResolvedImageSpec[] ris = this.resolvedImageSpecs;
 		ImageInfo[] images = new ImageInfo[ris.length];
 		for(int i = 0; i < ris.length; i++) {
@@ -132,16 +130,19 @@ public class MultiImageTransitBuilder implements ParametricTransitFunctionSource
 			}
 			BufferedImage image = ImageIO.read(imageFile);			
 			float[][] transmittanceMatrix = ImageUtil.blackOnWhiteToTransmittanceMatrix(image);
-			ValueInfo tilt = getValueInfo(imageSpec.getTilt(), parameterSet);
-			ValueInfo originX = getValueInfo(imageSpec.getOriginX(), parameterSet);
-			ValueInfo originY = getValueInfo(imageSpec.getOriginY(), parameterSet);
-			ValueInfo height = getValueInfo(imageSpec.getHeight(), parameterSet);
-			ValueInfo aspectRatio = getValueInfo(imageSpec.getAspectRatio(), parameterSet);
-			ValueInfo opacity = getValueInfo(imageSpec.getOpacity(), parameterSet);
+			ValueInfo tilt = getValueInfo(imageSpec.getTilt(), parameterSet, "tilt");
+			ValueInfo originX = getValueInfo(imageSpec.getOriginX(), parameterSet, "originX");
+			ValueInfo originY = getValueInfo(imageSpec.getOriginY(), parameterSet, "originY");
+			ValueInfo height = getValueInfo(imageSpec.getHeight(), parameterSet, "height");
+			ValueInfo aspectRatio = getValueInfo(imageSpec.getAspectRatio(), parameterSet, "aspectRatio");
+			ValueInfo opacity = getValueInfo(imageSpec.getOpacity(), parameterSet, "opacity");
 			return new ResolvedImageSpec(transmittanceMatrix, image.getWidth(), image.getHeight(), tilt, originX, originY, height, aspectRatio, opacity);
 		}
 		
-		private static ValueInfo getValueInfo(String valueText, ParameterSet<String> parameterSet) {
+		private static ValueInfo getValueInfo(String valueText, ParameterSet<String> parameterSet, String parameterName) {
+			if(valueText == null) {
+				throw new IllegalArgumentException("Property value of " + parameterName + " is null!");
+			}
 			try {
 				double value = Double.parseDouble(valueText);
 				return new SimpleValueInfo(value);
@@ -193,6 +194,7 @@ public class MultiImageTransitBuilder implements ParametricTransitFunctionSource
 		private String aspectRatio;
 		private String opacity;
 
+		@JsonProperty(required=true)
 		public final String getFilePath() {
 			return filePath;
 		}
@@ -201,6 +203,7 @@ public class MultiImageTransitBuilder implements ParametricTransitFunctionSource
 			this.filePath = filePath;
 		}
 
+		@JsonProperty(required=true)
 		public final String getTilt() {
 			return tilt;
 		}
@@ -209,6 +212,7 @@ public class MultiImageTransitBuilder implements ParametricTransitFunctionSource
 			this.tilt = tilt;
 		}
 
+		@JsonProperty(required=true)
 		public final String getOriginX() {
 			return originX;
 		}
@@ -217,6 +221,7 @@ public class MultiImageTransitBuilder implements ParametricTransitFunctionSource
 			this.originX = originX;
 		}
 
+		@JsonProperty(required=true)
 		public final String getOriginY() {
 			return originY;
 		}
@@ -225,6 +230,7 @@ public class MultiImageTransitBuilder implements ParametricTransitFunctionSource
 			this.originY = originY;
 		}
 
+		@JsonProperty(required=true)
 		public final String getHeight() {
 			return height;
 		}
@@ -233,6 +239,7 @@ public class MultiImageTransitBuilder implements ParametricTransitFunctionSource
 			this.height = height;
 		}
 
+		@JsonProperty(required=true)
 		public final String getAspectRatio() {
 			return aspectRatio;
 		}
@@ -241,6 +248,7 @@ public class MultiImageTransitBuilder implements ParametricTransitFunctionSource
 			this.aspectRatio = aspectRatio;
 		}
 
+		@JsonProperty(required=true)
 		public final String getOpacity() {
 			return opacity;
 		}
