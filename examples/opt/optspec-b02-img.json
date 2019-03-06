@@ -1,0 +1,40 @@
+{
+	"widthPixels": 100,
+	"heightPixels": 100,
+	"orbitPeriod": 150,
+	"orbitRadius": 300.5,
+	"orbitRadiusFlexibility": 0.003,
+	"method": {
+		"type": "multi-image",
+		"parameters": {
+			"originX": [-1, 1],
+			"originY": [-1, 0],
+			"squareHeight1": [0.03, 0.3],
+			"squareAspectRatio1": [1.0, 10.0],
+			"squareTilt1": [-1.571, 1.571],
+			"squareHeight2": [0.03, 0.3],
+			"squareAspectRatio2": [1.0, 10.0],
+			"squareTilt2": [-1.571, 1.571]
+		},
+		"images": [
+			{
+				"filePath": "../img/opaque-square.png",
+				"originX": "originX",
+				"originY": "originY",
+				"height": "squareHeight1",
+				"aspectRatio": "squareAspectRatio1",
+				"tilt": "squareTilt1",
+				"opacity": 1.0
+			},
+			{
+				"filePath": "../img/opaque-square.png",
+				"originX": "originX",
+				"originY": "originY",
+				"height": "squareHeight2",
+				"aspectRatio": "squareAspectRatio2",
+				"tilt": "squareTilt2",
+				"opacity": 1.0				
+			}			
+		]		
+	}
+}

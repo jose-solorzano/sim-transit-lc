@@ -13,4 +13,4 @@ ${projectDir}/bin/lc-opt ${OPTS} \
 	-o ${workDir}/opt-b01.csv \
 	-or ${workDir}/opt-b01.json \
 	-oi ${workDir}/opt-b01.png \
-	${projectDir}/examples/opt/optspec-b01.json
+	${projectDir}/examples/opt/optspec-b01-nn.json
