@@ -84,9 +84,6 @@ public class ClusteredGridSearchOptimizer {
 		int n = nc * nppc;
 		int maxI = this.maxIterations;
 		double factor = this.boundsIterativeFactor;
-		if(logger.isLoggable(Level.INFO)) {
-			logger.info("optimize(): vectorLength=" + vectorLength + ", nc=" + nc + ", nppc=" + nppc + ", n=" + n + ", maxI=" + maxI);
-		}
 		List<Particle> clusterParticles = this.createInitialClusterParticles(nc, vectorLength, errorFunction);
 		if(clusterParticles.size() != nc) {
 			throw new IllegalStateException("Expected an initial cluster of size " + nc + " but got " + clusterParticles.size() + ".");

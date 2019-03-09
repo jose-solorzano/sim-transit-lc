@@ -32,19 +32,7 @@ public class TestSolutionSampler {
 			public SimulatedFlux produceModeledFlux(double peakFraction,
 					TransitFunction brightnessFunction, double orbitRadius) {
 				return null;
-			}
-			
-			@Override
-			public double numPixelsInTimeSpanArc(
-					TransitFunction brightnessFunction, double orbitRadius) {
-				return 0;
-			}
-			
-			@Override
-			public ImageElementInfo createImageElementInfo(
-					TransitFunction brightnessFunction, double orbitRadius) {
-				return null;
-			}
+			}			
 		};
 		SolutionSampler sampler = new SolutionSampler(random, fluxSource, opacitySource, minRadius, maxRadius);
 		int np = sampler.getNumParameters();

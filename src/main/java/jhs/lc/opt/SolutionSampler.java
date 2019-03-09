@@ -1,5 +1,6 @@
 package jhs.lc.opt;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -275,9 +276,8 @@ public class SolutionSampler {
 		Solution solution = this.parametersAsSolution(optimizerParameters);
 		TransitFunction bf = solution.getBrightnessFunction();
 		double orbitRadius = this.getOrbitRadius(optimizerParameters);
-		ImageElementInfo imageElementInfo = this.fluxSource.createImageElementInfo(bf, orbitRadius);
-		int problemArcPixels = (int) Math.round(this.fluxSource.numPixelsInTimeSpanArc(bf, orbitRadius) * NPF);
-		return new ImageState(imageElementInfo, problemArcPixels);
+		SimulatedFlux simFlux = this.fluxSource.produceModeledFlux(peakFraction, bf, orbitRadius);
+		return new ImageState(simFlux.getFluxArray());
 	}
 
 	public EvaluationInfo getEvaluationInfo(double[] fluxArray, Solution solution) throws FunctionEvaluationException {
@@ -312,26 +312,20 @@ public class SolutionSampler {
 	}
 	
 	private static class ImageState {
-		private final ImageElementInfo imageElementInfo;
-		private final int problemArcPixels;
+		private final double[] fluxArray;
 		
-		
-		public ImageState(ImageElementInfo imageElementInfo, int problemArcPixels) {
+		public ImageState(double[] fluxArray) {
 			super();
-			this.imageElementInfo = imageElementInfo;
-			this.problemArcPixels = problemArcPixels;
+			this.fluxArray = fluxArray;
 		}
-
 
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + ((imageElementInfo == null) ? 0 : imageElementInfo.hashCode());
-			result = prime * result + problemArcPixels;
+			result = prime * result + Arrays.hashCode(fluxArray);
 			return result;
 		}
-
 
 		@Override
 		public boolean equals(Object obj) {
@@ -342,12 +336,7 @@ public class SolutionSampler {
 			if (getClass() != obj.getClass())
 				return false;
 			ImageState other = (ImageState) obj;
-			if (imageElementInfo == null) {
-				if (other.imageElementInfo != null)
-					return false;
-			} else if (!imageElementInfo.equals(other.imageElementInfo))
-				return false;
-			if (problemArcPixels != other.problemArcPixels)
+			if (!Arrays.equals(fluxArray, other.fluxArray))
 				return false;
 			return true;
 		}

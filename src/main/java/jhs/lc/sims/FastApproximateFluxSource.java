@@ -52,7 +52,7 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		Rectangle2D boundingBox = brightnessFunction.getBoundingBox();
 		if(boundingBox.isEmpty()) {
 			Arrays.fill(fluxArray, 1.0);
-			return new SimulatedFlux(fluxArray, ImageElementInfo.blankClusteringPosition());
+			return new SimulatedFlux(fluxArray);
 		}
 		
 		Sphere star = new SolidSphere(1.0, this.ldParams);
@@ -84,7 +84,7 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		
 		this.normalizeFluxArray(fluxArray, baseFlux);
 
-		return new SimulatedFlux(fluxArray, imageElementInfo.clusteringPosition);
+		return new SimulatedFlux(fluxArray);
 	}
 	
 	private double[] getDisplacedImageXArray(double[] timestamps, double imageX, double orbitRadius, double startAngle, double timeToAngleFactor) {
@@ -231,6 +231,7 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		return boxFlux * (starPixelWidth * starPixelHeight) / (ceilStarPixelWidth * ceilStarPixelHeight);
 	}
 
+	/*
 	@Override
 	public ImageElementInfo createImageElementInfo(TransitFunction brightnessFunction, double orbitRadius) {
 		double yoffset = -orbitRadius * Math.sin(this.inclineAngle);		
@@ -250,4 +251,5 @@ public class FastApproximateFluxSource implements SimulatedFluxSource {
 		double arcDistance = orbitRadius * angularRange;
 		return this.frameWidthPixels * arcDistance / boundingBox.getWidth();
 	}	
+	*/
 }

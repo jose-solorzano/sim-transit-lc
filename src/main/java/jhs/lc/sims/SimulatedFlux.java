@@ -1,20 +1,15 @@
 package jhs.lc.sims;
 
+import java.util.Arrays;
+
 public class SimulatedFlux {
 	private final double[] fluxArray;
-	private final double[] clusteringPosition;
 	
-	public SimulatedFlux(double[] fluxArray, double[] clusteringPosition) {
-		super();
+	public SimulatedFlux(double[] fluxArray) {
 		this.fluxArray = fluxArray;
-		this.clusteringPosition = clusteringPosition;
 	}
 
 	public double[] getFluxArray() {
 		return fluxArray;
-	}
-
-	public double[] getClusteringPosition() {
-		return clusteringPosition;
 	}
 }

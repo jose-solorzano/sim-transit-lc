@@ -9,6 +9,7 @@ echo "BO3 optimization: Models an inclined single-ring planet."
 OPTS="-log INFO -nc 10 -nppc 10 -noi 400 -nagd 200"
 
 ${projectDir}/bin/lc-opt ${OPTS} \
+	-et pstar \
 	-i ${projectDir}/examples/lc/sim-b03.csv \
 	-o ${workDir}/opt-b03.csv \
 	-or ${workDir}/opt-b03.json \

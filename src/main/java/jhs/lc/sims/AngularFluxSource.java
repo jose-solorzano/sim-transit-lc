@@ -29,9 +29,11 @@ public final class AngularFluxSource implements SimulatedFluxSource {
 		AngularSimulation simulation = new AngularSimulation(inclineAngle, orbitRadius, orbitalPeriod, ldParams, sphereFactory);
 		double[] fluxArray = simulation.produceModeledFlux(timestamps, peakFraction, width, height);
 		// Note: Doesn't support image-based clustering positions.
-		return new SimulatedFlux(fluxArray, fluxArray);
+		return new SimulatedFlux(fluxArray);
 	}
 	
+	
+	/*
 	@Override
 	public ImageElementInfo createImageElementInfo(TransitFunction brightnessFunction, double orbitRadius) {
 		double yoffset = -orbitRadius * Math.sin(this.inclineAngle);		
@@ -51,4 +53,5 @@ public final class AngularFluxSource implements SimulatedFluxSource {
 		double arcDistance = orbitRadius * angularRange;
 		return this.width * arcDistance / boundingBox.getWidth();
 	}	
+	*/
 }

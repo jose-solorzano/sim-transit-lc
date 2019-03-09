@@ -14,12 +14,13 @@ public final class RadialDiskTransit implements TransitFunction {
 	private final double sinTilt, cosTilt;
 	private final double sinObliquity;
 	private final double diskRadiusSquared;
-	private final double planetRadiusSquared;
+	private final double innerRadius;
+	private final double innerOpacity;
 	private final double decayCoefficient;
 	private final double extraOptimizationError;
 	
 	public RadialDiskTransit(double originX, double originY, double tilt, double obliquity,
-			double planetRadius,
+			double innerRadius, double innerOpacity,
 			double diskRadius, double decayCoefficient, double extraOptimizationError) {
 		super();
 		this.originX = originX;
@@ -28,7 +29,8 @@ public final class RadialDiskTransit implements TransitFunction {
 		this.cosTilt = Math.cos(tilt);
 		this.sinObliquity = Math.sin(obliquity);
 		this.diskRadiusSquared = diskRadius * diskRadius;
-		this.planetRadiusSquared = planetRadius * planetRadius;
+		this.innerRadius = innerRadius;
+		this.innerOpacity = innerOpacity;
 		this.decayCoefficient = decayCoefficient;
 		this.extraOptimizationError = extraOptimizationError;
 	}
@@ -39,13 +41,14 @@ public final class RadialDiskTransit implements TransitFunction {
 		@JsonProperty("impactParameter") double impactParameter,
 		@JsonProperty("tilt") double tilt,
 		@JsonProperty(value="obliquity", required=false) double obliquity,
-		@JsonProperty(value="planetRadius", required=true) double planetRadius,
+		@JsonProperty(value="innerRadius", required=true) double innerRadius,
+		@JsonProperty(value="innerOpacity", required=true) double innerOpacity,
 		@JsonProperty(value="diskRadius", required=true) double diskRadius,
 		@JsonProperty(value="decayCoefficient", required=true) double decayCoefficient,
 		@JsonProperty("__do_not_use_01") double extraOptimizerError) {
 		
 		double originY = -impactParameter;
-		return new RadialDiskTransit(originX, originY, tilt, obliquity, planetRadius, diskRadius, decayCoefficient, extraOptimizerError);
+		return new RadialDiskTransit(originX, originY, tilt, obliquity, innerRadius, innerOpacity, diskRadius, decayCoefficient, extraOptimizerError);
 	}
 
 	/**
@@ -55,12 +58,7 @@ public final class RadialDiskTransit implements TransitFunction {
 	public final double fluxOrTransmittance(double x, double y, double z) {
 		double xdiff = x - this.originX;
 		double ydiff = y - this.originY;
-		/*
-		double rs = xdiff * xdiff + ydiff * ydiff;
-		if(rs <= this.planetRadiusSquared) {
-			return 0;
-		}
-		*/
+
 		double rotA = this.cosTilt;
 		double rotB = this.sinTilt;
 		double xr = xdiff * rotA + ydiff * rotB;
@@ -77,32 +75,16 @@ public final class RadialDiskTransit implements TransitFunction {
 			return Double.NaN;
 		}
 
-		/*
-		if(rrs < this.planetRadiusSquared) {
-			return 0;
-		}
-		*/
-		
-		
-		/*
-		double planetRadius = Math.sqrt(this.planetRadiusSquared);				
+		double innerRadius = this.innerRadius;				
 		double plainDistance = StrictMath.sqrt(rrs);				
-		if(plainDistance <= planetRadius) {
-			// TODO parameterize
-			return -0.97;
+		if(plainDistance <= innerRadius) {
+			return this.innerOpacity;
 		}
-		double ratio = planetRadius / plainDistance;
+		double ratio = innerRadius / plainDistance;
 		double ratio1m = 1 - ratio;
 		double xrr = xr * ratio1m;
 		double yrr = yr * ratio1m;
 		double opacityDistance = StrictMath.sqrt(xrr * xrr * sinOb * sinOb + yrr * yrr);
-		*/
-		
-		/*
-		double opacityDistance = plainDistance - planetRadius;
-		*/
-		
-		double opacityDistance = StrictMath.sqrt(xrSq * sinOb * sinOb + yrSq);
 		
 		double dc = this.decayCoefficient;
 		double denominator1 = dc * opacityDistance;
@@ -137,7 +119,8 @@ public final class RadialDiskTransit implements TransitFunction {
 	public String toString() {
 		return "RadialDiskTransit [originX=" + originX + ", originY=" + originY + ", sinTilt=" + sinTilt + ", cosTilt="
 				+ cosTilt + ", sinObliquity=" + sinObliquity + 
-				", planetRadiusSquared=" + planetRadiusSquared +
+				", innerRadius=" + innerRadius +
+				", innerOpacity=" + innerOpacity +
 				", diskRadiusSquared=" + diskRadiusSquared
 				+ ", decayCoefficient=" + decayCoefficient + ", extraOptimizationError=" + extraOptimizationError + "]";
 	}

@@ -33,9 +33,7 @@ public abstract class AbstractLossFunction implements MultivariateRealFunction, 
 		if(Double.isNaN(error)) {
 			throw new IllegalStateException("Loss is " + error + "; baseError=" + baseError + "; extraError=" + extraError + "; params=" + Arrays.toString(params) + "; modeledFlux=" + Arrays.toString(modeledFlux));
 		}
-		double[] clusteringPosition = sf.getClusteringPosition();
-		//double[] clusteringPosition = this.getClusteringPosition(modeledFlux);
-		return new ClusteredParamEvaluation(error, clusteringPosition);
+		return new ClusteredParamEvaluation(error, params);
 	}
 
 	@Override
