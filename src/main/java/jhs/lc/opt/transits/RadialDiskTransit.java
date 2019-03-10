@@ -78,7 +78,7 @@ public final class RadialDiskTransit implements TransitFunction {
 		double innerRadius = this.innerRadius;				
 		double plainDistance = StrictMath.sqrt(rrs);				
 		if(plainDistance <= innerRadius) {
-			return this.innerOpacity;
+			return -(1.0 - this.innerOpacity);
 		}
 		double ratio = innerRadius / plainDistance;
 		double ratio1m = 1 - ratio;
