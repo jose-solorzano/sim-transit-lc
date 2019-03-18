@@ -76,7 +76,10 @@ public final class RadialDiskTransit implements TransitFunction {
 		}
 
 		double innerRadius = this.innerRadius;				
-		double plainDistance = StrictMath.sqrt(rrs);				
+		double plainDistance = StrictMath.sqrt(rrs);		
+		if(plainDistance == 0) {
+			return Double.NaN;
+		}
 		if(plainDistance <= innerRadius) {
 			return -(1.0 - this.innerOpacity);
 		}
@@ -88,7 +91,19 @@ public final class RadialDiskTransit implements TransitFunction {
 		
 		double dc = this.decayCoefficient;
 		double denominator1 = dc * opacityDistance;
+		
+		double maxOpacity = this.innerOpacity;
+		if(maxOpacity > 1) {
+			maxOpacity = 1;
+		}
+		else if(maxOpacity < 0) {
+			maxOpacity = 0;
+		}
+		
 		double opacity1 = denominator1 <= 1 ? 1.0 : 1.0 / denominator1;
+		if(opacity1 > maxOpacity) {
+			opacity1 = maxOpacity;
+		}
 		return -(1.0 - opacity1);
 	}
 
