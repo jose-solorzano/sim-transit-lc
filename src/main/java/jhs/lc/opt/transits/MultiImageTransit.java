@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -47,6 +48,11 @@ public class MultiImageTransit implements TransitFunction {
 	public static MultiImageTransit create(ImageInfo[] images, double extraOptimizerError) {
 		Rectangle2D boundingBox = getBoundingBox(images);
 		return new MultiImageTransit(images, boundingBox, extraOptimizerError);
+	}
+
+	@Override
+	public String toString() {
+		return "MultiImageTransit [images=" + Arrays.toString(images) + "]";
 	}
 
 	@Override
@@ -218,6 +224,13 @@ public class MultiImageTransit implements TransitFunction {
 			if(lowerLeft != null) {
 				boundList.add(lowerLeft);
 			}
+		}
+
+		@Override
+		public String toString() {
+			return "ImageInfo [widthPixels=" + widthPixels + ", heightPixels=" + heightPixels + ", colA=" + colA
+					+ ", colB=" + colB + ", colC=" + colC + ", rowA=" + rowA + ", rowB=" + rowB + ", rowC=" + rowC
+					+ "]";
 		}
 	}	
 	

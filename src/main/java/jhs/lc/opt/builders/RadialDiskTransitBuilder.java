@@ -28,7 +28,8 @@ public class RadialDiskTransitBuilder implements ParametricTransitFunctionSource
 			@JsonProperty(value="tiltBounds", required=true) double[] tiltBounds,
 			@JsonProperty(value="obliquityBounds", required=true) double[] obliquityBounds,
 			@JsonProperty(value="diskRadiusBounds", required=true) double[] diskRadiusBounds,
-			@JsonProperty(value="planetRadiusBounds", required=true) double[] planetRadiusBounds,
+			@JsonProperty(value="innerRadiusBounds", required=true) double[] innerRadiusBounds,
+			@JsonProperty(value="innerOpacityBounds", required=true) double[] innerOpacityBounds,
 			@JsonProperty(value="decayCoefficientBounds", required=true) double[] decayCoefficientBounds
 		) {
 		
@@ -40,7 +41,8 @@ public class RadialDiskTransitBuilder implements ParametricTransitFunctionSource
 		ps.addParameterDef(ParamId.OBLIQUITY, obliquityBounds);
 		ps.addParameterDef(ParamId.DECAY_COEFFICIENT, decayCoefficientBounds);
 		ps.addParameterDef(ParamId.DISK_RADIUS, diskRadiusBounds);
-		ps.addParameterDef(ParamId.PLANET_RADIUS, planetRadiusBounds);
+		ps.addParameterDef(ParamId.INNER_RADIUS, innerRadiusBounds);
+		ps.addParameterDef(ParamId.INNER_OPACITY, innerOpacityBounds);
 				
 		return new RadialDiskTransitBuilder(ps);
 	}
@@ -52,13 +54,14 @@ public class RadialDiskTransitBuilder implements ParametricTransitFunctionSource
 		double impactParameter = ps.getValue(ParamId.IMPACT_PARAMETER, parameters);
 		double tilt = ps.getValue(ParamId.TILT, parameters);
 		double obliquity = ps.getValue(ParamId.OBLIQUITY, parameters);
-		double planetRadius = ps.getValue(ParamId.PLANET_RADIUS, parameters);
+		double innerRadius = ps.getValue(ParamId.INNER_RADIUS, parameters);
+		double innerOpacity = ps.getValue(ParamId.INNER_OPACITY, parameters);
 		double diskRadius = ps.getValue(ParamId.DISK_RADIUS, parameters);
 		double decayCoefficient = ps.getValue(ParamId.DECAY_COEFFICIENT, parameters);
 		
 		double extraOptimizerError = ps.getExtraOptimizerError(parameters, LAMBDA);
 		
-		return RadialDiskTransit.create(originX, impactParameter, tilt, obliquity, planetRadius, diskRadius, decayCoefficient, extraOptimizerError);
+		return RadialDiskTransit.create(originX, impactParameter, tilt, obliquity, innerRadius, innerOpacity, diskRadius, decayCoefficient, extraOptimizerError);
 	}
 
 	@Override
@@ -77,7 +80,8 @@ public class RadialDiskTransitBuilder implements ParametricTransitFunctionSource
 		IMPACT_PARAMETER,
 		TILT,
 		OBLIQUITY,
-		PLANET_RADIUS,
+		INNER_RADIUS,
+		INNER_OPACITY,
 		DISK_RADIUS,
 		DECAY_COEFFICIENT,
 	}

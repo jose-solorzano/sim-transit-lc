@@ -35,6 +35,7 @@ import jhs.lc.opt.SolutionSampler;
 import jhs.lc.sims.AngleUnsupportedException;
 import jhs.lc.sims.AngularFluxSource;
 import jhs.lc.sims.FastApproximateFluxSource;
+import jhs.lc.sims.PixelatedStarFluxSource;
 import jhs.lc.sims.SimulatedFluxSource;
 import jhs.lc.sims.SimulationImageSet;
 import jhs.lc.tools.inputs.AbstractOptMethod;
@@ -303,6 +304,9 @@ public class SolveLightCurve extends AbstractTool {
 		logger.fine("getSampler();: method=" + method);
 		ParametricTransitFunctionSource ffs = method.createFluxFunctionSource(contextFile);
 		SimulatedFluxSource fluxSource = this.getFluxSource(cmdLine, optSpec, timestamps, ldParams, contextFile);
+		if(logger.isLoggable(Level.INFO)) {
+			logger.info("Flux source: " + fluxSource);
+		}
 		double baseRadius = optSpec.getOrbitRadius();
 		double orf = optSpec.getOrbitRadiusFlexibility();
 		if(orf < 0) {
@@ -327,15 +331,27 @@ public class SolveLightCurve extends AbstractTool {
 		int widthPixels = optSpec.getWidthPixels();
 		int heightPixels = optSpec.getHeightPixels();
 		logger.info("getFluxSource(): inclineAngle=" + inclineAngle + ", orbitalPeriod=" + orbitalPeriod + ", withPixels=" + widthPixels + ", heightPixels=" + heightPixels);
-		if(cmdLine.hasOption("angular")) {
-			return new AngularFluxSource(timestamps, widthPixels, heightPixels, inclineAngle, orbitalPeriod, ldParams);
+		String estimationType = cmdLine.getOptionValue("et");
+		if(estimationType == null) {
+			estimationType = "ptransit";
 		}
-		else {
+		switch(estimationType) {
+		case "angular":
+			return new AngularFluxSource(timestamps, widthPixels, heightPixels, inclineAngle, orbitalPeriod, ldParams);
+		case "ptransit":
 			try {
 				return new FastApproximateFluxSource(timestamps, ldParams, inclineAngle, orbitalPeriod, widthPixels, heightPixels);
 			} catch(AngleUnsupportedException au) {
-				throw new IllegalStateException("Cannot handle a rotation of " + au.getValue() + " radians with 'fast' optimization. Use -angular option instead.");
+				throw new IllegalStateException("Cannot handle a rotation of " + au.getValue() + " radians with 'ptransit' flux source. Use '-et angular' option instead.");
 			}
+		case "pstar":
+			try {
+				return new PixelatedStarFluxSource(timestamps, ldParams, inclineAngle, orbitalPeriod, widthPixels, heightPixels);
+			} catch(AngleUnsupportedException au) {
+				throw new IllegalStateException("Cannot handle a rotation of " + au.getValue() + " radians with 'pstar' flux source. Use '-et angular' option instead.");
+			}
+		default:
+			throw new IllegalStateException("Unknown estimation type: " + estimationType);
 		}
 	}
 
@@ -422,9 +438,9 @@ public class SolveLightCurve extends AbstractTool {
 				.withDescription("Sets the java.util.logging level.")
 				.create("log");
 		Option angOption = OptionBuilder
-				.hasArg(false)
-				.withDescription("Disables 'fast' approximate optimization, and performs accurate rotations.")
-				.create("angular");
+				.hasArg()
+				.withDescription("Sets the flux estimation type. Default is ptransit. Possible values are angular, pstar and ptransit. Angular is slow but more exact with short orbital periods. Use pstar when the transit is big.")
+				.create("et");
 		Option videoDurationOption = OptionBuilder.withArgName("seconds")
 				.hasArg()
 				.withDescription("Sets the video duration in seconds. Default is " + DEF_VIDEO_DURATION + ".")
