@@ -3,6 +3,7 @@ package jhs.lc.tools.inputs;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -15,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.jsontype.impl.ClassNameIdResolver;
 
 public class ClassTransitShape extends AbstractTransitShape {
+	private static final Logger logger = Logger.getLogger(ClassTransitShape.class.getName());
 	private String className;
 	private Map<String, Object> properties;
 
@@ -56,6 +58,8 @@ public class ClassTransitShape extends AbstractTransitShape {
 			if(params == null) {
 				params = new HashMap<>();
 			}
+			params.put(ClassOptMethod.SPECIAL_PARAM_FILE_CONTEXT, context);
+			logger.fine("Will convert parameters map to POJO: " + params);
 			@SuppressWarnings("unchecked")
 			TransitFunction bf = SpecMapper.mapToPojo(params, (Class<TransitFunction>) c);
 			return new EvaluatableSurfaceSphereFactory(bf);

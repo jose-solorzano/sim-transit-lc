@@ -47,7 +47,7 @@ public final class RingedPlanet implements TransitFunction {
 		@JsonProperty(value="ringGap", required=false) double ringGap,
 		@JsonProperty(value="ringTransmittances", required=false) double[] ringTransmittances,
 		@JsonProperty(value="ringTransmittancesWhenPerpendicular", required=false) double[] ringTransmittancesWhenPerpendicular,
-		@JsonProperty("doNotUse01") double extraOptimizerError) {
+		@JsonProperty("__do_not_use_01") double extraOptimizerError) {
 		
 		double sinObliquity = Math.sin(obliquity);
 		if(numRings != 0) {

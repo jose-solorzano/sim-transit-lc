@@ -44,7 +44,7 @@ public abstract class AbstractTool {
 		}
 	}
 	
-	protected void configureLoggingLevel(CommandLine cmdLine) {
+	protected void configureLoggingLevel(CommandLine cmdLine, Logger logger) {
 		Level level = Level.WARNING;
 		try {
 			String logText = cmdLine.getOptionValue("log");
@@ -52,7 +52,12 @@ public abstract class AbstractTool {
 				level = Level.parse(logText);
 			}
 		} finally {
-			Logger.getLogger("").setLevel(level);
+			Logger rootLogger = Logger.getLogger("");
+			rootLogger.setLevel(level);
+			java.util.logging.Handler[] handlers = rootLogger.getHandlers();
+			if(handlers.length != 0) {
+				handlers[0].setLevel(level);
+			}
 		}
 	}
 	

@@ -16,6 +16,7 @@ import jhs.lc.opt.builders.RingedPlanetBuilder;
 
 public class ClassOptMethod extends AbstractOptMethod {
 	private static final Logger logger = Logger.getLogger(ClassOptMethod.class.getName());
+	public static final String SPECIAL_PARAM_FILE_CONTEXT = "__file_context";
 	private String className;
 	private Map<String, Object> properties;
 	
@@ -56,6 +57,8 @@ public class ClassOptMethod extends AbstractOptMethod {
 		if(params == null) {
 			params = new HashMap<>();
 		}
+		params.put(SPECIAL_PARAM_FILE_CONTEXT, context);
+		logger.fine("Will convert parameters map to POJO: " + params);
 		@SuppressWarnings("unchecked")
 		ParametricTransitFunctionSource pfs = SpecMapper.mapToPojo(params, (Class<ParametricTransitFunctionSource>) c);
 		return pfs;

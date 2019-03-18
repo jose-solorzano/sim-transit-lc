@@ -536,6 +536,17 @@ public class MatrixUtil {
 		return result;
 	}
 
+	public static float[][] copyOf(float[][] matrix) {
+		int length = matrix.length;
+		float[][] result = new float[length][];
+		for(int i = 0; i < length; i++) {
+			float[] column = matrix[i];
+			float[] resultColumn = Arrays.copyOf(column, column.length);
+			result[i] = resultColumn;
+		}
+		return result;
+	}
+
 	public static void addInPlace(double[][] matrix, double[][] plusMatrix) {
 		int length = matrix.length;
 		for(int x = 0; x < length; x++) {

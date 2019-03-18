@@ -33,8 +33,8 @@ public class ImageOpacityFunctionSource implements ParametricTransitFunctionSour
 	public static ImageOpacityFunctionSource create(BufferedImage image, boolean aspectRatioPreserved, double positionFlexibility, double minWidth, double minHeight, double maxWidth, double maxHeight) {
 		int numColumns = image.getWidth();
 		int numRows = image.getHeight();
-		float[][] brightnessMatrix = ImageUtil.blackOnWhiteToOpacityMatrix(image);
-		return new ImageOpacityFunctionSource(brightnessMatrix, aspectRatioPreserved, numColumns, numRows, positionFlexibility, minWidth, minHeight, maxWidth, maxHeight);
+		float[][] transmittanceMatrix = ImageUtil.blackOnWhiteToTransmittanceMatrix(image);
+		return new ImageOpacityFunctionSource(transmittanceMatrix, aspectRatioPreserved, numColumns, numRows, positionFlexibility, minWidth, minHeight, maxWidth, maxHeight);
 	}
 	
 	@Override

@@ -23,7 +23,7 @@ public class EstimateTransitProperties extends AbstractTool {
 	private static final int DEFAULT_WL = 7;
 	
 	private void run(CommandLine cmdLine) throws Exception {
-		this.configureLoggingLevel(cmdLine);
+		this.configureLoggingLevel(cmdLine, logger);
 		Double orbitPeriod = this.getOptionDouble(cmdLine, "p", null);
 		if(orbitPeriod == null) {
 			throw new IllegalStateException("Option -p (orbit period) is required.");

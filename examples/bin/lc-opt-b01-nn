@@ -6,11 +6,11 @@ mkdir -p ${workDir}
 
 echo "BO1 optimization: Triangle transit, using RBF_T activation function."
 
-OPTS="-log INFO -nc 10 -nppc 10 -noi 200 -nagd 200"
+OPTS="-log INFO -nc 10 -nppc 10 -noi 300 -nagd 200"
 
 ${projectDir}/bin/lc-opt ${OPTS} \
 	-i ${projectDir}/examples/lc/sim-b01.csv \
 	-o ${workDir}/opt-b01.csv \
 	-or ${workDir}/opt-b01.json \
 	-oi ${workDir}/opt-b01.png \
-	${projectDir}/examples/opt/optspec-b01.json
+	${projectDir}/examples/opt/optspec-b01-nn.json

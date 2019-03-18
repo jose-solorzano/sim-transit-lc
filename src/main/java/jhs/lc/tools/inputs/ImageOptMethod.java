@@ -47,22 +47,22 @@ public class ImageOptMethod extends AbstractOptMethod {
 
 	@Override
 	public ParametricTransitFunctionSource createFluxFunctionSource(File context) throws Exception {
-		if(this.imageFilePath == null) {
+		if (this.imageFilePath == null) {
 			throw new IllegalStateException("imageFilePath must be provided in image method specification.");
 		}
 		File imageFile;
-		if(new File(this.imageFilePath).exists()) {
+		if (new File(this.imageFilePath).exists()) {
 			imageFile = new File(this.imageFilePath);
-		}
-		else {
+		} else {
 			File parent = context == null ? new File(".") : (context.isDirectory() ? context : context.getParentFile());
 			imageFile = new File(parent, this.imageFilePath);
 		}
 		BufferedImage image = ImageIO.read(imageFile);
-		return ImageOpacityFunctionSource.create(image, this.aspectRatioPreserved, this.positionFlexibility, minImageWidth, minImageHeight, maxImageWidth, maxImageHeight);
+		return ImageOpacityFunctionSource.create(image, this.aspectRatioPreserved, this.positionFlexibility,
+				minImageWidth, minImageHeight, maxImageWidth, maxImageHeight);
 	}
 
-	@JsonProperty(required = true)	
+	@JsonProperty(required = true)
 	public final double getMinImageWidth() {
 		return minImageWidth;
 	}
@@ -71,7 +71,7 @@ public class ImageOptMethod extends AbstractOptMethod {
 		this.minImageWidth = minImageWidth;
 	}
 
-	@JsonProperty(required = true)	
+	@JsonProperty(required = true)
 	public final double getMinImageHeight() {
 		return minImageHeight;
 	}
@@ -80,7 +80,7 @@ public class ImageOptMethod extends AbstractOptMethod {
 		this.minImageHeight = minImageHeight;
 	}
 
-	@JsonProperty(required = true)	
+	@JsonProperty(required = true)
 	public final double getMaxImageWidth() {
 		return maxImageWidth;
 	}
@@ -89,7 +89,7 @@ public class ImageOptMethod extends AbstractOptMethod {
 		this.maxImageWidth = maxImageWidth;
 	}
 
-	@JsonProperty(required = true)	
+	@JsonProperty(required = true)
 	public final double getMaxImageHeight() {
 		return maxImageHeight;
 	}
